@@ -1,424 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fog Shadow — where the fog isn't, in San Francisco</title>
+<meta name="description" content="One message, one place. Twelve San Francisco spots ranked on low cloud, visibility, wind, and comfort, so you know where to go outside right now.">
+<meta name="theme-color" content="#0E161C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="Fog Shadow">
+<meta property="og:description" content="Where the fog isn't, in San Francisco.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E161C'/><circle cx='16' cy='13' r='6' fill='%23F0A03C'/><rect x='4' y='21' width='24' height='3.4' rx='1.7' fill='%23A9B7BE'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,700;12..96,75..100,800&display=swap" rel="stylesheet">
 
 <style>
-  :root{
-    --ink:#0E161C;
-    --ink-2:#16222A;
-    --line:rgba(169,183,190,.18);
-    --line-hi:rgba(169,183,190,.34);
-    --fog:#A9B7BE;
-    --fog-dim:#5E7077;
-    --fog-faint:#38474F;
-    --clear:#F0A03C;
-    --clear-dim:#9A6520;
-    --paper:#E9EAE4;
-    --disp:'Bricolage Grotesque', system-ui, sans-serif;
-    --mono:ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-    --msg:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-  }
-  *{box-sizing:border-box}
-  .fs-root{
-    background:var(--ink); color:var(--paper);
-    font-family:var(--msg); line-height:1.45;
-    padding:26px 20px 46px; margin:0 auto; max-width:1080px;
-    border-radius:2px;
-  }
-  .fs-root ::selection{background:var(--clear);color:var(--ink)}
+/* ══ tokens ══════════════════════════════════════════════════════ */
+:root{
+  --ink:#0E161C; --ink-2:#16222A; --ink-3:#1E2B33;
+  --line:rgba(169,183,190,.18); --line-hi:rgba(169,183,190,.34);
+  --fog:#A9B7BE; --fog-dim:#5E7077; --fog-faint:#38474F;
+  --clear:#F0A03C; --clear-dim:#9A6520;
+  --paper:#E9EAE4;
+  --disp:'Bricolage Grotesque', system-ui, sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --msg:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;
+  --pad:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ink); color:var(--paper);
+  font-family:var(--msg); line-height:1.45; font-size:16px;
+  padding:calc(18px + env(safe-area-inset-top)) calc(var(--pad) + env(safe-area-inset-right))
+          calc(40px + env(safe-area-inset-bottom)) calc(var(--pad) + env(safe-area-inset-left));
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--clear); color:var(--ink)}
+.wrap{max-width:1080px; margin:0 auto}
 
-  /* ---- masthead ---- */
-  .fs-eyebrow{
-    font-family:var(--mono); font-size:10px; letter-spacing:.18em;
-    text-transform:uppercase; color:var(--fog-dim);
-    display:flex; justify-content:space-between; align-items:center;
-    padding-bottom:10px; border-bottom:1px solid var(--line); gap:12px; flex-wrap:wrap;
-  }
-  .fs-badge{
-    font-family:var(--mono); font-size:10px; letter-spacing:.14em;
-    padding:4px 8px; border:1px solid var(--line-hi); border-radius:2px; color:var(--fog);
-    white-space:nowrap;
-  }
-  .fs-badge.live{color:var(--clear); border-color:var(--clear-dim)}
-  .fs-title{
-    font-family:var(--disp); font-weight:800;
-    font-size:clamp(38px,7.4vw,74px); line-height:.92;
-    letter-spacing:-.035em; margin:20px 0 8px; color:var(--paper);
-  }
-  .fs-title em{font-style:normal; color:var(--clear)}
-  .fs-sub{
-    max-width:52ch; color:var(--fog); font-size:15px; margin:0 0 26px;
-  }
+/* ══ masthead ════════════════════════════════════════════════════ */
+.eyebrow{
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--fog-dim); display:flex; justify-content:space-between; align-items:center;
+  gap:10px; padding-bottom:9px; border-bottom:1px solid var(--line);
+}
+.badge{
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+  padding:4px 7px; border:1px solid var(--line-hi); border-radius:2px;
+  color:var(--fog); white-space:nowrap;
+}
+.badge.live{color:var(--clear); border-color:var(--clear-dim)}
+h1{
+  font-family:var(--disp); font-weight:800; font-size:clamp(33px,10vw,74px);
+  line-height:.94; letter-spacing:-.035em; margin:18px 0 8px;
+}
+h1 em{font-style:normal; color:var(--clear)}
+.sub{max-width:54ch; color:var(--fog); font-size:14.5px; margin:0 0 22px}
 
-  /* ---- ridge ---- */
-  .fs-ridge{
-    border:1px solid var(--line); border-radius:3px; background:var(--ink-2);
-    padding:14px 14px 6px; margin-bottom:22px; overflow:hidden;
-  }
-  .fs-ridge-head{
-    display:flex; justify-content:space-between; font-family:var(--mono);
-    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--fog-dim);
-    margin-bottom:6px;
-  }
-  .fs-svg{width:100%; height:auto; display:block}
-  .fs-dot{transition:all .5s cubic-bezier(.2,.7,.3,1)}
-  .fs-lbl{font-family:var(--mono); font-size:7.4px; letter-spacing:.05em; fill:var(--fog-dim)}
-  .fs-lbl.on{fill:var(--clear)}
+/* ══ layout ══════════════════════════════════════════════════════ */
+.grid{display:grid; gap:24px; grid-template-areas:"msg" "ridge" "board"}
+.a-msg{grid-area:msg} .a-ridge{grid-area:ridge} .a-board{grid-area:board}
+.ph{
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.17em; text-transform:uppercase;
+  color:var(--fog-dim); margin:0 0 10px; padding-bottom:8px; border-bottom:1px solid var(--line);
+}
 
-  /* ---- two-up ---- */
-  .fs-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start}
-  @media(max-width:760px){ .fs-grid{grid-template-columns:1fr} }
+/* ══ the message ═════════════════════════════════════════════════ */
+.phone{
+  background:linear-gradient(168deg,#22323B 0%,#141F26 100%);
+  border:1px solid var(--line-hi); border-radius:18px; padding:16px 14px 18px;
+  position:relative; overflow:hidden;
+}
+.phone::after{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 60% at 15% 0%, rgba(240,160,60,.10), transparent 60%);
+}
+.lock{
+  font-family:var(--mono); font-size:9px; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--fog-dim); margin-bottom:13px; display:flex; justify-content:space-between;
+}
+.card{
+  background:rgba(233,234,228,.94); color:#12181C; border-radius:14px;
+  padding:12px 13px 13px; position:relative; z-index:1;
+  box-shadow:0 10px 26px rgba(0,0,0,.42);
+}
+.card-top{
+  display:flex; align-items:center; gap:7px; margin-bottom:7px;
+  font-family:var(--mono); font-size:9px; letter-spacing:.09em;
+  text-transform:uppercase; color:#5A676E;
+}
+.ic{width:15px;height:15px;border-radius:4px;background:var(--clear);
+   display:grid;place-items:center;font-size:9px;color:#12181C;font-weight:700}
+#msg1{font-size:16px; line-height:1.4; margin:0; letter-spacing:-.005em}
+#msg1 b{font-weight:600}
+#msg2{margin:7px 0 0; font-size:14px; color:#4C6672; line-height:1.4}
 
-  .fs-panel-h{
-    font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
-    color:var(--fog-dim); margin:0 0 10px; padding-bottom:8px; border-bottom:1px solid var(--line);
-  }
+/* ══ controls (thumb sized) ══════════════════════════════════════ */
+.ctrls{margin-top:16px; display:grid; gap:14px}
+.lab{font-family:var(--mono); font-size:9.5px; letter-spacing:.15em;
+     text-transform:uppercase; color:var(--fog-dim); display:block; margin-bottom:7px}
+.row{display:flex; gap:6px; flex-wrap:wrap}
+.btn{
+  flex:1 1 auto; min-width:88px; min-height:44px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.07em; text-transform:uppercase;
+  background:transparent; color:var(--fog); border:1px solid var(--line-hi);
+  border-radius:3px; cursor:pointer; transition:.16s; -webkit-tap-highlight-color:transparent;
+}
+.btn:hover{border-color:var(--fog); color:var(--paper)}
+.btn[aria-pressed="true"]{background:var(--clear); border-color:var(--clear); color:var(--ink); font-weight:700}
+.btn:focus-visible{outline:2px solid var(--clear); outline-offset:2px}
+input[type=range]{width:100%; accent-color:var(--clear); height:34px; margin:0}
 
-  /* ---- the message ---- */
-  .fs-phone{
-    background:linear-gradient(168deg,#22323B 0%,#141F26 100%);
-    border:1px solid var(--line-hi); border-radius:16px; padding:18px 16px 20px;
-    position:relative; overflow:hidden;
-  }
-  .fs-phone::after{
-    content:''; position:absolute; inset:0; pointer-events:none;
-    background:radial-gradient(120% 60% at 15% 0%, rgba(240,160,60,.10), transparent 60%);
-  }
-  .fs-lock{
-    font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; color:var(--fog-dim);
-    text-transform:uppercase; margin-bottom:14px; display:flex; justify-content:space-between;
-  }
-  .fs-card{
-    background:rgba(233,234,228,.94); color:#12181C; border-radius:13px;
-    padding:13px 14px 14px; position:relative; z-index:1;
-    box-shadow:0 10px 26px rgba(0,0,0,.4);
-  }
-  .fs-card-top{
-    display:flex; align-items:center; gap:7px; margin-bottom:7px;
-    font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5A676E;
-  }
-  .fs-icon{
-    width:15px;height:15px;border-radius:4px;background:var(--clear);
-    display:grid;place-items:center;font-size:9px;color:#12181C;font-weight:700;
-  }
-  .fs-msg{font-size:16.5px; line-height:1.4; margin:0; letter-spacing:-.005em}
-  .fs-msg b{font-weight:600}
-  .fs-msg .fs-cool{color:#4C6672}
-  .fs-msg-2{margin:7px 0 0; font-size:14.5px; color:#4C6672; line-height:1.4}
+/* ══ ridge: SVG background + HTML dot layer ══════════════════════ */
+.ridge{border:1px solid var(--line); border-radius:4px; background:var(--ink-2); padding:12px 12px 10px}
+.ridge-head{display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
+  font-size:9px; letter-spacing:.13em; text-transform:uppercase; color:var(--fog-dim); margin-bottom:8px}
+.ridge-head b{color:var(--fog); font-weight:400; text-align:center}
+.stage{position:relative; width:100%; aspect-ratio:900/330}
+.stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
+.dot{
+  position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px;
+  border-radius:50%; background:var(--fog-dim); opacity:.75;
+  transition:background .5s ease, opacity .5s ease, transform .5s cubic-bezier(.2,.7,.3,1);
+}
+.dot.on{background:var(--clear); opacity:1; transform:scale(1.35)}
+.dot b{
+  position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
+  font-family:var(--mono); font-size:8px; letter-spacing:.04em; font-weight:400;
+  color:var(--fog-dim); white-space:nowrap; display:none;
+}
+.dot.on b{color:var(--clear)}
+.dot.pick b{display:block; color:var(--clear); font-size:9px}
+.ridge-foot{font-family:var(--mono); font-size:9px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fog-faint); margin-top:6px; text-align:center}
 
-  /* ---- controls ---- */
-  .fs-ctrls{margin-top:16px; display:grid; gap:12px}
-  .fs-row{display:flex; gap:6px; flex-wrap:wrap}
-  .fs-lab{
-    font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
-    color:var(--fog-dim); display:block; margin-bottom:6px;
-  }
-  .fs-btn{
-    font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
-    background:transparent; color:var(--fog); border:1px solid var(--line-hi);
-    padding:7px 11px; border-radius:2px; cursor:pointer; transition:.16s;
-  }
-  .fs-btn:hover{border-color:var(--fog); color:var(--paper)}
-  .fs-btn[aria-pressed="true"]{background:var(--clear); border-color:var(--clear); color:var(--ink); font-weight:700}
-  .fs-btn:focus-visible{outline:2px solid var(--clear); outline-offset:2px}
-  .fs-slider{width:100%; accent-color:var(--clear); margin:2px 0 0}
+/* ══ board ═══════════════════════════════════════════════════════ */
+.tr{display:grid; grid-template-columns:16px 1fr 46px 38px; gap:9px; align-items:center;
+    padding:9px 0; border-bottom:1px solid var(--line); font-size:14px}
+.tr.head{font-family:var(--mono); font-size:9px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--fog-dim); border-bottom:1px solid var(--line-hi); padding-bottom:7px}
+.rk{font-family:var(--mono); font-size:10px; color:var(--fog-faint)}
+.nm{font-weight:500; line-height:1.25}
+.nm span{display:block; font-size:10.5px; color:var(--fog-dim); font-weight:400; margin-top:2px}
+.bar{height:4px; background:var(--fog-faint); border-radius:2px; overflow:hidden}
+.bar i{display:block; height:100%; background:var(--fog-dim); transition:width .55s cubic-bezier(.2,.7,.3,1)}
+.tr.top .bar i{background:var(--clear)}
+.tr.top .nm{color:var(--clear)}
+.num{font-family:var(--mono); font-size:11px; color:var(--fog); text-align:right}
+.yr{display:none}
 
-  /* ---- board ---- */
-  .fs-board{margin-top:26px}
-  .fs-tr{
-    display:grid; grid-template-columns:18px 1fr 60px 46px 52px;
-    gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line);
-    font-size:13.5px;
-  }
-  .fs-tr.head{
-    font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--fog-dim); border-bottom:1px solid var(--line-hi); padding-bottom:7px;
-  }
-  .fs-rank{font-family:var(--mono); font-size:10px; color:var(--fog-faint)}
-  .fs-nm{font-weight:500}
-  .fs-nm span{display:block; font-size:11px; color:var(--fog-dim); font-weight:400; margin-top:1px}
-  .fs-bar{height:4px; background:var(--fog-faint); border-radius:2px; overflow:hidden}
-  .fs-bar i{display:block; height:100%; background:var(--fog-dim); transition:width .55s cubic-bezier(.2,.7,.3,1)}
-  .fs-tr.top .fs-bar i{background:var(--clear)}
-  .fs-tr.top .fs-nm{color:var(--clear)}
-  .fs-num{font-family:var(--mono); font-size:11.5px; color:var(--fog); text-align:right}
+/* ══ footer ══════════════════════════════════════════════════════ */
+.method{margin-top:24px; padding-top:14px; border-top:1px solid var(--line);
+  font-family:var(--mono); font-size:10px; line-height:1.85; color:var(--fog-dim)}
+.method b{color:var(--fog); font-weight:400}
+.attr{margin-top:16px; font-family:var(--mono); font-size:9.5px; line-height:1.8; color:var(--fog-faint)}
+.attr a{color:var(--fog-dim)}
 
-  .fs-method{
-    margin-top:24px; padding-top:14px; border-top:1px solid var(--line);
-    font-family:var(--mono); font-size:10.5px; line-height:1.8; color:var(--fog-dim);
-    letter-spacing:.02em;
-  }
-  .fs-method b{color:var(--fog); font-weight:400}
-
-  @media (prefers-reduced-motion: reduce){
-    .fs-dot,.fs-bar i{transition:none}
-  }
+/* ══ ≥560: labels + fifth column ═════════════════════════════════ */
+@media(min-width:560px){
+  :root{--pad:22px}
+  .dot b{display:block}
+  .tr{grid-template-columns:18px 1fr 58px 44px 50px; gap:10px}
+  .yr{display:block}
+  .stage{aspect-ratio:900/240}
+}
+/* ══ ≥860: ridge spans, message beside board ═════════════════════ */
+@media(min-width:860px){
+  body{padding-top:28px}
+  .grid{grid-template-columns:1fr 1fr; gap:22px 24px;
+        grid-template-areas:"ridge ridge" "msg board"}
+  .stage{aspect-ratio:900/190}
+  .btn{flex:0 0 auto; min-width:0; padding:0 13px}
+}
+@media(prefers-reduced-motion:reduce){ .dot,.bar i{transition:none} }
 </style>
+</head>
+<body>
+<div class="wrap">
 
-<div class="fs-root">
-
-  <div class="fs-eyebrow">
-    <span>RFC-001 &nbsp;/&nbsp; Experience prototype</span>
-    <span class="fs-badge" id="src">Connecting…</span>
+  <div class="eyebrow">
+    <span>RFC-001 / Prototype</span>
+    <span class="badge" id="src">Connecting…</span>
   </div>
 
-  <h1 class="fs-title">Where the fog <em>isn't</em></h1>
-  <p class="fs-sub">One message. One place. Twelve candidate spots ranked west to east, scored on low cloud, visibility, wind, and comfort for what you're actually going out to do.</p>
+  <h1>Where the fog <em>isn't</em></h1>
+  <p class="sub">One message. One place. Twelve spots ranked west to east on low cloud, visibility, wind, and comfort for what you're actually going out to do.</p>
 
-  <!-- SIGNATURE: west-to-east cross section of the city -->
-  <div class="fs-ridge">
-    <div class="fs-ridge-head">
-      <span>← Pacific &nbsp;·&nbsp; west</span>
-      <span id="ridgeState">Marine layer</span>
-      <span>east &nbsp;·&nbsp; Bay →</span>
-    </div>
-    <svg class="fs-svg" viewBox="0 0 900 190" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin, showing where low cloud sits against the Twin Peaks ridge">
-      <defs>
-        <linearGradient id="fogGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"  stop-color="#A9B7BE" stop-opacity=".55"/>
-          <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
-          <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
-        </linearGradient>
-        <clipPath id="clipAll"><rect x="0" y="0" width="900" height="190"/></clipPath>
-      </defs>
-      <g clip-path="url(#clipAll)">
-        <path id="fogBody" d="" fill="url(#fogGrad)" style="transition:d .7s ease"/>
-        <path id="terrain"
-          d="M0,190 L0,176 L120,172 L215,160 L300,140 L355,60 L392,96 L440,150 L500,108 L560,124 L640,168 L760,172 L900,174 L900,190 Z"
-          fill="#1E2B33" stroke="rgba(169,183,190,.30)" stroke-width="1"/>
-        <g id="dots"></g>
-      </g>
-    </svg>
-  </div>
+  <div class="grid">
 
-  <div class="fs-grid">
-
-    <!-- LEFT: the artifact under evaluation -->
-    <div>
-      <h2 class="fs-panel-h">The message</h2>
-      <div class="fs-phone">
-        <div class="fs-lock"><span id="lockDay">Tuesday</span><span id="lockTime">3:00 PM</span></div>
-        <div class="fs-card">
-          <div class="fs-card-top"><span class="fs-icon">☀</span><span>Fog Shadow</span><span style="margin-left:auto" id="stamp">now</span></div>
-          <p class="fs-msg" id="msg1">Reading conditions…</p>
-          <p class="fs-msg-2" id="msg2"></p>
+    <!-- the artifact under evaluation ───────────────────────────── -->
+    <section class="a-msg">
+      <h2 class="ph">The message</h2>
+      <div class="phone">
+        <div class="lock"><span id="lockDay">Tuesday</span><span id="lockTime">3:00 PM</span></div>
+        <div class="card">
+          <div class="card-top"><span class="ic">☀</span><span>Fog Shadow</span><span style="margin-left:auto" id="stamp">now</span></div>
+          <p id="msg1">Reading conditions…</p>
+          <p id="msg2"></p>
         </div>
       </div>
 
-      <div class="fs-ctrls">
+      <div class="ctrls">
         <div>
-          <span class="fs-lab">Send window</span>
-          <div class="fs-row" id="whenRow">
-            <button class="fs-btn" data-when="wk" aria-pressed="true">Weekday 3pm</button>
-            <button class="fs-btn" data-when="we" aria-pressed="false">Weekend 10am</button>
+          <span class="lab">Send window</span>
+          <div class="row" id="whenRow">
+            <button class="btn" data-when="wk" aria-pressed="true">Weekday 3pm</button>
+            <button class="btn" data-when="we" aria-pressed="false">Weekend 10am</button>
           </div>
         </div>
         <div>
-          <span class="fs-lab">Going out to</span>
-          <div class="fs-row" id="modeRow">
-            <button class="fs-btn" data-mode="relax" aria-pressed="true">Relax</button>
-            <button class="fs-btn" data-mode="walk" aria-pressed="false">Walk</button>
-            <button class="fs-btn" data-mode="run" aria-pressed="false">Run</button>
+          <span class="lab">Going out to</span>
+          <div class="row" id="modeRow">
+            <button class="btn" data-mode="relax" aria-pressed="true">Relax</button>
+            <button class="btn" data-mode="walk"  aria-pressed="false">Walk</button>
+            <button class="btn" data-mode="run"   aria-pressed="false">Run</button>
           </div>
         </div>
-        <div id="simWrap" style="display:none">
-          <span class="fs-lab">Marine push <span id="pushVal" style="color:var(--clear)">50</span></span>
-          <input class="fs-slider" type="range" id="push" min="0" max="100" value="50" aria-label="Marine layer strength">
+        <div id="simWrap" hidden>
+          <span class="lab">Marine push <b id="pushVal" style="color:var(--clear);font-weight:400">50</b></span>
+          <input type="range" id="push" min="0" max="100" value="50" aria-label="Marine layer strength">
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- RIGHT: the ranked board -->
-    <div class="fs-board" style="margin-top:0">
-      <h2 class="fs-panel-h">Ranked, right now</h2>
-      <div class="fs-tr head">
-        <span></span><span>Spot</span><span>Score</span><span>Temp</span><span>Clear yr</span>
+    <!-- signature: west→east cross section ──────────────────────── -->
+    <section class="a-ridge">
+      <div class="ridge">
+        <div class="ridge-head">
+          <span>← West</span><b id="ridgeState">Marine layer</b><span>East →</span>
+        </div>
+        <div class="stage">
+          <svg viewBox="0 0 900 190" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
+            <defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#A9B7BE" stop-opacity=".55"/>
+              <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
+              <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
+            </linearGradient></defs>
+            <path id="fogBody" d="" fill="url(#fg)" style="transition:d .7s ease"/>
+            <path d="M0,190 L0,176 L120,172 L215,160 L300,140 L355,60 L392,96 L440,150 L500,108 L560,124 L640,168 L760,172 L900,174 L900,190 Z"
+                  fill="#1E2B33" stroke="rgba(169,183,190,.30)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+          </svg>
+          <div id="dots"></div>
+        </div>
+        <div class="ridge-foot">Ocean Beach → Twin Peaks ridge → India Basin</div>
+      </div>
+    </section>
+
+    <!-- ranked board ────────────────────────────────────────────── -->
+    <section class="a-board">
+      <h2 class="ph">Ranked, right now</h2>
+      <div class="tr head">
+        <span></span><span>Spot</span><span>Score</span><span>Temp</span><span class="yr">Clear yr</span>
       </div>
       <div id="board"></div>
-    </div>
+    </section>
   </div>
 
-  <div class="fs-method" id="method"></div>
+  <div class="method" id="method"></div>
+  <p class="attr">
+    Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a>, CC BY 4.0.
+    Non-commercial use. Fog climatology is a static local estimate, not measured.
+  </p>
 </div>
 
 <script>
 (function(){
-  // ── 12 candidate spots, ordered west → east by longitude ──────────────
-  const SPOTS = [
-    {n:"Ocean Beach",            a:"Outer Sunset",    lat:37.7590, lon:-122.5100, rel:26, x:14,  y:172, note:"The control group. Coat regardless."},
-    {n:"Golden Gate Park",       a:"Conservatory end",lat:37.7720, lon:-122.4600, rel:48, x:250, y:152, note:"East end clears hours before the west."},
-    {n:"Twin Peaks",             a:"the ridge",       lat:37.7544, lon:-122.4477, rel:55, x:355, y:60,  note:"Above the inversion, or inside it."},
-    {n:"Corona Heights",         a:"Castro",          lat:37.7650, lon:-122.4380, rel:62, x:420, y:132, note:"Pokes above low fog when the Castro is grey."},
-    {n:"Mission Dolores Park",   a:"Mission",         lat:37.7596, lon:-122.4269, rel:78, x:487, y:110, note:"The default. Crowded when it's good."},
-    {n:"Glen Canyon Park",       a:"Glen Park",       lat:37.7400, lon:-122.4430, rel:68, x:392, y:96,  note:"Wind drops the moment you're in it."},
-    {n:"Bernal Heights Park",    a:"Bernal",          lat:37.7431, lon:-122.4160, rel:82, x:552, y:122, note:"Fog shadow plus 440 feet of elevation."},
-    {n:"McLaren Park",           a:"Excelsior",       lat:37.7180, lon:-122.4180, rel:79, x:540, y:126, note:"Big, empty, warm side of the ridge."},
-    {n:"Potrero Hill",           a:"McKinley Square", lat:37.7600, lon:-122.3990, rel:84, x:648, y:166, note:"Steep. The fog almost never gets over."},
-    {n:"Crane Cove Park",        a:"Dogpatch",        lat:37.7615, lon:-122.3872, rel:85, x:730, y:171, note:"Waterfront, sun, a slipway to sit on."},
-    {n:"Fort Mason",             a:"Marina Green",    lat:37.8060, lon:-122.4320, rel:52, x:455, y:146, note:"Sun and a 20 mph headwind through the Gate."},
-    {n:"India Basin Shoreline",  a:"Bayview",         lat:37.7370, lon:-122.3775, rel:88, x:830, y:173, note:"Sunniest corner of the city. Flat and quiet."}
-  ];
+/* ── 12 candidate spots, ordered west → east ─────────────────────── */
+const SPOTS=[
+ {n:"Ocean Beach",           a:"Outer Sunset",     lat:37.7590,lon:-122.5100,rel:26,x:14, y:172},
+ {n:"Golden Gate Park",      a:"Conservatory end", lat:37.7720,lon:-122.4600,rel:48,x:250,y:152},
+ {n:"Twin Peaks",            a:"the ridge",        lat:37.7544,lon:-122.4477,rel:55,x:355,y:60 },
+ {n:"Glen Canyon Park",      a:"Glen Park",        lat:37.7400,lon:-122.4430,rel:68,x:392,y:96 },
+ {n:"Corona Heights",        a:"Castro",           lat:37.7650,lon:-122.4380,rel:62,x:420,y:132},
+ {n:"Fort Mason",            a:"Marina Green",     lat:37.8060,lon:-122.4320,rel:52,x:455,y:146},
+ {n:"Mission Dolores Park",  a:"Mission",          lat:37.7596,lon:-122.4269,rel:78,x:487,y:110},
+ {n:"McLaren Park",          a:"Excelsior",        lat:37.7180,lon:-122.4180,rel:79,x:540,y:126},
+ {n:"Bernal Heights Park",   a:"Bernal",           lat:37.7431,lon:-122.4160,rel:82,x:565,y:122},
+ {n:"Potrero Hill",          a:"McKinley Square",  lat:37.7600,lon:-122.3990,rel:84,x:648,y:166},
+ {n:"Crane Cove Park",       a:"Dogpatch",         lat:37.7615,lon:-122.3872,rel:85,x:730,y:171},
+ {n:"India Basin Shoreline", a:"Bayview",          lat:37.7370,lon:-122.3775,rel:88,x:830,y:173}
+];
+const MODES={
+ relax:{c:.45,v:.10,w:.20,t:.25,ideal:72,verb:"sit"},
+ walk :{c:.40,v:.15,w:.25,t:.20,ideal:65,verb:"walk"},
+ run  :{c:.35,v:.15,w:.30,t:.20,ideal:59,verb:"run"}
+};
+let S={when:"wk",mode:"relax",push:50,data:null};
+const $=i=>document.getElementById(i), cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 
-  const MODES = {
-    relax:{c:.45,v:.10,w:.20,t:.25, ideal:72, verb:"sit"},
-    walk: {c:.40,v:.15,w:.25,t:.20, ideal:65, verb:"walk"},
-    run:  {c:.35,v:.15,w:.30,t:.20, ideal:59, verb:"run"}
-  };
+function score(d,m){
+  const M=MODES[m];
+  return Math.round(
+    (100-cl(d.lowCloud,0,100))*M.c +
+    (cl(d.vis/16000,0,1)*100)*M.v +
+    (100-cl((d.wind-8)*5,0,100))*M.w +
+    (100-cl(Math.abs(d.temp-M.ideal)*5.5,0,100))*M.t);
+}
 
-  let state = {when:"wk", mode:"relax", live:false, push:50, data:null};
-  const $ = id => document.getElementById(id);
-  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-
-  // ── scoring ───────────────────────────────────────────────────────────
-  function score(d, m){
-    const M = MODES[m];
-    const clarity = 100 - clamp(d.lowCloud,0,100);
-    const vis     = clamp(d.vis/16000,0,1)*100;
-    const wind    = 100 - clamp((d.wind-8)*5,0,100);
-    const temp    = 100 - clamp(Math.abs(d.temp-M.ideal)*5.5,0,100);
-    return Math.round(clarity*M.c + vis*M.v + wind*M.w + temp*M.t);
-  }
-
-  // ── simulated conditions, driven by the marine push slider ────────────
-  function simulate(push){
-    // push 0 = offshore/clear everywhere, 100 = full marine layer to the Bay
-    return SPOTS.map(s=>{
-      const exposure = (100 - s.rel)/100;              // how open the spot is to fog
-      let low = clamp((push*1.55*exposure) - 8 + (Math.random()*10-5), 0, 100);
-      if(s.n==="Twin Peaks" && push>62) low = clamp(low-42,0,100); // above the inversion
-      const temp = Math.round(70 - low*0.17 - (push*.03) + (Math.random()*3-1.5));
-      const wind = Math.round(6 + push*0.11 + exposure*13 + (Math.random()*5));
-      const vis  = low>70 ? 900+Math.random()*2500 : 16000 - low*100;
-      return {...s, lowCloud:low, temp, wind, vis, hold: low<45 && push<70};
-    });
-  }
-
-  // ── live Open-Meteo, one batched request for all 12 coordinates ───────
-  async function fetchLive(){
-    const lat = SPOTS.map(s=>s.lat).join(",");
-    const lon = SPOTS.map(s=>s.lon).join(",");
-    const url = "https://api.open-meteo.com/v1/forecast"
-      + "?latitude="+lat+"&longitude="+lon
-      + "&current=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
-      + "&hourly=cloud_cover_low&forecast_hours=4"
-      + "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Los_Angeles";
-    const ctl = new AbortController();
-    const to = setTimeout(()=>ctl.abort(), 7000);
-    const r = await fetch(url, {signal:ctl.signal});
-    clearTimeout(to);
-    if(!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    const arr = Array.isArray(j) ? j : [j];
-    return SPOTS.map((s,i)=>{
-      const c = arr[i].current, h = arr[i].hourly;
-      const ahead = (h && h.cloud_cover_low) ? h.cloud_cover_low.slice(0,4) : [];
-      return {...s,
-        lowCloud: c.cloud_cover_low ?? 0,
-        temp: Math.round(c.temperature_2m),
-        wind: Math.round(c.wind_speed_10m),
-        vis: c.visibility ?? 16000,
-        hold: ahead.length ? ahead.every(v=>v<50) : true};
-    });
-  }
-
-  // ── copy ──────────────────────────────────────────────────────────────
-  function compose(ranked){
-    const top = ranked[0], worst = ranked[ranked.length-1];
-    const M = MODES[state.mode];
-    if(top.score < 55){
-      return ["Nothing's clear anywhere in the city right now.",
-              "Low cloud from Ocean Beach to the Bay, and it isn't lifting today. I'll skip tomorrow's message if it looks the same."];
-    }
-    const hold = top.hold
-      ? (state.when==="wk" ? "holding past sunset." : "and it should hold through the afternoon.")
-      : (state.when==="wk" ? "but the fog is moving back in within the hour." : "though it may close in by early afternoon.");
-    const one = `<b>${top.n}</b>. ${top.temp}° and clear, ${hold}`;
-    const two = state.when==="wk"
-      ? `${worst.n} is at ${worst.temp}° under low cloud, so go east. About ${M.verb === "run" ? "a 4-mile loop" : "20 minutes from downtown"}.`
-      : `${worst.n} is still socked in at ${worst.temp}°. The west side usually opens up around 1pm if you'd rather wait it out.`;
-    return [one, two];
-  }
-
-  // ── render ────────────────────────────────────────────────────────────
-  function render(){
-    const scored = state.data.map(d=>({...d, score:score(d, state.mode)}));
-    const ranked = [...scored].sort((a,b)=> b.score - a.score || b.rel - a.rel);
-
-    // message
-    const [a,b] = compose(ranked);
-    $("msg1").innerHTML = a;
-    $("msg2").textContent = b;
-    $("lockDay").textContent  = state.when==="wk" ? "Tuesday" : "Saturday";
-    $("lockTime").textContent = state.when==="wk" ? "3:00 PM" : "10:00 AM";
-    $("stamp").textContent    = state.when==="wk" ? "3:00 pm" : "10:00 am";
-
-    // board
-    $("board").innerHTML = ranked.map((s,i)=>`
-      <div class="fs-tr ${i===0?'top':''}">
-        <span class="fs-rank">${String(i+1).padStart(2,"0")}</span>
-        <span class="fs-nm">${s.n}<span>${s.a}</span></span>
-        <span class="fs-bar"><i style="width:${s.score}%"></i></span>
-        <span class="fs-num">${s.temp}°</span>
-        <span class="fs-num">${s.rel}%</span>
-      </div>`).join("");
-
-    // ridge dots
-    $("dots").innerHTML = scored.map(s=>{
-      const on = s.lowCloud < 45;
-      return `<circle class="fs-dot" cx="${s.x}" cy="${s.y-9}" r="${on?5:3.4}"
-                fill="${on?'var(--clear)':'var(--fog-dim)'}"
-                opacity="${on?1:.75}"/>
-              <text class="fs-lbl ${on?'on':''}" x="${s.x}" y="${s.y-18}" text-anchor="middle">${s.a.toUpperCase()}</text>`;
-    }).join("");
-
-    // fog body: height follows mean low cloud on the western half
-    const west = scored.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4;
-    const east = scored.slice(-4).reduce((t,s)=>t+s.lowCloud,0)/4;
-    const wy = 190 - (west*1.15), ey = 190 - (east*1.15);
-    $("fogBody").setAttribute("d",
-      `M0,190 L0,${wy} C240,${wy-14} 330,${wy+10} 400,${(wy+ey)/2} C520,${ey-8} 700,${ey} 900,${ey} L900,190 Z`);
-    $("ridgeState").textContent = west>60
-      ? (east>55 ? "City-wide marine layer" : "Fog held at the ridge")
-      : "Clear west to east";
-
-    // method line
-    const M = MODES[state.mode];
-    $("method").innerHTML =
-      `<b>Score</b> = clarity×${M.c} + visibility×${M.v} + wind comfort×${M.w} + temperature fit×${M.t}. `+
-      `<b>Clarity</b> = 100 − low cloud cover. <b>Wind comfort</b> falls off above 8 mph. `+
-      `<b>Temperature fit</b> centers on ${M.ideal}°F for ${state.mode}. `+
-      `<b>Clear yr</b> is the static climatology base, how often the spot is fog-free across a year, used as the tiebreak. `+
-      `<b>Quiet rule</b>: no place is named when the best score falls under 55.`;
-  }
-
-  // ── wiring ────────────────────────────────────────────────────────────
-  function bindRow(id, key){
-    $(id).addEventListener("click", e=>{
-      const btn = e.target.closest("button"); if(!btn) return;
-      [...$(id).querySelectorAll("button")].forEach(b=>b.setAttribute("aria-pressed", String(b===btn)));
-      state[key] = btn.dataset[key]; render();
-    });
-  }
-  bindRow("whenRow","when");
-  bindRow("modeRow","mode");
-  $("push").addEventListener("input", e=>{
-    state.push = +e.target.value; $("pushVal").textContent = state.push;
-    state.data = simulate(state.push); render();
+/* ── simulated fallback, driven by the marine push slider ────────── */
+function simulate(p){
+  return SPOTS.map(s=>{
+    const ex=(100-s.rel)/100;
+    let low=cl(p*1.55*ex-8+(Math.random()*10-5),0,100);
+    if(s.n==="Twin Peaks"&&p>62) low=cl(low-42,0,100);       // above the inversion
+    return {...s,
+      lowCloud:low,
+      temp:Math.round(70-low*.17-p*.03+(Math.random()*3-1.5)),
+      wind:Math.round(6+p*.11+ex*13+Math.random()*5),
+      vis: low>70 ? 900+Math.random()*2500 : 16000-low*100,
+      hold: low<45 && p<70};
   });
+}
 
-  (async ()=>{
-    try{
-      state.data = await fetchLive();
-      state.live = true;
-      $("src").textContent = "Live · Open-Meteo · HRRR 3 km";
-      $("src").classList.add("live");
-    }catch(err){
-      state.live = false;
-      state.data = simulate(state.push);
-      $("src").textContent = "Simulated · no network";
-      $("simWrap").style.display = "block";
-    }
-    render();
-  })();
+/* ── live: one batched Open-Meteo request for all 12 coordinates ─── */
+async function fetchLive(){
+  const url="https://api.open-meteo.com/v1/forecast"
+   +"?latitude="+SPOTS.map(s=>s.lat).join(",")
+   +"&longitude="+SPOTS.map(s=>s.lon).join(",")
+   +"&current=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
+   +"&hourly=cloud_cover_low&forecast_hours=4"
+   +"&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Los_Angeles";
+  const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),7000);
+  const r=await fetch(url,{signal:ctl.signal}); clearTimeout(to);
+  if(!r.ok) throw new Error(r.status);
+  const j=await r.json(), arr=Array.isArray(j)?j:[j];
+  return SPOTS.map((s,i)=>{
+    const c=arr[i].current, h=arr[i].hourly,
+          ahead=(h&&h.cloud_cover_low)?h.cloud_cover_low.slice(0,4):[];
+    return {...s, lowCloud:c.cloud_cover_low??0, temp:Math.round(c.temperature_2m),
+            wind:Math.round(c.wind_speed_10m), vis:c.visibility??16000,
+            hold: ahead.length ? ahead.every(v=>v<50) : true};
+  });
+}
+
+function compose(r){
+  const top=r[0], worst=r[r.length-1], M=MODES[S.mode];
+  if(top.score<55) return ["Nothing's clear anywhere in the city right now.",
+    "Low cloud from Ocean Beach to the Bay, and it isn't lifting today. I'll stay quiet tomorrow if it looks the same."];
+  const hold = top.hold
+    ? (S.when==="wk" ? "holding past sunset." : "and it should hold through the afternoon.")
+    : (S.when==="wk" ? "but the fog moves back in within the hour." : "though it may close in by early afternoon.");
+  return [
+    `<b>${top.n}</b>. ${top.temp}° and clear, ${hold}`,
+    S.when==="wk"
+      ? `${worst.n} is at ${worst.temp}° under low cloud, so go east. About ${M.verb==="run"?"a 4-mile loop":"20 minutes from downtown"}.`
+      : `${worst.n} is still socked in at ${worst.temp}°. The west side usually opens up around 1pm if you'd rather wait.`];
+}
+
+function render(){
+  const sc=S.data.map(d=>({...d,score:score(d,S.mode)}));
+  const rk=[...sc].sort((a,b)=>b.score-a.score||b.rel-a.rel);
+
+  const [m1,m2]=compose(rk);
+  $("msg1").innerHTML=m1; $("msg2").textContent=m2;
+  $("lockDay").textContent = S.when==="wk"?"Tuesday":"Saturday";
+  $("lockTime").textContent= S.when==="wk"?"3:00 PM":"10:00 AM";
+  $("stamp").textContent   = S.when==="wk"?"3:00 pm":"10:00 am";
+
+  $("board").innerHTML=rk.map((s,i)=>`
+    <div class="tr ${i===0?'top':''}">
+      <span class="rk">${String(i+1).padStart(2,"0")}</span>
+      <span class="nm">${s.n}<span>${s.a}</span></span>
+      <span class="bar"><i style="width:${s.score}%"></i></span>
+      <span class="num">${s.temp}°</span>
+      <span class="num yr">${s.rel}%</span>
+    </div>`).join("");
+
+  const pick=rk[0].n;
+  $("dots").innerHTML=sc.map(s=>{
+    const on=s.lowCloud<45;
+    return `<span class="dot ${on?'on':''} ${s.n===pick?'pick':''}"
+      style="left:${(s.x/900*100).toFixed(2)}%; top:${((s.y-11)/190*100).toFixed(2)}%"
+      title="${s.n}"><b>${s.a.toUpperCase()}</b></span>`;
+  }).join("");
+
+  const w=sc.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4,
+        e=sc.slice(-4).reduce((t,s)=>t+s.lowCloud,0)/4,
+        wy=190-w*1.15, ey=190-e*1.15;
+  $("fogBody").setAttribute("d",
+    `M0,190 L0,${wy} C240,${wy-14} 330,${wy+10} 400,${(wy+ey)/2} C520,${ey-8} 700,${ey} 900,${ey} L900,190 Z`);
+  $("ridgeState").textContent = w>60 ? (e>55?"City-wide marine layer":"Fog held at the ridge") : "Clear west to east";
+
+  const M=MODES[S.mode];
+  $("method").innerHTML=
+    `<b>Score</b> = clarity×${M.c} + visibility×${M.v} + wind comfort×${M.w} + temperature fit×${M.t}. `+
+    `<b>Clarity</b> = 100 − low cloud cover. <b>Wind comfort</b> falls off above 8 mph. `+
+    `<b>Temperature fit</b> centers on ${M.ideal}°F for ${S.mode}. `+
+    `<b>Clear yr</b> is the static climatology base, how often a spot is fog-free across a year, used as the tiebreak. `+
+    `<b>Quiet rule</b>: no place is named when the best score falls under 55.`;
+}
+
+function bind(id,key){
+  $(id).addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    [...$(id).querySelectorAll("button")].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    S[key]=b.dataset[key]; render();
+  });
+}
+bind("whenRow","when"); bind("modeRow","mode");
+$("push").addEventListener("input",e=>{
+  S.push=+e.target.value; $("pushVal").textContent=S.push;
+  S.data=simulate(S.push); render();
+});
+
+(async()=>{
+  try{
+    S.data=await fetchLive();
+    $("src").textContent="Live · Open-Meteo · HRRR 3 km"; $("src").classList.add("live");
+  }catch(err){
+    S.data=simulate(S.push);
+    $("src").textContent="Simulated · no network"; $("simWrap").hidden=false;
+  }
+  render();
+})();
 })();
 </script>
+</body>
+</html>
