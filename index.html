@@ -47,13 +47,6 @@ body{
 .wrap{max-width:760px; margin:0 auto}
 
 /* ══ masthead + segmented toggle ════════════════════════════════ */
-.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase;
-  color:var(--fog-dim); display:flex; justify-content:space-between; align-items:center;
-  gap:10px; padding-bottom:10px; border-bottom:1px solid var(--line)}
-.badge{font-family:var(--mono); font-size:11px; letter-spacing:.08em; padding:5px 8px;
-  border:1px solid var(--line-hi); border-radius:2px; color:var(--fog); white-space:nowrap}
-.badge.live{color:var(--clear); border-color:var(--clear-dim)}
-
 .titlerow{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0 10px}
 h1{margin:0; flex:0 1 auto; min-width:0}
 /* wordmark x-height = 124/196 of image → 62px pill ÷ .633 ≈ 98px */
@@ -152,9 +145,6 @@ svg.g{fill:currentColor}
   background:var(--paper); color:#12181C; border-radius:18px; padding:18px 18px 20px}
 .c-head{display:flex; align-items:center; gap:8px; font-family:var(--mono);
   font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#5A676E}
-.ic{width:18px;height:18px;border-radius:5px;background:var(--clear);
-  display:grid;place-items:center;color:#12181C}
-.ic svg{width:12px;height:12px}
 .c-when{margin-left:auto; color:#12181C; font-weight:600; letter-spacing:.05em}
 
 .c-hero{display:flex; align-items:center; gap:14px; margin:20px 0 18px}
@@ -194,23 +184,30 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
 .stage{position:relative; width:100%; aspect-ratio:900/250}
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
-.dot{position:absolute; width:13px; height:13px; margin:-6.5px 0 0 -6.5px; border-radius:50%;
+.dot{position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%;
   background:var(--fog-faint); border:1px solid var(--fog-dim);
-  transition:background .5s ease, border-color .5s ease, transform .5s cubic-bezier(.2,.7,.3,1)}
-.dot.on{background:var(--clear); border-color:var(--clear); transform:scale(1.3)}
-/* label rail: horizontal names in staggered rows, a tick per dot */
+  transition:background .5s ease, border-color .5s ease}
+.dot.on{background:var(--clear); border-color:var(--clear)}
+.dot.pick{width:26px; height:26px; margin:-13px 0 0 -13px; background:none; border:none;
+  color:var(--clear); display:grid; place-items:center}
+.dot.pick svg{width:100%; height:100%}
+/* label rail: horizontal names in staggered rows, a tick per dot.
+   Labels carry the container ground as background and sit above the
+   ticks, so a tick crossing a row is masked — no line-over-name. */
 .rail{position:relative; height:68px}
 .rail .r0{--row:0}.rail .r1{--row:1}.rail .r2{--row:2}.rail .r3{--row:3}
-.rail i{position:absolute; top:0; width:1px; margin-left:-.5px;
+.rail i{position:absolute; top:0; width:1px; margin-left:-.5px; z-index:0;
   height:calc(5px + var(--row)*15px); background:var(--fog-faint)}
 .rail i.on{background:var(--clear-dim)}
 .rail b{position:absolute; top:calc(6px + var(--row)*15px); transform:translateX(-50%);
-  font-family:var(--msg); font-size:11.5px; font-weight:400; letter-spacing:0;
-  color:var(--fog); white-space:nowrap; line-height:1.3}
+  font-family:var(--disp); font-size:11.5px; font-weight:400; letter-spacing:0;
+  color:var(--fog); white-space:nowrap; line-height:1.3;
+  background:var(--ink-2); padding:0 3px; z-index:1}
 .rail b.el{transform:none}
 .rail b.er{transform:translateX(-100%)}
 .rail b.on{color:var(--clear)}
-.rail b.pick{font-weight:600}
+.rail b.pick{font-weight:700}
+@media(max-width:374px){ .rail b{font-size:10.5px} }
 
 /* ══ full data ══════════════════════════════════════════════════ */
 .ph{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
@@ -256,11 +253,6 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 </head>
 <body>
 <div class="wrap">
-
-  <div class="eyebrow">
-    <span>RFC-001 / Prototype</span>
-    <span class="badge" id="src">Connecting…</span>
-  </div>
 
   <div class="titlerow">
     <h1><img src="logo.png" alt="Karl" width="638" height="196"></h1>
@@ -425,8 +417,7 @@ const rankAt=k=>S.slices[k].spots.map(d=>({...d,score:score(d,S.mode)}))
 function cardHTML(sl,k){
   const rk=rankAt(k), top=rk[0], next=rk[1], worst=rk[rk.length-1], M=MODES[S.mode];
   const when=(k===4?dow(sl.t)+" ":"")+hhmm(sl.t);
-  const head=`<div class="c-head"><span class="ic">${ico("sun")}</span><span>NoKarl</span>
-    <span class="c-when">${sl.label} · ${when}</span></div>`;
+  const head=`<div class="c-head"><span class="c-when">${sl.label} · ${when}</span></div>`;
   if(top.score<55) return `<article class="card">${head}
     <div class="c-hero"><span class="c-ico">${ico("fogx")}</span>
       <span><span class="c-name">Nothing's clear</span><span class="c-area">City-wide</span></span></div>
@@ -469,11 +460,11 @@ function paintSlice(){
       <span class="sc"><u>${s.score}</u><span class="bar"><i style="width:${s.score}%"></i></span></span>
     </div>`).join("");
 
-  const pick=rk[0].n;
+  const pick=rk[0].score>=55?rk[0].n:null;   /* quiet rule: no pick, no sun */
   $("dots").innerHTML=sl.spots.map((s,j)=>{
-    const on=s.lowCloud<45;
-    return `<span class="dot ${on?'on':''} ${s.n===pick?'pick':''}" title="${s.n}"
-      style="left:${(s.x/VBW*100).toFixed(2)}%; top:${(s.y/VBH*100).toFixed(2)}%"></span>`;
+    const on=s.lowCloud<45, p=s.n===pick;
+    return `<span class="dot ${on?'on':''} ${p?'pick':''}" title="${s.n}"
+      style="left:${(s.x/VBW*100).toFixed(2)}%; top:${(s.y/VBH*100).toFixed(2)}%">${p?ico("sun"):""}</span>`;
   }).join("");
   $("rail").innerHTML=sl.spots.map((s,j)=>{
     const on=s.lowCloud<45, L=(s.x/VBW*100).toFixed(2),
@@ -538,10 +529,8 @@ $("push").addEventListener("input",e=>{
 });
 
 (async()=>{
-  try{ S.slices=await fetchLive();
-    $("src").textContent="Live · Open-Meteo · HRRR 3 km"; $("src").classList.add("live"); }
-  catch(err){ S.slices=simulate(S.push);
-    $("src").textContent="Simulated · no network"; $("simWrap").hidden=false; }
+  try{ S.slices=await fetchLive(); }
+  catch(err){ S.slices=simulate(S.push); $("simWrap").hidden=false; }
   render(); start();
 })();
 })();
