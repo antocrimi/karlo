@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fog Shadow — where the fog isn't, in San Francisco</title>
-<meta name="description" content="One place, five time slices. San Francisco spots ranked on low cloud, visibility, wind and comfort, so you know where to go outside right now.">
+<title>NoKarl — where the fog isn't, in San Francisco</title>
+<meta name="description" content="One place at a time, five steps ahead. San Francisco spots scored on low cloud, visibility, wind and comfort, so you know where to go outside.">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NoKarl">
 <meta name="color-scheme" content="dark">
-<meta property="og:title" content="Fog Shadow">
+<meta property="og:title" content="NoKarl">
 <meta property="og:description" content="Where the fog isn't, in San Francisco.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E161C'/><circle cx='16' cy='13' r='6' fill='%23F0A03C'/><rect x='4' y='21' width='24' height='3.4' rx='1.7' fill='%23A9B7BE'/></svg>">
@@ -18,7 +19,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,700;12..96,75..100,800&display=swap" rel="stylesheet">
 
 <style>
-/* ══ tokens ═════════════════════════════════════════════════════ */
 :root{
   --ink:#0E161C; --ink-2:#16222A;
   --line:rgba(169,183,190,.18); --line-hi:rgba(169,183,190,.34);
@@ -37,100 +37,86 @@ body{
   font-family:var(--msg); line-height:1.45; font-size:17px;
   padding:calc(18px + env(safe-area-inset-top)) calc(var(--pad) + env(safe-area-inset-right))
           calc(44px + env(safe-area-inset-bottom)) calc(var(--pad) + env(safe-area-inset-left));
-  -webkit-font-smoothing:antialiased;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
 }
 ::selection{background:var(--clear); color:var(--ink)}
 .wrap{max-width:760px; margin:0 auto}
 
-/* ══ masthead ═══════════════════════════════════════════════════ */
-.eyebrow{
-  font-family:var(--mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase;
+/* ══ masthead + segmented toggle ════════════════════════════════ */
+.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase;
   color:var(--fog-dim); display:flex; justify-content:space-between; align-items:center;
-  gap:10px; padding-bottom:10px; border-bottom:1px solid var(--line);
-}
-.badge{font-family:var(--mono); font-size:11px; letter-spacing:.08em;
-  padding:5px 8px; border:1px solid var(--line-hi); border-radius:2px;
-  color:var(--fog); white-space:nowrap}
+  gap:10px; padding-bottom:10px; border-bottom:1px solid var(--line)}
+.badge{font-family:var(--mono); font-size:11px; letter-spacing:.08em; padding:5px 8px;
+  border:1px solid var(--line-hi); border-radius:2px; color:var(--fog); white-space:nowrap}
 .badge.live{color:var(--clear); border-color:var(--clear-dim)}
-h1{font-family:var(--disp); font-weight:800; font-size:clamp(38px,11.5vw,72px);
-  line-height:.93; letter-spacing:-.035em; margin:20px 0 10px}
+
+.titlerow{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0 10px}
+h1{font-family:var(--disp); font-weight:800; font-size:clamp(40px,13vw,74px);
+  line-height:.92; letter-spacing:-.042em; margin:0}
 h1 em{font-style:normal; color:var(--clear)}
-.sub{max-width:50ch; color:var(--fog); font-size:16px; margin:0 0 22px}
 
-/* ══ 1 · move / chill ═══════════════════════════════════════════ */
-.toggle{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:22px}
-.tg{
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
-  min-height:78px; padding:12px 8px; cursor:pointer;
-  background:transparent; color:var(--fog); border:1px solid var(--line-hi); border-radius:5px;
-  font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
-  transition:.18s; -webkit-tap-highlight-color:transparent;
-}
-.tg svg{width:28px; height:28px; stroke:currentColor; fill:none;
-  stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
-.tg:hover{border-color:var(--fog); color:var(--paper)}
-.tg[aria-pressed="true"]{background:var(--clear); border-color:var(--clear); color:var(--ink); font-weight:700}
-.tg:focus-visible{outline:2px solid var(--clear); outline-offset:3px}
+.seg{position:relative; flex:0 0 auto; display:inline-flex; padding:3px;
+  border-radius:11px; background:rgba(169,183,190,.13); border:1px solid var(--line)}
+.seg-thumb{position:absolute; top:3px; left:3px; width:42px; height:34px; border-radius:8px;
+  background:var(--clear); box-shadow:0 1px 4px rgba(0,0,0,.45);
+  transition:transform .34s cubic-bezier(.32,.72,0,1)}
+.seg[data-on="chill"] .seg-thumb{transform:translateX(42px)}
+.seg-b{position:relative; z-index:1; width:42px; height:34px; padding:0; border:0;
+  background:none; cursor:pointer; color:var(--fog); display:grid; place-items:center;
+  transition:color .22s; -webkit-tap-highlight-color:transparent}
+.seg-b[aria-pressed="true"]{color:var(--ink)}
+.seg-b svg{width:21px; height:21px}
+.seg-b:focus-visible{outline:2px solid var(--clear); outline-offset:3px; border-radius:8px}
+svg.g{stroke:currentColor; fill:none; stroke-width:1.85; stroke-linecap:round; stroke-linejoin:round}
 
-/* ══ 2 · swipeable insight ══════════════════════════════════════ */
-.phone{
-  background:linear-gradient(168deg,#22323B 0%,#141F26 100%);
-  border:1px solid var(--line-hi); border-radius:20px;
-  padding:16px 0 16px; position:relative; overflow:hidden; margin-bottom:26px;
-}
-.phone::after{content:''; position:absolute; inset:0; pointer-events:none;
-  background:radial-gradient(120% 55% at 15% 0%, rgba(240,160,60,.11), transparent 62%)}
-.lock{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--fog-dim); margin:0 16px 14px; display:flex; justify-content:space-between}
-.cards{
-  display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
-  scroll-behavior:smooth; position:relative; z-index:1;
-  scrollbar-width:none; -ms-overflow-style:none; padding:0 16px; gap:10px;
-}
+.sub{max-width:50ch; color:var(--fog); font-size:16px; margin:0 0 24px}
+
+/* ══ swipeable cards, no chrome ═════════════════════════════════ */
+.cards{display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory;
+  scroll-behavior:smooth; scrollbar-width:none; -ms-overflow-style:none;
+  margin:0 calc(-1 * var(--pad)); padding:2px var(--pad) 4px}
 .cards::-webkit-scrollbar{display:none}
-.card{
-  flex:0 0 100%; scroll-snap-align:center;
-  background:rgba(233,234,228,.95); color:#12181C; border-radius:15px;
-  padding:14px 15px 15px; box-shadow:0 12px 28px rgba(0,0,0,.42);
-}
-.card-top{display:flex; align-items:center; gap:8px; margin-bottom:9px;
-  font-family:var(--mono); font-size:11px; letter-spacing:.09em;
-  text-transform:uppercase; color:#5A676E}
-.ic{width:17px;height:17px;border-radius:5px;background:var(--clear);
+.card{flex:0 0 min(100%, 460px); scroll-snap-align:center;
+  min-height:288px; display:flex; flex-direction:column;
+  background:var(--paper); color:#12181C; border-radius:18px; padding:18px 18px 20px}
+.c-head{display:flex; align-items:center; gap:8px; font-family:var(--mono);
+  font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#5A676E}
+.ic{width:18px;height:18px;border-radius:5px;background:var(--clear);
   display:grid;place-items:center;font-size:10px;color:#12181C;font-weight:700}
-.c-when{margin-left:auto; color:#12181C; font-weight:600}
-.c-1{font-size:19px; line-height:1.35; margin:0; letter-spacing:-.008em}
-.c-1 b{font-weight:600}
-.c-2{margin:8px 0 0; font-size:15.5px; color:#4C6672; line-height:1.4}
-.nav{display:flex; justify-content:center; gap:7px; margin:15px 16px 0; position:relative; z-index:1}
-.nav button{
-  width:30px; height:22px; padding:0; background:none; border:0; cursor:pointer;
-  display:grid; place-items:center; -webkit-tap-highlight-color:transparent;
-}
+.c-when{margin-left:auto; color:#12181C; font-weight:600; letter-spacing:.05em}
+
+.c-hero{display:flex; align-items:center; gap:14px; margin:20px 0 18px}
+.c-ico{flex:0 0 auto; width:56px; height:56px; border-radius:15px; background:var(--clear);
+  color:#12181C; display:grid; place-items:center}
+.c-ico svg{width:30px; height:30px}
+.c-name{display:block; font-family:var(--disp); font-weight:700; font-size:25px;
+  line-height:1.04; letter-spacing:-.022em}
+.c-area{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:#6C7A81; margin-top:6px}
+
+.c-stat{display:flex; align-items:center; gap:16px; margin-top:auto;
+  padding-top:16px; border-top:1px solid rgba(18,24,28,.14)}
+.c-temp{font-family:var(--disp); font-weight:700; font-size:44px; line-height:1; letter-spacing:-.04em}
+.c-cond{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:#4C6672; letter-spacing:.02em}
+.c-cond b{color:#12181C; font-weight:400}
+.c-2{margin:16px 0 0; font-size:16px; color:#3F5966; line-height:1.4}
+
+.nav{display:flex; justify-content:center; gap:7px; margin:16px 0 26px}
+.nav button{width:32px; height:24px; padding:0; background:none; border:0; cursor:pointer;
+  display:grid; place-items:center; -webkit-tap-highlight-color:transparent}
 .nav i{display:block; width:100%; height:3px; border-radius:2px;
   background:var(--fog-faint); transition:background .3s}
 .nav button[aria-current="true"] i{background:var(--clear)}
 .nav button:focus-visible{outline:2px solid var(--clear); outline-offset:1px; border-radius:3px}
 
-/* ══ secondary controls ═════════════════════════════════════════ */
-.ctrls{display:grid; gap:16px; margin-bottom:26px}
+/* ══ marine push (fallback only) ════════════════════════════════ */
 .lab{font-family:var(--mono); font-size:11px; letter-spacing:.15em;
   text-transform:uppercase; color:var(--fog-dim); display:block; margin-bottom:8px}
-.row{display:flex; gap:6px; flex-wrap:wrap}
-.btn{
-  flex:1 1 auto; min-width:96px; min-height:46px;
-  font-family:var(--mono); font-size:12px; letter-spacing:.07em; text-transform:uppercase;
-  background:transparent; color:var(--fog); border:1px solid var(--line-hi);
-  border-radius:3px; cursor:pointer; transition:.16s; -webkit-tap-highlight-color:transparent;
-}
-.btn:hover{border-color:var(--fog); color:var(--paper)}
-.btn[aria-pressed="true"]{background:var(--clear); border-color:var(--clear); color:var(--ink); font-weight:700}
-.btn:focus-visible{outline:2px solid var(--clear); outline-offset:2px}
-input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0}
+input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0 22px}
 
-/* ══ 3 · ridge ══════════════════════════════════════════════════ */
-.ridge{border:1px solid var(--line); border-radius:4px; background:var(--ink-2);
-  padding:13px 13px 11px; margin-bottom:28px}
+/* ══ ridge ══════════════════════════════════════════════════════ */
+.ridge{border:1px solid var(--line); border-radius:5px; background:var(--ink-2);
+  padding:13px 13px 11px; margin-bottom:30px}
 .ridge-head{display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
   font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--fog-dim); margin-bottom:9px}
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
@@ -147,17 +133,20 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0}
 .ridge-foot{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
   text-transform:uppercase; color:var(--fog-faint); margin-top:8px; text-align:center}
 
-/* ══ 4 · full data ══════════════════════════════════════════════ */
+/* ══ full data ══════════════════════════════════════════════════ */
 .ph{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--fog-dim); margin:0 0 4px; padding-bottom:9px; border-bottom:1px solid var(--line-hi);
   display:flex; justify-content:space-between; gap:10px}
 .ph b{color:var(--clear); font-weight:400}
-.tr{display:grid; grid-template-columns:22px 1fr 62px; gap:11px; align-items:center;
-  padding:11px 0; border-bottom:1px solid var(--line)}
+.tr{display:grid; grid-template-columns:22px 26px 1fr 62px; gap:10px; align-items:center;
+  padding:12px 0; border-bottom:1px solid var(--line)}
 .rk{font-family:var(--mono); font-size:12px; color:var(--fog-faint)}
+.ri{color:var(--fog-dim); display:grid; place-items:center}
+.ri svg{width:22px; height:22px}
+.tr.top .ri{color:var(--clear)}
 .nm{font-size:16px; font-weight:500; line-height:1.25}
 .nm em{font-style:normal; display:block; font-size:13px; color:var(--fog-dim); font-weight:400; margin-top:2px}
-.strip{font-family:var(--mono); font-size:12px; color:var(--fog-dim); margin-top:5px; letter-spacing:.02em}
+.strip{display:block; font-family:var(--mono); font-size:12px; color:var(--fog-dim); margin-top:5px}
 .strip s{text-decoration:none; color:var(--fog)}
 .sc{text-align:right}
 .sc u{font-family:var(--mono); font-size:14px; text-decoration:none; color:var(--fog); display:block; margin-bottom:5px}
@@ -166,7 +155,6 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0}
 .tr.top .bar i{background:var(--clear)}
 .tr.top .nm,.tr.top .sc u{color:var(--clear)}
 
-/* ══ footer ═════════════════════════════════════════════════════ */
 .method{margin-top:26px; padding-top:15px; border-top:1px solid var(--line);
   font-family:var(--mono); font-size:12px; line-height:1.85; color:var(--fog-dim)}
 .method b{color:var(--fog); font-weight:400}
@@ -177,12 +165,12 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0}
   :root{--pad:24px}
   .dot b{display:block}
   .stage{aspect-ratio:900/230}
-  .tg{flex-direction:row; gap:11px; min-height:66px}
-  .btn{flex:0 0 auto; min-width:0; padding:0 16px}
-  .tr{grid-template-columns:26px 1fr 88px; gap:14px}
+  .card{min-height:300px; padding:22px}
+  .c-name{font-size:28px}
+  .tr{grid-template-columns:26px 30px 1fr 88px; gap:14px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
-@media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i{transition:none} }
+@media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i,.seg-thumb{transition:none} }
 </style>
 </head>
 <body>
@@ -193,52 +181,29 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0}
     <span class="badge" id="src">Connecting…</span>
   </div>
 
-  <h1>Where the fog <em>isn't</em></h1>
-  <p class="sub">One place at a time, five steps ahead. Twelve San Francisco spots scored on low cloud, visibility, wind and comfort.</p>
-
-  <!-- 1 ─ move / chill ───────────────────────────────────────── -->
-  <div class="toggle" id="modeRow" role="group" aria-label="What you're going out to do">
-    <button class="tg" data-mode="move" aria-pressed="true">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="15.6" cy="4.5" r="2.3"/>
-        <path d="M9.4 21.6l2.7-5.5-2.9-2.7.9-4.9 4-1.6 3.6 2.6 3 .9"/>
-        <path d="M12.2 16.1l4.2 1.4 1.8 4.3"/>
-        <path d="M5.4 12.1l3.4-3"/>
-      </svg>
-      <span>Move</span>
-    </button>
-    <button class="tg" data-mode="chill" aria-pressed="false">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="9.6" r="4"/>
-        <path d="M12 2v1.9M12 15.4v1.9M3.9 9.6h1.9M18.2 9.6h1.9M6.2 3.8l1.4 1.4M16.4 14l1.4 1.4M17.8 3.8l-1.4 1.4M7.6 14l-1.4 1.4"/>
-        <path d="M3 21h18"/>
-      </svg>
-      <span>Chill</span>
-    </button>
-  </div>
-
-  <!-- 2 ─ swipeable insight ──────────────────────────────────── -->
-  <div class="phone">
-    <div class="lock"><span id="lockDay">Tuesday</span><span id="lockTime">3:00 PM</span></div>
-    <div class="cards" id="cards" tabindex="0" role="region" aria-label="Forecast, swipe for later time slices"></div>
-    <div class="nav" id="nav"></div>
-  </div>
-
-  <div class="ctrls">
-    <div>
-      <span class="lab">Send window</span>
-      <div class="row" id="whenRow">
-        <button class="btn" data-when="wk" aria-pressed="true">Weekday 3pm</button>
-        <button class="btn" data-when="we" aria-pressed="false">Weekend 10am</button>
-      </div>
-    </div>
-    <div id="simWrap" hidden>
-      <span class="lab">Marine push <b id="pushVal" style="color:var(--clear);font-weight:400">50</b></span>
-      <input type="range" id="push" min="0" max="100" value="50" aria-label="Marine layer strength">
+  <div class="titlerow">
+    <h1><em>No</em>Karl</h1>
+    <div class="seg" id="modeRow" data-on="move" role="group" aria-label="What you're going out to do">
+      <span class="seg-thumb" aria-hidden="true"></span>
+      <button class="seg-b" data-mode="move" aria-pressed="true" aria-label="Move">
+        <svg class="g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.6" cy="4.5" r="2.3"/><path d="M9.4 21.6l2.7-5.5-2.9-2.7.9-4.9 4-1.6 3.6 2.6 3 .9"/><path d="M12.2 16.1l4.2 1.4 1.8 4.3"/><path d="M5.4 12.1l3.4-3"/></svg>
+      </button>
+      <button class="seg-b" data-mode="chill" aria-pressed="false" aria-label="Chill">
+        <svg class="g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.6" r="4"/><path d="M12 2v1.9M12 15.4v1.9M3.9 9.6h1.9M18.2 9.6h1.9M6.2 3.8l1.4 1.4M16.4 14l1.4 1.4M17.8 3.8l-1.4 1.4M7.6 14l-1.4 1.4M3 21h18"/></svg>
+      </button>
     </div>
   </div>
 
-  <!-- 3 ─ ridge ──────────────────────────────────────────────── -->
+  <p class="sub">Where the fog isn't. One place at a time, five steps ahead, across twelve San Francisco spots.</p>
+
+  <div class="cards" id="cards" tabindex="0" role="region" aria-label="Forecast, swipe for later time slices"></div>
+  <div class="nav" id="nav"></div>
+
+  <div id="simWrap" hidden>
+    <span class="lab">Marine push <b id="pushVal" style="color:var(--clear);font-weight:400">50</b></span>
+    <input type="range" id="push" min="0" max="100" value="50" aria-label="Marine layer strength">
+  </div>
+
   <div class="ridge">
     <div class="ridge-head"><span>← West</span><b id="ridgeState">Marine layer</b><span>East →</span></div>
     <div class="stage">
@@ -257,7 +222,6 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0}
     <div class="ridge-foot">Ocean Beach → Twin Peaks ridge → India Basin</div>
   </div>
 
-  <!-- 4 ─ full data ──────────────────────────────────────────── -->
   <h2 class="ph"><span>All twelve spots</span><b id="sliceTag">Now</b></h2>
   <div id="board"></div>
 
@@ -270,44 +234,56 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0}
 
 <script>
 (function(){
+/* ── neighborhood glyph set, same grid and weight as the toggle ── */
+const G={
+ wave:'<path d="M1.6 9.4c2.3-2.7 4.6-2.7 6.9 0s4.6 2.7 6.9 0 4.6-2.7 6.9 0"/><path d="M1.6 15.6c2.3-2.7 4.6-2.7 6.9 0s4.6 2.7 6.9 0 4.6-2.7 6.9 0"/>',
+ tree:'<path d="M12 2.6 6.4 10.4h3.3L5.3 16.6h13.4L14.3 10.4h3.3z"/><path d="M12 16.6V21"/><path d="M8.4 21h7.2"/>',
+ peak:'<path d="M1.8 18.9l5.7-7.8 3.1 4.2 4.4-6.2 7.2 9.8z"/>',
+ crane:'<path d="M6 21V3.4"/><path d="M6 3.4h12.4"/><path d="M17.4 3.4v6.2"/><path d="M15.6 9.6h3.6"/><path d="M6 8.4l5.2-4.4"/><path d="M2.2 21h11.4"/>',
+ slope:'<path d="M2.4 20.6h4.6V16h4.6v-4.6h4.6V6.8h5.4"/>',
+ palm:'<path d="M12.2 21c0-5.6.6-9.7 1.9-12.9"/><path d="M14.1 8.1C11.2 5.2 7.7 5.3 5 8"/><path d="M14.1 8.1c3.5-1.7 6.8-.5 8.2 2.9"/><path d="M14.1 8.1c-.6-3.3 1-5.8 4.1-6.6"/><path d="M14.1 8.1C12.6 4.6 9.7 3 6.4 3.5"/>',
+ sail:'<path d="M12.6 2.4v15.2"/><path d="M12.6 4.6l6.6 13h-6.6"/><path d="M11 17.6H4.4l6.6-11z"/><path d="M2 21h20"/>',
+ fogx:'<path d="M3 9.5h13"/><path d="M6 13.5h15"/><path d="M4 17.5h11"/><path d="M18.5 5.5h2.5"/>'
+};
+const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${G[k]}</svg>`;
+
 const SPOTS=[
- {n:"Ocean Beach",           a:"Outer Sunset",    lat:37.7590,lon:-122.5100,rel:26,x:14, y:172},
- {n:"Golden Gate Park",      a:"Conservatory",    lat:37.7720,lon:-122.4600,rel:48,x:250,y:152},
- {n:"Twin Peaks",            a:"the ridge",       lat:37.7544,lon:-122.4477,rel:55,x:355,y:60 },
- {n:"Glen Canyon Park",      a:"Glen Park",       lat:37.7400,lon:-122.4430,rel:68,x:392,y:96 },
- {n:"Corona Heights",        a:"Castro",          lat:37.7650,lon:-122.4380,rel:62,x:420,y:132},
- {n:"Fort Mason",            a:"Marina Green",    lat:37.8060,lon:-122.4320,rel:52,x:455,y:146},
- {n:"Mission Dolores Park",  a:"Mission",         lat:37.7596,lon:-122.4269,rel:78,x:487,y:110},
- {n:"McLaren Park",          a:"Excelsior",       lat:37.7180,lon:-122.4180,rel:79,x:540,y:126},
- {n:"Bernal Heights Park",   a:"Bernal",          lat:37.7431,lon:-122.4160,rel:82,x:565,y:122},
- {n:"Potrero Hill",          a:"McKinley Square", lat:37.7600,lon:-122.3990,rel:84,x:648,y:166},
- {n:"Crane Cove Park",       a:"Dogpatch",        lat:37.7615,lon:-122.3872,rel:85,x:730,y:171},
- {n:"India Basin",           a:"Bayview",         lat:37.7370,lon:-122.3775,rel:88,x:830,y:173}
+ {n:"Ocean Beach",          a:"Outer Sunset",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:14, y:172},
+ {n:"Golden Gate Park",     a:"Conservatory",    g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:250,y:152},
+ {n:"Twin Peaks",           a:"the ridge",       g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:355,y:60 },
+ {n:"Glen Canyon Park",     a:"Glen Park",       g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:392,y:96 },
+ {n:"Corona Heights",       a:"Castro",          g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:420,y:132},
+ {n:"Fort Mason",           a:"Marina Green",    g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:455,y:146},
+ {n:"Mission Dolores Park", a:"Mission",         g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:487,y:110},
+ {n:"McLaren Park",         a:"Excelsior",       g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:540,y:126},
+ {n:"Bernal Heights Park",  a:"Bernal",          g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:565,y:122},
+ {n:"Potrero Hill",         a:"McKinley Square", g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:648,y:166},
+ {n:"Crane Cove Park",      a:"Dogpatch",        g:"crane",lat:37.7615,lon:-122.3872,rel:85,x:730,y:171},
+ {n:"India Basin",          a:"Bayview",         g:"crane",lat:37.7370,lon:-122.3775,rel:88,x:830,y:173}
 ];
 const MODES={
  move :{c:.35,v:.15,w:.30,t:.20,ideal:60,verb:"a 4-mile loop"},
  chill:{c:.48,v:.10,w:.18,t:.24,ideal:72,verb:"20 minutes from downtown"}
 };
 const SLICES=[
- {label:"Now",           off:0,  sim:0},
- {label:"In 3 hours",    off:3,  sim:14},
- {label:"In 6 hours",    off:6,  sim:24},
- {label:"In 12 hours",   off:12, sim:-6},
- {label:"Tomorrow",      off:24, sim:4}
+ {label:"Now",         off:0,  sim:0},
+ {label:"In 3 hours",  off:3,  sim:14},
+ {label:"In 6 hours",  off:6,  sim:24},
+ {label:"In 12 hours", off:12, sim:-6},
+ {label:"Tomorrow",    off:24, sim:4}
 ];
 const ROTATE=5600, RESUME=14000;
-let S={mode:"move",when:"wk",push:50,slices:null,i:0};
-let timer=null, idle=null;
+let S={mode:"move",push:50,slices:null,i:0}, timer=null, idle=null;
 const $=i=>document.getElementById(i), cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-const fmt=e=>new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"2-digit"}).format(new Date(e*1000));
-const day=e=>new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",weekday:"long"}).format(new Date(e*1000));
+const TZ="America/Los_Angeles";
+const hhmm=e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"}).format(new Date(e*1000));
+const dow =e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,weekday:"short"}).format(new Date(e*1000));
 
 function score(d,m){const M=MODES[m];return Math.round(
   (100-cl(d.lowCloud,0,100))*M.c + (cl(d.vis/16000,0,1)*100)*M.v +
   (100-cl((d.wind-8)*5,0,100))*M.w + (100-cl(Math.abs(d.temp-M.ideal)*5.5,0,100))*M.t);}
 
-/* ── simulated fallback ──────────────────────────────────────── */
 function simulate(p){
   const now=Math.floor(Date.now()/1000);
   return SLICES.map(sl=>{
@@ -323,14 +299,13 @@ function simulate(p){
   });
 }
 
-/* ── live: one batched request, 12 coordinates, 3 days hourly ── */
 async function fetchLive(){
   const u="https://api.open-meteo.com/v1/forecast"
    +"?latitude="+SPOTS.map(s=>s.lat).join(",")+"&longitude="+SPOTS.map(s=>s.lon).join(",")
    +"&current=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
    +"&hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
    +"&forecast_days=3&timeformat=unixtime&temperature_unit=fahrenheit"
-   +"&wind_speed_unit=mph&timezone=America/Los_Angeles";
+   +"&wind_speed_unit=mph&timezone="+TZ;
   const c=new AbortController(), to=setTimeout(()=>c.abort(),8000);
   const r=await fetch(u,{signal:c.signal}); clearTimeout(to);
   if(!r.ok) throw new Error(r.status);
@@ -341,41 +316,39 @@ async function fetchLive(){
     const idx=Math.min(base+sl.off,T.length-1);
     return {label:sl.label, t:k===0?now:T[idx], spots:SPOTS.map((s,i)=>{
       const h=A[i].hourly, c0=A[i].current;
-      const src = k===0
+      const v = k===0
         ? {temp:c0.temperature_2m,low:c0.cloud_cover_low,vis:c0.visibility,wind:c0.wind_speed_10m}
         : {temp:h.temperature_2m[idx],low:h.cloud_cover_low[idx],vis:h.visibility[idx],wind:h.wind_speed_10m[idx]};
-      return {...s, lowCloud:src.low??0, temp:Math.round(src.temp),
-              wind:Math.round(src.wind), vis:src.vis??16000};
+      return {...s, lowCloud:v.low??0, temp:Math.round(v.temp), wind:Math.round(v.wind), vis:v.vis??16000};
     })};
   });
 }
 
-/* ── copy ─────────────────────────────────────────────────────── */
-function compose(rk,k,slice){
-  const top=rk[0], worst=rk[rk.length-1], M=MODES[S.mode];
-  if(top.score<55) return ["Nothing's clear anywhere in the city.",
-    k===0 ? "Low cloud from Ocean Beach to the Bay. I'll stay quiet rather than send you somewhere grey."
-          : "Low cloud right across the city at this hour. Try one of the other cards."];
-  const next=rk[1];
-  const line2 = k===0
-    ? `${worst.n} is at ${worst.temp}° under low cloud, so go east. About ${M.verb}.`
-    : `${next.n} is the backup at ${next.temp}°. ${worst.n} stays socked in.`;
-  return [`<b>${top.n}</b>. ${top.temp}° and clear, ${top.wind} mph.`, line2];
-}
-
-/* ── render ───────────────────────────────────────────────────── */
-function rankAt(k){
-  return S.slices[k].spots.map(d=>({...d,score:score(d,S.mode)}))
-          .sort((a,b)=>b.score-a.score||b.rel-a.rel);
-}
+const rankAt=k=>S.slices[k].spots.map(d=>({...d,score:score(d,S.mode)}))
+                 .sort((a,b)=>b.score-a.score||b.rel-a.rel);
 
 function paintCards(){
   $("cards").innerHTML=S.slices.map((sl,k)=>{
-    const rk=rankAt(k), [a,b]=compose(rk,k,sl);
-    return `<article class="card" aria-roledescription="slide" aria-label="${sl.label}">
-      <div class="card-top"><span class="ic">☀</span><span>Fog Shadow</span>
-        <span class="c-when">${sl.label} · ${fmt(sl.t)}</span></div>
-      <p class="c-1">${a}</p><p class="c-2">${b}</p></article>`;}).join("");
+    const rk=rankAt(k), top=rk[0], next=rk[1], worst=rk[rk.length-1], M=MODES[S.mode];
+    const when = (k===4?dow(sl.t)+" ":"")+hhmm(sl.t);
+    const head=`<div class="c-head"><span class="ic">☀</span><span>NoKarl</span>
+      <span class="c-when">${sl.label} · ${when}</span></div>`;
+    if(top.score<55) return `<article class="card">${head}
+      <div class="c-hero"><span class="c-ico">${ico("fogx")}</span>
+        <span><span class="c-name">Nothing's clear</span><span class="c-area">City-wide</span></span></div>
+      <div class="c-stat"><span class="c-temp">—</span>
+        <span class="c-cond">low cloud<br><b>Ocean Beach to the Bay</b></span></div>
+      <p class="c-2">${k===0?"I'd rather stay quiet than send you somewhere grey.":"Try one of the other cards."}</p>
+    </article>`;
+    const line = k===0
+      ? `${worst.n} is at ${worst.temp}° under low cloud, so go east. About ${M.verb}.`
+      : `${next.n} is the backup at ${next.temp}°. ${worst.n} stays socked in.`;
+    return `<article class="card" aria-roledescription="slide" aria-label="${sl.label}">${head}
+      <div class="c-hero"><span class="c-ico">${ico(top.g)}</span>
+        <span><span class="c-name">${top.n}</span><span class="c-area">${top.a}</span></span></div>
+      <div class="c-stat"><span class="c-temp">${top.temp}°</span>
+        <span class="c-cond"><b>${Math.round(top.lowCloud)}%</b> low cloud<br><b>${top.wind}</b> mph wind</span></div>
+      <p class="c-2">${line}</p></article>`;}).join("");
   $("nav").innerHTML=S.slices.map((sl,k)=>
     `<button data-i="${k}" aria-current="${k===S.i}" aria-label="${sl.label}"><i></i></button>`).join("");
 }
@@ -383,13 +356,12 @@ function paintCards(){
 function paintSlice(){
   const k=S.i, rk=rankAt(k), sl=S.slices[k];
   $("sliceTag").textContent=sl.label;
-  $("lockDay").textContent=day(sl.t);
-  $("lockTime").textContent=fmt(sl.t);
   [...$("nav").children].forEach((b,j)=>b.setAttribute("aria-current",String(j===k)));
 
   $("board").innerHTML=rk.map((s,i)=>`
     <div class="tr ${i===0?'top':''}">
       <span class="rk">${String(i+1).padStart(2,"0")}</span>
+      <span class="ri">${ico(s.g)}</span>
       <span><span class="nm">${s.n}<em>${s.a}</em></span>
         <span class="strip"><s>${s.temp}°</s> · ${s.wind} mph · ${Math.round(s.lowCloud)}% low cloud · ${s.rel}% clear yr</span></span>
       <span class="sc"><u>${s.score}</u><span class="bar"><i style="width:${s.score}%"></i></span></span>
@@ -416,19 +388,19 @@ function paintSlice(){
    `<b>Clear yr</b> is a static climatology estimate used as the tiebreak. `+
    `<b>Quiet rule</b>: no place is named below a score of 55.`;
 }
-
-function render(){ paintCards(); paintSlice(); }
+const render=()=>{paintCards(); paintSlice();};
 
 /* ── carousel ─────────────────────────────────────────────────── */
 const cards=$("cards");
-function go(k){ S.i=(k+5)%5; cards.scrollTo({left:S.i*cards.clientWidth, behavior:reduce?"auto":"smooth"}); paintSlice(); }
+const width=()=>cards.firstElementChild ? cards.firstElementChild.offsetWidth+12 : cards.clientWidth;
+function go(k){ S.i=(k+5)%5; cards.scrollTo({left:S.i*width(), behavior:reduce?"auto":"smooth"}); paintSlice(); }
 function start(){ if(reduce) return; stop(); timer=setInterval(()=>go(S.i+1),ROTATE); }
 function stop(){ clearInterval(timer); timer=null; }
 function pause(){ stop(); clearTimeout(idle); idle=setTimeout(start,RESUME); }
 
 let st;
-cards.addEventListener("scroll",()=>{ clearTimeout(st); st=setTimeout(()=>{
-  const k=Math.round(cards.scrollLeft/cards.clientWidth);
+cards.addEventListener("scroll",()=>{clearTimeout(st); st=setTimeout(()=>{
+  const k=Math.round(cards.scrollLeft/width());
   if(k!==S.i && k>=0 && k<5){ S.i=k; paintSlice(); }
 },110);},{passive:true});
 cards.addEventListener("pointerdown",pause);
@@ -436,18 +408,13 @@ cards.addEventListener("wheel",pause,{passive:true});
 cards.addEventListener("keydown",e=>{
   if(e.key==="ArrowRight"){pause();go(S.i+1);} if(e.key==="ArrowLeft"){pause();go(S.i-1);}});
 $("nav").addEventListener("click",e=>{const b=e.target.closest("button"); if(b){pause();go(+b.dataset.i);}});
-addEventListener("resize",()=>cards.scrollTo({left:S.i*cards.clientWidth,behavior:"auto"}));
+addEventListener("resize",()=>cards.scrollTo({left:S.i*width(),behavior:"auto"}));
 
-/* ── controls ─────────────────────────────────────────────────── */
+/* ── segmented toggle ─────────────────────────────────────────── */
 $("modeRow").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
-  [...$("modeRow").children].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
-  S.mode=b.dataset.mode; render();
-});
-$("whenRow").addEventListener("click",e=>{
-  const b=e.target.closest("button"); if(!b) return;
-  [...$("whenRow").children].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
-  S.when=b.dataset.when; render();
+  [...$("modeRow").querySelectorAll("button")].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  S.mode=b.dataset.mode; $("modeRow").dataset.on=S.mode; render();
 });
 $("push").addEventListener("input",e=>{
   S.push=+e.target.value; $("pushVal").textContent=S.push;
