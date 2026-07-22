@@ -51,8 +51,10 @@ body{
 .badge.live{color:var(--clear); border-color:var(--clear-dim)}
 
 .titlerow{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0 10px}
-h1{font-family:var(--disp); font-weight:800; font-size:clamp(40px,13vw,74px);
-  line-height:.92; letter-spacing:-.042em; margin:0}
+h1{font-family:var(--disp); font-weight:800;
+  /* x-height ≈ .52em, target = 62px pill height → 62 / .52 ≈ 119px */
+  font-size:clamp(44px, 15vw, 119px);
+  line-height:.86; letter-spacing:-.048em; margin:0; flex:0 1 auto; min-width:0}
 h1 em{font-style:normal; color:var(--clear)}
 
 /* From Uiverse.io by MuhammadHasann */
@@ -81,10 +83,10 @@ h1 em{font-style:normal; color:var(--clear)}
   padding: 6px;
   width: 100%;
   height: 100%;
-  background: #1B262C;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
   border-radius: 9999px;
   box-sizing: content-box;
-  box-shadow: 0px 0px 16px -8px #fefefe;
 }
 
 .toggle-cont .toggle-input:focus-visible + .toggle-label {
@@ -96,13 +98,13 @@ h1 em{font-style:normal; color:var(--clear)}
   position: relative;
   width: 50px;
   aspect-ratio: 1 / 1;
-  background: #5e5e5e;
+  background: var(--ink);
   border-radius: 9999px;
   transition: all 0.5s cubic-bezier(1, 0, 0, 1);
 }
 
 .toggle-cont .toggle-input:checked + .toggle-label .cont-label-play {
-  background: #f43f5e;
+  background: var(--clear);
   transform: translateX(50px);
 }
 
@@ -115,14 +117,16 @@ h1 em{font-style:normal; color:var(--clear)}
   width: 24px;
   aspect-ratio: 1 / 1;
   background: #fefefe;
-  border-radius: 4px;
-  clip-path: polygon(25% 0, 75% 50%, 25% 100%, 25% 51%);
+  border-radius: 6px;
+  clip-path: polygon(25% 10%, 26% 4.5%, 30.5% 4%, 35% 10%, 66% 41%, 71.5% 46.5%,
+                    71.5% 53.5%, 66% 59%, 35% 90%, 30.5% 96%, 26% 95.5%, 25% 90%);
   transition: all 0.5s cubic-bezier(1, 0, 0, 1);
 }
 
 .toggle-cont .toggle-input:checked + .toggle-label .label-play {
   width: 20px;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  clip-path: polygon(0 10%, 0 2%, 2% 0, 10% 0, 98% 0, 100% 2%,
+                    100% 98%, 98% 100%, 10% 100%, 2% 100%, 0 98%, 0 90%);
 }
 
 svg.g{stroke:currentColor; fill:none; stroke-width:1.85; stroke-linecap:round; stroke-linejoin:round}
