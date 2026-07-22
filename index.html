@@ -55,18 +55,50 @@ h1{font-family:var(--disp); font-weight:800; font-size:clamp(40px,13vw,74px);
   line-height:.92; letter-spacing:-.042em; margin:0}
 h1 em{font-style:normal; color:var(--clear)}
 
-.seg{position:relative; flex:0 0 auto; display:inline-flex; padding:3px;
-  border-radius:11px; background:rgba(169,183,190,.13); border:1px solid var(--line)}
-.seg-thumb{position:absolute; top:3px; left:3px; width:42px; height:34px; border-radius:8px;
-  background:var(--clear); box-shadow:0 1px 4px rgba(0,0,0,.45);
-  transition:transform .34s cubic-bezier(.32,.72,0,1)}
-.seg[data-on="chill"] .seg-thumb{transform:translateX(42px)}
-.seg-b{position:relative; z-index:1; width:42px; height:34px; padding:0; border:0;
-  background:none; cursor:pointer; color:var(--fog); display:grid; place-items:center;
-  transition:color .22s; -webkit-tap-highlight-color:transparent}
-.seg-b[aria-pressed="true"]{color:var(--ink)}
-.seg-b svg{width:21px; height:21px}
-.seg-b:focus-visible{outline:2px solid var(--clear); outline-offset:3px; border-radius:8px}
+/* toggle — pattern from Uiverse.io by MuhammadHasann, recoloured and made focusable */
+.toggle-cont{
+  --tgH:38px; --tgP:5px;
+  width:calc(var(--tgH) * 2); height:var(--tgH);
+  border-radius:9999px; flex:0 0 auto; margin:var(--tgP);
+}
+.toggle-cont .toggle-input{
+  position:absolute; width:1px; height:1px; margin:0; opacity:0; pointer-events:none;
+}
+.toggle-cont .toggle-label{
+  cursor:pointer; position:relative; display:inline-block;
+  padding:var(--tgP); width:100%; height:100%;
+  background:#1B262C; border-radius:9999px; box-sizing:content-box;
+  box-shadow:0 0 16px -8px var(--paper);
+  -webkit-tap-highlight-color:transparent;
+}
+.toggle-cont .toggle-input:focus-visible + .toggle-label{
+  outline:2px solid var(--clear); outline-offset:4px;
+}
+.toggle-cont .toggle-label .cont-label-play{
+  position:relative; width:var(--tgH); aspect-ratio:1 / 1;
+  background:var(--fog-faint); border-radius:9999px;
+  transition:all .5s cubic-bezier(1, 0, 0, 1);
+}
+.toggle-cont .toggle-input:checked + .toggle-label .cont-label-play{
+  background:var(--clear); transform:translateX(var(--tgH));
+}
+.toggle-cont .toggle-label .label-play{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  display:block; width:calc(var(--tgH) * .5); aspect-ratio:1 / 1;
+  color:var(--paper); transition:all .5s cubic-bezier(1, 0, 0, 1);
+}
+.toggle-cont .toggle-input:checked + .toggle-label .label-play{
+  width:calc(var(--tgH) * .44); color:#12181C;
+}
+.toggle-cont .label-play svg{
+  position:absolute; inset:0; width:100%; height:100%;
+  transition:opacity .5s cubic-bezier(1, 0, 0, 1), transform .5s cubic-bezier(1, 0, 0, 1);
+}
+.toggle-cont .label-play .g-chill{opacity:0; transform:rotate(-70deg) scale(.4)}
+.toggle-cont .toggle-input:checked + .toggle-label .g-move{opacity:0; transform:rotate(70deg) scale(.4)}
+.toggle-cont .toggle-input:checked + .toggle-label .g-chill{opacity:1; transform:none}
+@media(min-width:560px){ .toggle-cont{--tgH:50px; --tgP:6px} }
+
 svg.g{stroke:currentColor; fill:none; stroke-width:1.85; stroke-linecap:round; stroke-linejoin:round}
 
 .sub{max-width:50ch; color:var(--fog); font-size:16px; margin:0 0 24px}
@@ -170,7 +202,7 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
   .tr{grid-template-columns:26px 30px 1fr 88px; gap:14px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
-@media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i,.seg-thumb{transition:none} }
+@media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i,.cont-label-play,.label-play,.label-play svg{transition:none} }
 </style>
 </head>
 <body>
@@ -183,14 +215,17 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 
   <div class="titlerow">
     <h1><em>No</em>Karl</h1>
-    <div class="seg" id="modeRow" data-on="move" role="group" aria-label="What you're going out to do">
-      <span class="seg-thumb" aria-hidden="true"></span>
-      <button class="seg-b" data-mode="move" aria-pressed="true" aria-label="Move">
-        <svg class="g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.6" cy="4.5" r="2.3"/><path d="M9.4 21.6l2.7-5.5-2.9-2.7.9-4.9 4-1.6 3.6 2.6 3 .9"/><path d="M12.2 16.1l4.2 1.4 1.8 4.3"/><path d="M5.4 12.1l3.4-3"/></svg>
-      </button>
-      <button class="seg-b" data-mode="chill" aria-pressed="false" aria-label="Chill">
-        <svg class="g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.6" r="4"/><path d="M12 2v1.9M12 15.4v1.9M3.9 9.6h1.9M18.2 9.6h1.9M6.2 3.8l1.4 1.4M16.4 14l1.4 1.4M17.8 3.8l-1.4 1.4M7.6 14l-1.4 1.4M3 21h18"/></svg>
-      </button>
+    <div class="toggle-cont">
+      <input class="toggle-input" id="modeToggle" type="checkbox" role="switch"
+             aria-label="Chill mode. Off is Move mode.">
+      <label class="toggle-label" for="modeToggle">
+        <div class="cont-label-play">
+          <span class="label-play">
+            <svg class="g g-move" viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.6" cy="4.5" r="2.3"/><path d="M9.4 21.6l2.7-5.5-2.9-2.7.9-4.9 4-1.6 3.6 2.6 3 .9"/><path d="M12.2 16.1l4.2 1.4 1.8 4.3"/><path d="M5.4 12.1l3.4-3"/></svg>
+            <svg class="g g-chill" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.6" r="4"/><path d="M12 2v1.9M12 15.4v1.9M3.9 9.6h1.9M18.2 9.6h1.9M6.2 3.8l1.4 1.4M16.4 14l1.4 1.4M17.8 3.8l-1.4 1.4M7.6 14l-1.4 1.4M3 21h18"/></svg>
+          </span>
+        </div>
+      </label>
     </div>
   </div>
 
@@ -411,10 +446,8 @@ $("nav").addEventListener("click",e=>{const b=e.target.closest("button"); if(b){
 addEventListener("resize",()=>cards.scrollTo({left:S.i*width(),behavior:"auto"}));
 
 /* ── segmented toggle ─────────────────────────────────────────── */
-$("modeRow").addEventListener("click",e=>{
-  const b=e.target.closest("button"); if(!b) return;
-  [...$("modeRow").querySelectorAll("button")].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
-  S.mode=b.dataset.mode; $("modeRow").dataset.on=S.mode; render();
+$("modeToggle").addEventListener("change",e=>{
+  S.mode = e.target.checked ? "chill" : "move"; render();
 });
 $("push").addEventListener("input",e=>{
   S.push=+e.target.value; $("pushVal").textContent=S.push;
