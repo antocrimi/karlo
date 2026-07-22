@@ -55,49 +55,75 @@ h1{font-family:var(--disp); font-weight:800; font-size:clamp(40px,13vw,74px);
   line-height:.92; letter-spacing:-.042em; margin:0}
 h1 em{font-style:normal; color:var(--clear)}
 
-/* toggle — pattern from Uiverse.io by MuhammadHasann, recoloured and made focusable */
-.toggle-cont{
-  --tgH:38px; --tgP:5px;
-  width:calc(var(--tgH) * 2); height:var(--tgH);
-  border-radius:9999px; flex:0 0 auto; margin:var(--tgP);
+/* From Uiverse.io by MuhammadHasann */
+.toggle-cont {
+  width: 100px;
+  height: 50px;
+  border-radius: 9999px;
+  flex: 0 0 auto;
+  position: relative;
+  margin: 6px;
 }
-.toggle-cont .toggle-input{
-  position:absolute; width:1px; height:1px; margin:0; opacity:0; pointer-events:none;
+
+.toggle-cont .toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
 }
-.toggle-cont .toggle-label{
-  cursor:pointer; position:relative; display:inline-block;
-  padding:var(--tgP); width:100%; height:100%;
-  background:#1B262C; border-radius:9999px; box-sizing:content-box;
-  box-shadow:0 0 16px -8px var(--paper);
-  -webkit-tap-highlight-color:transparent;
+
+.toggle-cont .toggle-label {
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  padding: 6px;
+  width: 100%;
+  height: 100%;
+  background: #1B262C;
+  border-radius: 9999px;
+  box-sizing: content-box;
+  box-shadow: 0px 0px 16px -8px #fefefe;
 }
-.toggle-cont .toggle-input:focus-visible + .toggle-label{
-  outline:2px solid var(--clear); outline-offset:4px;
+
+.toggle-cont .toggle-input:focus-visible + .toggle-label {
+  outline: 2px solid var(--clear);
+  outline-offset: 4px;
 }
-.toggle-cont .toggle-label .cont-label-play{
-  position:relative; width:var(--tgH); aspect-ratio:1 / 1;
-  background:var(--fog-faint); border-radius:9999px;
-  transition:all .5s cubic-bezier(1, 0, 0, 1);
+
+.toggle-cont .toggle-label .cont-label-play {
+  position: relative;
+  width: 50px;
+  aspect-ratio: 1 / 1;
+  background: #5e5e5e;
+  border-radius: 9999px;
+  transition: all 0.5s cubic-bezier(1, 0, 0, 1);
 }
-.toggle-cont .toggle-input:checked + .toggle-label .cont-label-play{
-  background:var(--clear); transform:translateX(var(--tgH));
+
+.toggle-cont .toggle-input:checked + .toggle-label .cont-label-play {
+  background: #f43f5e;
+  transform: translateX(50px);
 }
-.toggle-cont .toggle-label .label-play{
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  display:block; width:calc(var(--tgH) * .5); aspect-ratio:1 / 1;
-  color:var(--paper); transition:all .5s cubic-bezier(1, 0, 0, 1);
+
+.toggle-cont .toggle-label .label-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-block;
+  width: 24px;
+  aspect-ratio: 1 / 1;
+  background: #fefefe;
+  border-radius: 4px;
+  clip-path: polygon(25% 0, 75% 50%, 25% 100%, 25% 51%);
+  transition: all 0.5s cubic-bezier(1, 0, 0, 1);
 }
-.toggle-cont .toggle-input:checked + .toggle-label .label-play{
-  width:calc(var(--tgH) * .44); color:#12181C;
+
+.toggle-cont .toggle-input:checked + .toggle-label .label-play {
+  width: 20px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
-.toggle-cont .label-play svg{
-  position:absolute; inset:0; width:100%; height:100%;
-  transition:opacity .5s cubic-bezier(1, 0, 0, 1), transform .5s cubic-bezier(1, 0, 0, 1);
-}
-.toggle-cont .label-play .g-chill{opacity:0; transform:rotate(-70deg) scale(.4)}
-.toggle-cont .toggle-input:checked + .toggle-label .g-move{opacity:0; transform:rotate(70deg) scale(.4)}
-.toggle-cont .toggle-input:checked + .toggle-label .g-chill{opacity:1; transform:none}
-@media(min-width:560px){ .toggle-cont{--tgH:50px; --tgP:6px} }
 
 svg.g{stroke:currentColor; fill:none; stroke-width:1.85; stroke-linecap:round; stroke-linejoin:round}
 
@@ -202,7 +228,7 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
   .tr{grid-template-columns:26px 30px 1fr 88px; gap:14px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
-@media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i,.cont-label-play,.label-play,.label-play svg{transition:none} }
+@media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i,.cont-label-play,.label-play{transition:none} }
 </style>
 </head>
 <body>
@@ -220,10 +246,7 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
              aria-label="Chill mode. Off is Move mode.">
       <label class="toggle-label" for="modeToggle">
         <div class="cont-label-play">
-          <span class="label-play">
-            <svg class="g g-move" viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.6" cy="4.5" r="2.3"/><path d="M9.4 21.6l2.7-5.5-2.9-2.7.9-4.9 4-1.6 3.6 2.6 3 .9"/><path d="M12.2 16.1l4.2 1.4 1.8 4.3"/><path d="M5.4 12.1l3.4-3"/></svg>
-            <svg class="g g-chill" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.6" r="4"/><path d="M12 2v1.9M12 15.4v1.9M3.9 9.6h1.9M18.2 9.6h1.9M6.2 3.8l1.4 1.4M16.4 14l1.4 1.4M17.8 3.8l-1.4 1.4M7.6 14l-1.4 1.4M3 21h18"/></svg>
-          </span>
+          <span class="label-play"></span>
         </div>
       </label>
     </div>
