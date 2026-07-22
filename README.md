@@ -1,6 +1,6 @@
-# Fog Shadow
+# NoKarl
 
-Where the fog isn't, in San Francisco. One message, one place.
+Where the fog isn't, in San Francisco. One place at a time, five steps ahead.
 
 An experience prototype for a microclimate notification product: twelve SF spots ranked west to east on low cloud, visibility, wind, and temperature fit for what you're going out to do.
 
