@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NoKarl — where the fog isn't, in San Francisco</title>
-<meta name="description" content="One place at a time, five steps ahead. San Francisco spots scored on low cloud, visibility, wind and comfort, so you know where to go outside.">
+<meta name="description" content="Karl doesn't own the whole city. Go find the rest. Twelve San Francisco spots scored on low cloud, visibility, wind and comfort.">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -59,12 +59,13 @@ h1 em{font-style:normal; color:var(--clear)}
 
 /* From Uiverse.io by MuhammadHasann */
 .toggle-cont {
-  width: 100px;
-  height: 50px;
+  --h: 50px; --p: 6px; --gl: 24px; --glc: 20px;
+  width: calc(var(--h) * 2);
+  height: var(--h);
   border-radius: 9999px;
   flex: 0 0 auto;
   position: relative;
-  margin: 6px;
+  margin: var(--p);
 }
 
 .toggle-cont .toggle-input {
@@ -80,7 +81,7 @@ h1 em{font-style:normal; color:var(--clear)}
   cursor: pointer;
   position: relative;
   display: inline-block;
-  padding: 6px;
+  padding: var(--p);
   width: 100%;
   height: 100%;
   background: var(--ink-2);
@@ -96,16 +97,16 @@ h1 em{font-style:normal; color:var(--clear)}
 
 .toggle-cont .toggle-label .cont-label-play {
   position: relative;
-  width: 50px;
+  width: var(--h);
   aspect-ratio: 1 / 1;
-  background: var(--ink);
+  background: var(--clear);
   border-radius: 9999px;
   transition: all 0.5s cubic-bezier(1, 0, 0, 1);
 }
 
 .toggle-cont .toggle-input:checked + .toggle-label .cont-label-play {
-  background: var(--clear);
-  transform: translateX(50px);
+  background: var(--ink);
+  transform: translateX(var(--h));
 }
 
 .toggle-cont .toggle-label .label-play {
@@ -114,7 +115,7 @@ h1 em{font-style:normal; color:var(--clear)}
   left: 50%;
   transform: translate(-50%, -50%);
   display: inline-block;
-  width: 24px;
+  width: var(--gl);
   aspect-ratio: 1 / 1;
   background: #fefefe;
   border-radius: 6px;
@@ -123,8 +124,10 @@ h1 em{font-style:normal; color:var(--clear)}
   transition: all 0.5s cubic-bezier(1, 0, 0, 1);
 }
 
+@media (max-width: 559px){ .toggle-cont{ --h:34px; --p:4px; --gl:16px; --glc:13px } }
+
 .toggle-cont .toggle-input:checked + .toggle-label .label-play {
-  width: 20px;
+  width: var(--glc);
   clip-path: polygon(0 10%, 0 2%, 2% 0, 10% 0, 98% 0, 100% 2%,
                     100% 98%, 98% 100%, 10% 100%, 2% 100%, 0 98%, 0 90%);
 }
@@ -178,20 +181,27 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 
 /* ══ ridge ══════════════════════════════════════════════════════ */
 .ridge{border:1px solid var(--line); border-radius:5px; background:var(--ink-2);
-  padding:13px 13px 11px; margin-bottom:30px}
+  padding:13px 18px 11px; margin-bottom:30px; overflow:hidden}
 .ridge-head{display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
   font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--fog-dim); margin-bottom:9px}
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
-.stage{position:relative; width:100%; aspect-ratio:900/320}
+.stage{position:relative; width:100%; aspect-ratio:900/330; overflow:visible}
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
-.dot{position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%;
-  background:var(--fog-dim); opacity:.75;
-  transition:background .5s ease, opacity .5s ease, transform .5s cubic-bezier(.2,.7,.3,1)}
-.dot.on{background:var(--clear); opacity:1; transform:scale(1.35)}
-.dot b{position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
-  font-family:var(--mono); font-size:10px; letter-spacing:.03em; font-weight:400;
-  color:var(--fog-dim); white-space:nowrap; display:none}
-.dot.pick b{display:block; color:var(--clear); font-size:11px}
+.dot{position:absolute; width:13px; height:13px; margin:-6.5px 0 0 -6.5px; border-radius:50%;
+  background:var(--fog-faint); border:1px solid var(--fog-dim);
+  transition:background .5s ease, border-color .5s ease, transform .5s cubic-bezier(.2,.7,.3,1)}
+.dot.on{background:var(--clear); border-color:var(--clear); transform:scale(1.3)}
+.dot b{position:absolute; left:50%; bottom:12px; transform-origin:0 100%;
+  transform:rotate(-50deg); white-space:nowrap; font-family:var(--msg);
+  font-size:11.5px; font-weight:400; letter-spacing:0; color:var(--fog); pointer-events:none}
+.dot.on b{color:var(--clear)}
+.dot.pick b{font-weight:600}
+@media(min-width:700px){
+  .dot b{transform:translateX(-50%) rotate(0); transform-origin:50% 100%; font-size:12px}
+  .dot.t1 b{bottom:30px}
+  .dot.t1::after{content:''; position:absolute; left:50%; bottom:11px; width:1px; height:18px;
+    background:var(--fog-faint); transform:translateX(-50%)}
+}
 .ridge-foot{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
   text-transform:uppercase; color:var(--fog-faint); margin-top:8px; text-align:center}
 
@@ -226,12 +236,12 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 @media(min-width:560px){
   :root{--pad:24px}
   .dot b{display:block}
-  .stage{aspect-ratio:900/230}
+  .stage{aspect-ratio:900/270}
   .card{min-height:300px; padding:22px}
   .c-name{font-size:28px}
   .tr{grid-template-columns:26px 30px 1fr 88px; gap:14px}
 }
-@media(min-width:860px){ .stage{aspect-ratio:900/190} }
+@media(min-width:860px){ .stage{aspect-ratio:900/215} }
 @media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i,.cont-label-play,.label-play{transition:none} }
 </style>
 </head>
@@ -256,7 +266,7 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
     </div>
   </div>
 
-  <p class="sub">Where the fog isn't. One place at a time, five steps ahead, across twelve San Francisco spots.</p>
+  <p class="sub">Karl doesn't own the whole city. Go find the rest.</p>
 
   <div class="cards" id="cards" tabindex="0" role="region" aria-label="Forecast, swipe for later time slices"></div>
   <div class="nav" id="nav"></div>
@@ -269,15 +279,14 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
   <div class="ridge">
     <div class="ridge-head"><span>← West</span><b id="ridgeState">Marine layer</b><span>East →</span></div>
     <div class="stage">
-      <svg viewBox="0 0 900 190" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
+      <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
         <defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stop-color="#A9B7BE" stop-opacity=".55"/>
           <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
           <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
         </linearGradient></defs>
         <path id="fogBody" d="" fill="url(#fg)" style="transition:d .7s ease"/>
-        <path d="M0,190 L0,176 L120,172 L215,160 L300,140 L355,60 L392,96 L440,150 L500,108 L560,124 L640,168 L760,172 L900,174 L900,190 Z"
-              fill="#1E2B33" stroke="rgba(169,183,190,.30)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
     </div>
@@ -310,18 +319,18 @@ const G={
 const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${G[k]}</svg>`;
 
 const SPOTS=[
- {n:"Ocean Beach",          a:"Outer Sunset",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:14, y:172},
- {n:"Golden Gate Park",     a:"Conservatory",    g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:250,y:152},
- {n:"Twin Peaks",           a:"the ridge",       g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:355,y:60 },
- {n:"Glen Canyon Park",     a:"Glen Park",       g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:392,y:96 },
- {n:"Corona Heights",       a:"Castro",          g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:420,y:132},
- {n:"Fort Mason",           a:"Marina Green",    g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:455,y:146},
- {n:"Mission Dolores Park", a:"Mission",         g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:487,y:110},
- {n:"McLaren Park",         a:"Excelsior",       g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:540,y:126},
- {n:"Bernal Heights Park",  a:"Bernal",          g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:565,y:122},
- {n:"Potrero Hill",         a:"McKinley Square", g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:648,y:166},
- {n:"Crane Cove Park",      a:"Dogpatch",        g:"crane",lat:37.7615,lon:-122.3872,rel:85,x:730,y:171},
- {n:"India Basin",          a:"Bayview",         g:"crane",lat:37.7370,lon:-122.3775,rel:88,x:830,y:173}
+ {n:"Ocean Beach",          a:"Outer Sunset",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40,y:218,m:"Ocean Beach"},
+ {n:"Golden Gate Park",     a:"Conservatory",    g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:232,y:200,m:"GG Park"},
+ {n:"Twin Peaks",           a:"the ridge",       g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:307,y:104,m:"Twin Peaks"},
+ {n:"Glen Canyon Park",     a:"Glen Park",       g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:360,y:158,m:"Glen Park"},
+ {n:"Corona Heights",       a:"Castro",          g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:414,y:142,m:"Corona"},
+ {n:"Fort Mason",           a:"Marina Green",    g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:470,y:190,m:"Fort Mason"},
+ {n:"Mission Dolores Park", a:"Mission",         g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:522,y:196,m:"Mission"},
+ {n:"McLaren Park",         a:"Excelsior",       g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:578,y:172,m:"McLaren"},
+ {n:"Bernal Heights Park",  a:"Bernal",          g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:640,y:156,m:"Bernal"},
+ {n:"Potrero Hill",         a:"McKinley Square", g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:722,y:182,m:"Potrero"},
+ {n:"Crane Cove Park",      a:"Dogpatch",        g:"crane",lat:37.7615,lon:-122.3872,rel:85,x:794,y:212,m:"Dogpatch"},
+ {n:"India Basin",          a:"Bayview",         g:"crane",lat:37.7370,lon:-122.3775,rel:88,x:860,y:218,m:"Bayview"}
 ];
 const MODES={
  move :{c:.35,v:.15,w:.30,t:.20,ideal:60,verb:"a 4-mile loop"},
@@ -334,7 +343,20 @@ const SLICES=[
  {label:"In 12 hours", off:12, sim:-6},
  {label:"Tomorrow",    off:24, sim:4}
 ];
-const ROTATE=5600, RESUME=14000;
+const ROTATE=5600, RESUME=14000, VBW=900, VBH=250, GROUND=246;
+
+/* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
+function smooth(pts){
+  const p=[{x:-70,y:pts[0].y+8},...pts,{x:VBW+70,y:pts[pts.length-1].y+6}];
+  let d=`L${p[1].x},${p[1].y}`;
+  for(let i=1;i<p.length-2;i++){
+    const a=p[i-1],b=p[i],c=p[i+1],e=p[i+2],k=7;
+    d+=` C${(b.x+(c.x-a.x)/k).toFixed(1)},${(b.y+(c.y-a.y)/k).toFixed(1)}`
+      +` ${(c.x-(e.x-b.x)/k).toFixed(1)},${(c.y-(e.y-b.y)/k).toFixed(1)} ${c.x},${c.y}`;
+  }
+  return d;
+}
+const RIDGE=[{x:0,y:224},...SPOTS.map(s=>({x:s.x,y:s.y})),{x:VBW,y:222}];
 let S={mode:"move",push:50,slices:null,i:0}, timer=null, idle=null;
 const $=i=>document.getElementById(i), cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -389,30 +411,37 @@ async function fetchLive(){
 const rankAt=k=>S.slices[k].spots.map(d=>({...d,score:score(d,S.mode)}))
                  .sort((a,b)=>b.score-a.score||b.rel-a.rel);
 
+function cardHTML(sl,k){
+  const rk=rankAt(k), top=rk[0], next=rk[1], worst=rk[rk.length-1], M=MODES[S.mode];
+  const when=(k===4?dow(sl.t)+" ":"")+hhmm(sl.t);
+  const head=`<div class="c-head"><span class="ic">☀</span><span>NoKarl</span>
+    <span class="c-when">${sl.label} · ${when}</span></div>`;
+  if(top.score<55) return `<article class="card">${head}
+    <div class="c-hero"><span class="c-ico">${ico("fogx")}</span>
+      <span><span class="c-name">Nothing's clear</span><span class="c-area">City-wide</span></span></div>
+    <div class="c-stat"><span class="c-temp">—</span>
+      <span class="c-cond">low cloud<br><b>Ocean Beach to the Bay</b></span></div>
+    <p class="c-2">${k===0?"I'd rather stay quiet than send you somewhere grey.":"Try one of the other cards."}</p>
+  </article>`;
+  const line = k===0
+    ? `${worst.n} is at ${worst.temp}° under low cloud, so go east. About ${M.verb}.`
+    : `${next.n} is the backup at ${next.temp}°. ${worst.n} stays socked in.`;
+  return `<article class="card" aria-roledescription="slide" aria-label="${sl.label}">${head}
+    <div class="c-hero"><span class="c-ico">${ico(top.g)}</span>
+      <span><span class="c-name">${top.n}</span><span class="c-area">${top.a}</span></span></div>
+    <div class="c-stat"><span class="c-temp">${top.temp}°</span>
+      <span class="c-cond"><b>${Math.round(top.lowCloud)}%</b> low cloud<br><b>${top.wind}</b> mph wind</span></div>
+    <p class="c-2">${line}</p></article>`;
+}
+
+/* clone of last + the five + clone of first, so the swipe never hits a wall */
+const SEQ=[4,0,1,2,3,4,0];
 function paintCards(){
-  $("cards").innerHTML=S.slices.map((sl,k)=>{
-    const rk=rankAt(k), top=rk[0], next=rk[1], worst=rk[rk.length-1], M=MODES[S.mode];
-    const when = (k===4?dow(sl.t)+" ":"")+hhmm(sl.t);
-    const head=`<div class="c-head"><span class="ic">☀</span><span>NoKarl</span>
-      <span class="c-when">${sl.label} · ${when}</span></div>`;
-    if(top.score<55) return `<article class="card">${head}
-      <div class="c-hero"><span class="c-ico">${ico("fogx")}</span>
-        <span><span class="c-name">Nothing's clear</span><span class="c-area">City-wide</span></span></div>
-      <div class="c-stat"><span class="c-temp">—</span>
-        <span class="c-cond">low cloud<br><b>Ocean Beach to the Bay</b></span></div>
-      <p class="c-2">${k===0?"I'd rather stay quiet than send you somewhere grey.":"Try one of the other cards."}</p>
-    </article>`;
-    const line = k===0
-      ? `${worst.n} is at ${worst.temp}° under low cloud, so go east. About ${M.verb}.`
-      : `${next.n} is the backup at ${next.temp}°. ${worst.n} stays socked in.`;
-    return `<article class="card" aria-roledescription="slide" aria-label="${sl.label}">${head}
-      <div class="c-hero"><span class="c-ico">${ico(top.g)}</span>
-        <span><span class="c-name">${top.n}</span><span class="c-area">${top.a}</span></span></div>
-      <div class="c-stat"><span class="c-temp">${top.temp}°</span>
-        <span class="c-cond"><b>${Math.round(top.lowCloud)}%</b> low cloud<br><b>${top.wind}</b> mph wind</span></div>
-      <p class="c-2">${line}</p></article>`;}).join("");
+  const html=S.slices.map(cardHTML);
+  $("cards").innerHTML=SEQ.map(k=>html[k]).join("");
   $("nav").innerHTML=S.slices.map((sl,k)=>
     `<button data-i="${k}" aria-current="${k===S.i}" aria-label="${sl.label}"><i></i></button>`).join("");
+  jump(S.i+1);
 }
 
 function paintSlice(){
@@ -430,17 +459,17 @@ function paintSlice(){
     </div>`).join("");
 
   const pick=rk[0].n;
-  $("dots").innerHTML=sl.spots.map(s=>{
+  $("dots").innerHTML=sl.spots.map((s,j)=>{
     const on=s.lowCloud<45;
-    return `<span class="dot ${on?'on':''} ${s.n===pick?'pick':''}" title="${s.n}"
-      style="left:${(s.x/900*100).toFixed(2)}%; top:${((s.y-11)/190*100).toFixed(2)}%"><b>${s.a.toUpperCase()}</b></span>`;
+    return `<span class="dot t${j%2} ${on?'on':''} ${s.n===pick?'pick':''}" title="${s.n}"
+      style="left:${(s.x/VBW*100).toFixed(2)}%; top:${(s.y/VBH*100).toFixed(2)}%"><b>${s.m}</b></span>`;
   }).join("");
 
   const w=sl.spots.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4,
         e=sl.spots.slice(-4).reduce((t,s)=>t+s.lowCloud,0)/4,
-        wy=190-w*1.15, ey=190-e*1.15;
+        wy=GROUND-w*1.55, ey=GROUND-e*1.55;
   $("fogBody").setAttribute("d",
-    `M0,190 L0,${wy} C240,${wy-14} 330,${wy+10} 400,${(wy+ey)/2} C520,${ey-8} 700,${ey} 900,${ey} L900,190 Z`);
+    `M0,${GROUND} L0,${wy} C240,${wy-18} 330,${wy+12} 400,${(wy+ey)/2} C520,${ey-10} 700,${ey} ${VBW},${ey} L${VBW},${GROUND} Z`);
   $("ridgeState").textContent=w>60?(e>55?"City-wide marine layer":"Fog held at the ridge"):"Clear west to east";
 
   const M=MODES[S.mode];
@@ -450,27 +479,36 @@ function paintSlice(){
    `<b>Clear yr</b> is a static climatology estimate used as the tiebreak. `+
    `<b>Quiet rule</b>: no place is named below a score of 55.`;
 }
+$("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`);
+
 const render=()=>{paintCards(); paintSlice();};
 
-/* ── carousel ─────────────────────────────────────────────────── */
+/* ── carousel: loops in both directions ───────────────────────── */
 const cards=$("cards");
 const width=()=>cards.firstElementChild ? cards.firstElementChild.offsetWidth+12 : cards.clientWidth;
-function go(k){ S.i=(k+5)%5; cards.scrollTo({left:S.i*width(), behavior:reduce?"auto":"smooth"}); paintSlice(); }
-function start(){ if(reduce) return; stop(); timer=setInterval(()=>go(S.i+1),ROTATE); }
+const jump=p=>cards.scrollTo({left:p*width(), behavior:"auto"});
+const glide=p=>cards.scrollTo({left:p*width(), behavior:reduce?"auto":"smooth"});
+function go(k){ S.i=((k%5)+5)%5; glide(S.i+1); paintSlice(); }
+function start(){ if(reduce) return; stop(); timer=setInterval(()=>{
+  const p=Math.round(cards.scrollLeft/width()); glide(p+1);
+},ROTATE); }
 function stop(){ clearInterval(timer); timer=null; }
 function pause(){ stop(); clearTimeout(idle); idle=setTimeout(start,RESUME); }
 
 let st;
 cards.addEventListener("scroll",()=>{clearTimeout(st); st=setTimeout(()=>{
-  const k=Math.round(cards.scrollLeft/width());
+  let p=Math.round(cards.scrollLeft/width());
+  if(p>=SEQ.length-1){ jump(1); p=1; }        // past the tail clone → real first
+  else if(p<=0){ jump(SEQ.length-2); p=SEQ.length-2; }  // past the head clone → real last
+  const k=p-1;
   if(k!==S.i && k>=0 && k<5){ S.i=k; paintSlice(); }
-},110);},{passive:true});
+},120);},{passive:true});
 cards.addEventListener("pointerdown",pause);
 cards.addEventListener("wheel",pause,{passive:true});
 cards.addEventListener("keydown",e=>{
   if(e.key==="ArrowRight"){pause();go(S.i+1);} if(e.key==="ArrowLeft"){pause();go(S.i-1);}});
 $("nav").addEventListener("click",e=>{const b=e.target.closest("button"); if(b){pause();go(+b.dataset.i);}});
-addEventListener("resize",()=>cards.scrollTo({left:S.i*width(),behavior:"auto"}));
+addEventListener("resize",()=>jump(S.i+1));
 
 /* ── segmented toggle ─────────────────────────────────────────── */
 $("modeToggle").addEventListener("change",e=>{
