@@ -35,9 +35,11 @@
   --pad:16px;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+/* ground lives on html so the iOS overscroll bounce and the area behind
+   the notch and home indicator stay dark too */
+html{-webkit-text-size-adjust:100%; background:var(--ink); min-height:100%}
 body{
-  margin:0; background:var(--ink); color:var(--paper);
+  margin:0; min-height:100dvh; background:var(--ink); color:var(--paper);
   font-family:var(--msg); line-height:1.45; font-size:17px;
   padding:calc(18px + env(safe-area-inset-top)) calc(var(--pad) + env(safe-area-inset-right))
           calc(44px + env(safe-area-inset-bottom)) calc(var(--pad) + env(safe-area-inset-left));
@@ -47,134 +49,53 @@ body{
 .wrap{max-width:760px; margin:0 auto}
 
 /* ══ masthead + segmented toggle ════════════════════════════════ */
-.titlerow{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0 10px}
+.titlerow{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin:22px 0 10px}
 h1{margin:0; flex:0 1 auto; min-width:0}
-/* wordmark x-height = 124/196 of image → 62px pill ÷ .633 ≈ 98px */
+/* wordmark height held from the pill-matched sizing; the toggle it was
+   measured against is gone, so this is now a free value */
 h1 img{display:block; height:98px; width:auto; max-width:100%; object-fit:contain}
 
-/* From Uiverse.io by MuhammadHasann */
-.toggle-cont {
-  --h: 50px; --p: 6px; --gl: 24px; --glc: 20px;
-  width: calc(var(--h) * 2);
-  height: var(--h);
-  border-radius: 9999px;
-  flex: 0 0 auto;
-  position: relative;
-  margin: var(--p);
-}
-
-.toggle-cont .toggle-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  margin: 0;
-  pointer-events: none;
-}
-
-.toggle-cont .toggle-label {
-  cursor: pointer;
-  position: relative;
-  display: inline-block;
-  padding: var(--p);
-  width: 100%;
-  height: 100%;
-  background: var(--ink-2);
-  border: 1px solid var(--line);
-  border-radius: 9999px;
-  box-sizing: content-box;
-}
-
-.toggle-cont .toggle-input:focus-visible + .toggle-label {
-  outline: 2px solid var(--clear);
-  outline-offset: 4px;
-}
-
-.toggle-cont .toggle-label .cont-label-play {
-  position: relative;
-  width: var(--h);
-  aspect-ratio: 1 / 1;
-  background: var(--clear);
-  border-radius: 9999px;
-  transition: all 0.5s cubic-bezier(1, 0, 0, 1);
-}
-
-.toggle-cont .toggle-input:checked + .toggle-label .cont-label-play {
-  background: var(--ink);
-  transform: translateX(var(--h));
-}
-
-.toggle-cont .toggle-label .label-play {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: inline-block;
-  width: var(--gl);
-  aspect-ratio: 1 / 1;
-  background: #fefefe;
-  border-radius: 6px;
-  clip-path: polygon(25% 10%, 26% 4.5%, 30.5% 4%, 35% 10%, 66% 41%, 71.5% 46.5%,
-                    71.5% 53.5%, 66% 59%, 35% 90%, 30.5% 96%, 26% 95.5%, 25% 90%);
-  transition: all 0.5s cubic-bezier(1, 0, 0, 1);
-}
-
-@media (max-width: 559px){
-  .toggle-cont{ --h:34px; --p:4px; --gl:16px; --glc:13px }
-  /* 42px pill ÷ .633 ≈ 66px */
-  h1 img{height:66px}
-}
-
-.toggle-cont .toggle-input:checked + .toggle-label .label-play {
-  width: var(--glc);
-  clip-path: polygon(0 10%, 0 2%, 2% 0, 10% 0, 98% 0, 100% 2%,
-                    100% 98%, 98% 100%, 10% 100%, 2% 100%, 0 98%, 0 90%);
-}
+/* unit override — muted, secondary. Default is inferred from locale. */
+.units{display:flex; align-items:center; gap:1px; flex:0 0 auto}
+.units button{font-family:var(--mono); font-size:12.5px; letter-spacing:.04em;
+  background:none; border:0; padding:9px 7px; min-height:40px; cursor:pointer;
+  color:var(--fog-faint); transition:color .2s; -webkit-tap-highlight-color:transparent}
+.units button[aria-pressed="true"]{color:var(--fog)}
+.units button:focus-visible{outline:2px solid var(--clear); outline-offset:2px; border-radius:3px}
+.units s{text-decoration:none; color:var(--fog-faint); font-family:var(--mono); font-size:11px}
 
 svg.g{fill:currentColor}
 
 .sub{max-width:50ch; color:var(--fog); font-size:16px; margin:0 0 24px}
 
-/* ══ swipeable cards, no chrome ═════════════════════════════════ */
-.cards{display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory;
-  scroll-behavior:smooth; scrollbar-width:none; -ms-overflow-style:none;
-  margin:0 calc(-1 * var(--pad)); padding:2px var(--pad) 4px}
-.cards::-webkit-scrollbar{display:none}
-.card{flex:0 0 min(100%, 460px); scroll-snap-align:center;
-  min-height:288px; display:flex; flex-direction:column;
-  background:var(--paper); color:#12181C; border-radius:18px; padding:18px 18px 20px}
-.c-head{display:flex; align-items:center; gap:8px; font-family:var(--mono);
-  font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#5A676E}
-.c-when{margin-left:auto; color:#12181C; font-weight:600; letter-spacing:.05em}
-
-.c-hero{display:flex; align-items:center; gap:14px; margin:20px 0 18px}
-.c-ico{flex:0 0 auto; width:56px; height:56px; border-radius:15px; background:var(--clear);
+/* ══ verdict — the answer, as the map's header ═════════════════ */
+.verdict{padding-bottom:17px; margin-bottom:14px; border-bottom:1px solid var(--line)}
+.v-when{font-family:var(--mono); font-size:11px; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--fog-dim); display:block; margin-bottom:13px}
+.v-row{display:flex; align-items:center; gap:14px}
+.v-ico{flex:0 0 auto; width:54px; height:54px; border-radius:15px; background:var(--clear);
   color:#12181C; display:grid; place-items:center}
-.c-ico svg{width:30px; height:30px}
-.c-name{display:block; font-family:var(--disp); font-weight:700; font-size:25px;
-  line-height:1.04; letter-spacing:-.022em}
-.c-area{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
-  text-transform:uppercase; color:#6C7A81; margin-top:6px}
+.v-ico svg{width:29px; height:29px}
+.v-name{display:block; font-family:var(--disp); font-weight:700; font-size:26px;
+  line-height:1.04; letter-spacing:-.026em; color:var(--paper)}
+.v-area{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--fog-dim); margin-top:6px}
+.v-stat{display:flex; align-items:center; gap:15px; margin-top:16px}
+.v-temp{font-family:var(--disp); font-weight:700; font-size:42px; line-height:1;
+  letter-spacing:-.04em; color:var(--paper)}
+.v-cond{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--fog-dim)}
+.v-cond b{color:var(--fog); font-weight:400}
+.v-line{margin:14px 0 0; font-size:16px; line-height:1.4; color:var(--fog)}
 
-.c-stat{display:flex; align-items:center; gap:16px; margin-top:auto;
-  padding-top:16px; border-top:1px solid rgba(18,24,28,.14)}
-.c-temp{font-family:var(--disp); font-weight:700; font-size:44px; line-height:1; letter-spacing:-.04em}
-.c-cond{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:#4C6672; letter-spacing:.02em}
-.c-cond b{color:#12181C; font-weight:400}
-.c-2{margin:16px 0 0; font-size:16px; color:#3F5966; line-height:1.4}
-
-.nav{display:flex; justify-content:center; gap:7px; margin:16px 0 26px}
-.nav button{width:32px; height:24px; padding:0; background:none; border:0; cursor:pointer;
-  display:grid; place-items:center; -webkit-tap-highlight-color:transparent}
-.nav i{display:block; width:100%; height:3px; border-radius:2px;
-  background:var(--fog-faint); transition:background .3s}
-.nav button[aria-current="true"] i{background:var(--clear)}
-.nav button:focus-visible{outline:2px solid var(--clear); outline-offset:1px; border-radius:3px}
-
-/* ══ marine push (fallback only) ════════════════════════════════ */
-.lab{font-family:var(--mono); font-size:11px; letter-spacing:.15em;
-  text-transform:uppercase; color:var(--fog-dim); display:block; margin-bottom:8px}
-input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0 22px}
+/* ══ time scrubber ═════════════════════════════════════════════ */
+.timebar{margin-top:15px; padding-top:13px; border-top:1px solid var(--line)}
+.tb-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:4px}
+.tb-at{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.022em; color:var(--paper)}
+.tb-rel{font-family:var(--mono); font-size:11px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--fog-dim)}
+#time{width:100%; accent-color:var(--clear); height:36px; margin:0; display:block}
+.tb-scale{display:flex; justify-content:space-between; font-family:var(--mono);
+  font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--fog-faint)}
 
 /* ══ ridge ══════════════════════════════════════════════════════ */
 .ridge{border:1px solid var(--line); border-radius:5px; background:var(--ink-2);
@@ -186,7 +107,7 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
 .dot{position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%;
   background:var(--fog-faint); border:1px solid var(--fog-dim);
-  transition:background .5s ease, border-color .5s ease}
+  transition:background .18s linear, border-color .18s linear}
 .dot.on{background:var(--clear); border-color:var(--clear)}
 .dot.pick{width:26px; height:26px; margin:-13px 0 0 -13px; background:none; border:none;
   color:var(--clear); display:grid; place-items:center}
@@ -227,7 +148,7 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 .sc{text-align:right}
 .sc u{font-family:var(--mono); font-size:14px; text-decoration:none; color:var(--fog); display:block; margin-bottom:5px}
 .bar{height:4px; background:var(--fog-faint); border-radius:2px; overflow:hidden}
-.bar i{display:block; height:100%; background:var(--fog-dim); transition:width .55s cubic-bezier(.2,.7,.3,1)}
+.bar i{display:block; height:100%; background:var(--fog-dim); transition:width .18s linear}
 .tr.top .bar i{background:var(--clear)}
 .tr.top .nm,.tr.top .sc u{color:var(--clear)}
 
@@ -243,12 +164,12 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
   .rail{height:40px}
   .rail .d0{--row:0}.rail .d1{--row:1}
   .rail b{font-size:12px}
-  .card{min-height:300px; padding:22px}
-  .c-name{font-size:28px}
+  .v-name{font-size:29px}
+  .v-ico{width:60px; height:60px}
   .tr{grid-template-columns:26px 30px 1fr 88px; gap:14px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
-@media(prefers-reduced-motion:reduce){ .cards{scroll-behavior:auto} .dot,.bar i,.cont-label-play,.label-play{transition:none} }
+@media(prefers-reduced-motion:reduce){ .dot,.bar i{transition:none} }
 </style>
 </head>
 <body>
@@ -256,28 +177,15 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
 
   <div class="titlerow">
     <h1><img src="logo.png" alt="Karl" width="638" height="196"></h1>
-    <div class="toggle-cont">
-      <input class="toggle-input" id="modeToggle" type="checkbox" role="switch"
-             aria-label="Chill mode. Off is Move mode.">
-      <label class="toggle-label" for="modeToggle">
-        <div class="cont-label-play">
-          <span class="label-play"></span>
-        </div>
-      </label>
+    <div class="units" id="units" role="group" aria-label="Temperature unit">
+      <button data-u="C" aria-pressed="false">°C</button><s>/</s><button data-u="F" aria-pressed="true">°F</button>
     </div>
   </div>
 
   <p class="sub">Karl doesn't own the whole city. Go find the rest.</p>
 
-  <div class="cards" id="cards" tabindex="0" role="region" aria-label="Forecast, swipe for later time slices"></div>
-  <div class="nav" id="nav"></div>
-
-  <div id="simWrap" hidden>
-    <span class="lab">Marine push <b id="pushVal" style="color:var(--clear);font-weight:400">50</b></span>
-    <input type="range" id="push" min="0" max="100" value="50" aria-label="Marine layer strength">
-  </div>
-
   <div class="ridge">
+    <div class="verdict" id="verdict" aria-live="polite"></div>
     <div class="ridge-head"><span>← West</span><b id="ridgeState">Marine layer</b><span>East →</span></div>
     <div class="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
@@ -286,12 +194,19 @@ input[type=range]{width:100%; accent-color:var(--clear); height:38px; margin:0 0
           <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
           <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
         </linearGradient></defs>
-        <path id="fogBody" d="" fill="url(#fg)" style="transition:d .7s ease"/>
+        <path id="fogBody" d="" fill="url(#fg)"/>
         <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
     </div>
     <div class="rail" id="rail"></div>
+
+    <div class="timebar">
+      <div class="tb-head"><span class="tb-at" id="tbAt">Now</span><span class="tb-rel" id="tbRel">Live</span></div>
+      <input type="range" id="time" min="0" max="47" step="1" value="0"
+             aria-label="Time, hours from now" aria-valuetext="Now">
+      <div class="tb-scale"><span>Now</span><span>+24h</span><span>+48h</span></div>
+    </div>
   </div>
 
   <h2 class="ph"><span>All twelve spots</span><b id="sliceTag">Now</b></h2>
@@ -335,18 +250,10 @@ const SPOTS=[
  {n:"Crane Cove Park",      a:"Dogpatch",        g:"crane",lat:37.7615,lon:-122.3872,rel:85,x:794,y:212,m:"Dogpatch"},
  {n:"India Basin",          a:"Bayview",         g:"crane",lat:37.7370,lon:-122.3775,rel:88,x:860,y:218,m:"Bayview"}
 ];
-const MODES={
- move :{c:.35,v:.15,w:.30,t:.20,ideal:60,verb:"a 4-mile loop"},
- chill:{c:.48,v:.10,w:.18,t:.24,ideal:72,verb:"20 minutes from downtown"}
-};
-const SLICES=[
- {label:"Now",         off:0,  sim:0},
- {label:"In 3 hours",  off:3,  sim:14},
- {label:"In 6 hours",  off:6,  sim:24},
- {label:"In 12 hours", off:12, sim:-6},
- {label:"Tomorrow",    off:24, sim:4}
-];
-const ROTATE=5600, RESUME=14000, VBW=900, VBH=250, GROUND=246;
+/* one profile. clarity-forward, since fog is the whole point;
+   ideal sits at 66°F, the midpoint of the old Move/Chill pair. */
+const W={c:.42, v:.13, w:.22, t:.23, ideal:66};
+const HOURS=48, VBW=900, VBH=250, GROUND=246;
 
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
 function smooth(pts){
@@ -360,36 +267,68 @@ function smooth(pts){
   return d;
 }
 const RIDGE=[{x:0,y:224},...SPOTS.map(s=>({x:s.x,y:s.y})),{x:VBW,y:222}];
-let S={mode:"move",push:50,slices:null,i:0}, timer=null, idle=null;
+
 const $=i=>document.getElementById(i), cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const TZ="America/Los_Angeles";
-const hhmm=e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"}).format(new Date(e*1000));
-const dow =e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,weekday:"short"}).format(new Date(e*1000));
 
-function score(d,m){const M=MODES[m];return Math.round(
-  (100-cl(d.lowCloud,0,100))*M.c + (cl(d.vis/16000,0,1)*100)*M.v +
-  (100-cl((d.wind-8)*5,0,100))*M.w + (100-cl(Math.abs(d.temp-M.ideal)*5.5,0,100))*M.t);}
+/* ── unit system: inferred from locale, overridable ─────────────
+   Fahrenheit is used by the US, Liberia, Myanmar and a handful of
+   Caribbean and Pacific territories. Everywhere else is Celsius. */
+const F_REGIONS=new Set(["US","LR","MM","BS","BZ","KY","PW","FM","MH","GU","PR","VI","AS","MP","TC","MS","AG","KN"]);
+function inferUnit(){
+  try{
+    const loc=new Intl.Locale(navigator.language);
+    if(loc.measurementSystem) return loc.measurementSystem==="us" ? "F" : "C";
+    const r=(loc.maximize&&loc.maximize().region)||loc.region;
+    return F_REGIONS.has(r) ? "F" : "C";
+  }catch(e){ return "F"; }
+}
+let S={unit:inferUnit(), h:0, frames:null};
 
-function simulate(p){
+const t2 = f => S.unit==="C" ? Math.round((f-32)*5/9) : Math.round(f);
+const w2 = m => S.unit==="C" ? Math.round(m*1.609) : Math.round(m);
+const wu = () => S.unit==="C" ? "km/h" : "mph";
+
+const fmtH=e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric"}).format(new Date(e*1000));
+const fmtD=e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,weekday:"short"}).format(new Date(e*1000));
+const stamp=(t,k)=> k===0 ? "Now" : `${fmtD(t)} ${fmtH(t)}`;
+const relLabel=k=> k===0 ? "Live" : `+${k}h`;
+
+/* score always computed in °F and mph — display units never touch it */
+function score(d){return Math.round(
+  (100-cl(d.lowCloud,0,100))*W.c + (cl(d.vis/16000,0,1)*100)*W.v +
+  (100-cl((d.wind-8)*5,0,100))*W.w + (100-cl(Math.abs(d.temp-W.ideal)*5.5,0,100))*W.t);}
+
+/* ── fallback: 48 hours of SF fog behaviour ────────────────────
+     Diurnal cycle peaks near 5am and burns off mid-afternoon, with a
+     deep marine push building on the second day so the sweep covers
+     the socked-in case the quiet rule exists for. Hour-of-day is read
+     in SF time, not the viewer's — the cycle belongs to the city. */
+function simulate(){
   const now=Math.floor(Date.now()/1000);
-  return SLICES.map(sl=>{
-    const pp=cl(p+sl.sim,0,100);
-    return {label:sl.label, t:now+sl.off*3600, spots:SPOTS.map(s=>{
+  const h0=+new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",hour12:false})
+             .format(new Date());
+  const out=[];
+  for(let k=0;k<HOURS;k++){
+    const hr=(h0+k)%24;
+    const diurnal=cl(50+38*Math.cos((hr-5)/24*2*Math.PI),0,100);
+    const deep=cl((k-26)/12,0,1);                 /* Karl takes the city */
+    const push=cl(diurnal+deep*26,0,100);
+    out.push({t:now+k*3600, spots:SPOTS.map(s=>{
       const ex=(100-s.rel)/100;
-      let low=cl(pp*1.55*ex-8+(Math.random()*8-4),0,100);
-      if(s.n==="Twin Peaks"&&pp>62) low=cl(low-42,0,100);
-      return {...s, lowCloud:low, temp:Math.round(70-low*.17-pp*.03+(Math.random()*3-1.5)),
-              wind:Math.round(6+pp*.11+ex*13+Math.random()*4),
-              vis:low>70?900+Math.random()*2500:16000-low*100};
-    })};
-  });
+      const low=cl(Math.max(push*1.55*ex-8, deep*92*(.78+.22*ex)),0,100);
+      return {...s, lowCloud:low, temp:70-low*.17-push*.03,
+              wind:6+push*.11+ex*13, vis:low>70?1800:16000-low*100};
+    })});
+  }
+  return out;
 }
 
+/* ── live: every hour reads the same hourly array, so the whole
+     48-hour sweep is internally consistent ─────────────────────── */
 async function fetchLive(){
   const u="https://api.open-meteo.com/v1/forecast"
    +"?latitude="+SPOTS.map(s=>s.lat).join(",")+"&longitude="+SPOTS.map(s=>s.lon).join(",")
-   +"&current=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
    +"&hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
    +"&forecast_days=3&timeformat=unixtime&temperature_unit=fahrenheit"
    +"&wind_speed_unit=mph&timezone="+TZ;
@@ -399,139 +338,107 @@ async function fetchLive(){
   const j=await r.json(), A=Array.isArray(j)?j:[j];
   const T=A[0].hourly.time, now=Math.floor(Date.now()/1000);
   let base=T.findIndex(t=>t>now); base=base<1?0:base-1;
-  return SLICES.map((sl,k)=>{
-    const idx=Math.min(base+sl.off,T.length-1);
-    return {label:sl.label, t:k===0?now:T[idx], spots:SPOTS.map((s,i)=>{
-      const h=A[i].hourly, c0=A[i].current;
-      const v = k===0
-        ? {temp:c0.temperature_2m,low:c0.cloud_cover_low,vis:c0.visibility,wind:c0.wind_speed_10m}
-        : {temp:h.temperature_2m[idx],low:h.cloud_cover_low[idx],vis:h.visibility[idx],wind:h.wind_speed_10m[idx]};
-      return {...s, lowCloud:v.low??0, temp:Math.round(v.temp), wind:Math.round(v.wind), vis:v.vis??16000};
-    })};
-  });
+  const out=[];
+  for(let k=0;k<HOURS;k++){
+    const i=Math.min(base+k,T.length-1);
+    out.push({t:T[i], spots:SPOTS.map((s,n)=>{
+      const h=A[n].hourly;
+      return {...s, lowCloud:h.cloud_cover_low[i]??0, temp:h.temperature_2m[i],
+              wind:h.wind_speed_10m[i], vis:h.visibility[i]??16000};
+    })});
+  }
+  return out;
 }
 
-const rankAt=k=>S.slices[k].spots.map(d=>({...d,score:score(d,S.mode)}))
+const rankAt=k=>S.frames[k].spots.map(d=>({...d,score:score(d)}))
                  .sort((a,b)=>b.score-a.score||b.rel-a.rel);
 
-function cardHTML(sl,k){
-  const rk=rankAt(k), top=rk[0], next=rk[1], worst=rk[rk.length-1], M=MODES[S.mode];
-  const when=(k===4?dow(sl.t)+" ":"")+hhmm(sl.t);
-  const head=`<div class="c-head"><span class="c-when">${sl.label} · ${when}</span></div>`;
-  if(top.score<55) return `<article class="card">${head}
-    <div class="c-hero"><span class="c-ico">${ico("fogx")}</span>
-      <span><span class="c-name">Nothing's clear</span><span class="c-area">City-wide</span></span></div>
-    <div class="c-stat"><span class="c-temp">—</span>
-      <span class="c-cond">low cloud<br><b>Ocean Beach to the Bay</b></span></div>
-    <p class="c-2">${k===0?"I'd rather stay quiet than send you somewhere grey.":"Try one of the other cards."}</p>
-  </article>`;
-  const line = k===0
-    ? `${worst.n} is at ${worst.temp}° under low cloud, so go east. About ${M.verb}.`
-    : `${next.n} is the backup at ${next.temp}°. ${worst.n} stays socked in.`;
-  return `<article class="card" aria-roledescription="slide" aria-label="${sl.label}">${head}
-    <div class="c-hero"><span class="c-ico">${ico(top.g)}</span>
-      <span><span class="c-name">${top.n}</span><span class="c-area">${top.a}</span></span></div>
-    <div class="c-stat"><span class="c-temp">${top.temp}°</span>
-      <span class="c-cond"><b>${Math.round(top.lowCloud)}%</b> low cloud<br><b>${top.wind}</b> mph wind</span></div>
-    <p class="c-2">${line}</p></article>`;
+/* ── the answer, sitting on top of the map ─────────────────────── */
+function paintVerdict(rk,fr,k){
+  const top=rk[0], next=rk[1], worst=rk[rk.length-1];
+  const when=`<span class="v-when">${stamp(fr.t,k)}${k===0?"":" · "+relLabel(k)}</span>`;
+  if(top.score<55){                     /* quiet rule */
+    $("verdict").innerHTML=when+`<div class="v-row">
+      <span class="v-ico">${ico("fogx")}</span>
+      <span><span class="v-name">Nothing's clear</span><span class="v-area">City-wide</span></span></div>
+      <div class="v-stat"><span class="v-temp">—</span>
+        <span class="v-cond">low cloud<br><b>Ocean Beach to the Bay</b></span></div>
+      <p class="v-line">${k===0
+        ? "I'd rather stay quiet than send you somewhere grey."
+        : "Scrub the slider — it lifts later."}</p>`;
+    return;
+  }
+  $("verdict").innerHTML=when+`<div class="v-row">
+    <span class="v-ico">${ico(top.g)}</span>
+    <span><span class="v-name">${top.n}</span><span class="v-area">${top.a}</span></span></div>
+    <div class="v-stat"><span class="v-temp">${t2(top.temp)}°</span>
+      <span class="v-cond"><b>${Math.round(top.lowCloud)}%</b> low cloud<br>
+        <b>${w2(top.wind)}</b> ${wu()} wind</span></div>
+    <p class="v-line">${next.n} is the backup at ${t2(next.temp)}°. ${worst.n} stays socked in.</p>`;
 }
 
-/* clone of last + the five + clone of first, so the swipe never hits a wall */
-const SEQ=[4,0,1,2,3,4,0];
-function paintCards(){
-  const html=S.slices.map(cardHTML);
-  $("cards").innerHTML=SEQ.map(k=>html[k]).join("");
-  $("nav").innerHTML=S.slices.map((sl,k)=>
-    `<button data-i="${k}" aria-current="${k===S.i}" aria-label="${sl.label}"><i></i></button>`).join("");
-  jump(S.i+1);
-}
-
-function paintSlice(){
-  const k=S.i, rk=rankAt(k), sl=S.slices[k];
-  $("sliceTag").textContent=sl.label;
-  [...$("nav").children].forEach((b,j)=>b.setAttribute("aria-current",String(j===k)));
+function paint(){
+  const k=S.h, fr=S.frames[k], rk=rankAt(k);
+  paintVerdict(rk,fr,k);
+  $("tbAt").textContent=stamp(fr.t,k);
+  $("tbRel").textContent=relLabel(k);
+  $("time").setAttribute("aria-valuetext",stamp(fr.t,k));
+  $("sliceTag").textContent=stamp(fr.t,k);
 
   $("board").innerHTML=rk.map((s,i)=>`
     <div class="tr ${i===0?'top':''}">
       <span class="rk">${String(i+1).padStart(2,"0")}</span>
       <span class="ri">${ico(s.g)}</span>
       <span><span class="nm">${s.n}<em>${s.a}</em></span>
-        <span class="strip"><s>${s.temp}°</s> · ${s.wind} mph · ${Math.round(s.lowCloud)}% low cloud · ${s.rel}% clear yr</span></span>
+        <span class="strip"><s>${t2(s.temp)}°</s> · ${w2(s.wind)} ${wu()} · ${Math.round(s.lowCloud)}% low cloud · ${s.rel}% clear yr</span></span>
       <span class="sc"><u>${s.score}</u><span class="bar"><i style="width:${s.score}%"></i></span></span>
     </div>`).join("");
 
-  const pick=rk[0].score>=55?rk[0].n:null;   /* quiet rule: no pick, no sun */
-  $("dots").innerHTML=sl.spots.map((s,j)=>{
+  const pick=rk[0].score>=55?rk[0].n:null;   /* no pick, no sun */
+  $("dots").innerHTML=fr.spots.map(s=>{
     const on=s.lowCloud<45, p=s.n===pick;
     return `<span class="dot ${on?'on':''} ${p?'pick':''}" title="${s.n}"
       style="left:${(s.x/VBW*100).toFixed(2)}%; top:${(s.y/VBH*100).toFixed(2)}%">${p?ico("sun"):""}</span>`;
   }).join("");
-  $("rail").innerHTML=sl.spots.map((s,j)=>{
+  $("rail").innerHTML=fr.spots.map((s,j)=>{
     const on=s.lowCloud<45, L=(s.x/VBW*100).toFixed(2),
           rows=`r${j%4} d${j%2}`,
-          edge=j===0?'el':(j===sl.spots.length-1?'er':'');
+          edge=j===0?'el':(j===fr.spots.length-1?'er':'');
     return `<i class="${rows} ${on?'on':''}" style="left:${L}%"></i>`
          + `<b class="${rows} ${edge} ${on?'on':''} ${s.n===pick?'pick':''}" style="left:${L}%">${s.m}</b>`;
   }).join("");
 
-  const w=sl.spots.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4,
-        e=sl.spots.slice(-4).reduce((t,s)=>t+s.lowCloud,0)/4,
+  const w=fr.spots.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4,
+        e=fr.spots.slice(-4).reduce((t,s)=>t+s.lowCloud,0)/4,
         wy=GROUND-w*1.55, ey=GROUND-e*1.55;
   $("fogBody").setAttribute("d",
     `M0,${GROUND} L0,${wy} C240,${wy-18} 330,${wy+12} 400,${(wy+ey)/2} C520,${ey-10} 700,${ey} ${VBW},${ey} L${VBW},${GROUND} Z`);
   $("ridgeState").textContent=w>60?(e>55?"City-wide marine layer":"Fog held at the ridge"):"Clear west to east";
 
-  const M=MODES[S.mode];
-  $("method").innerHTML=`<b>Score</b> = clarity×${M.c} + visibility×${M.v} + wind comfort×${M.w} + temperature fit×${M.t}. `+
+  $("method").innerHTML=`<b>Score</b> = clarity×${W.c} + visibility×${W.v} + wind comfort×${W.w} + temperature fit×${W.t}. `+
    `<b>Clarity</b> = 100 − low cloud. <b>Wind comfort</b> falls off above 8 mph. `+
-   `<b>Temperature fit</b> centers on ${M.ideal}°F for ${S.mode}. `+
-   `<b>Clear yr</b> is a static climatology estimate used as the tiebreak. `+
+   `<b>Temperature fit</b> centers on ${t2(W.ideal)}°${S.unit}. `+
+   `<b>Clear yr</b> is a static climatology estimate, not measured, used as the tiebreak. `+
    `<b>Quiet rule</b>: no place is named below a score of 55.`;
 }
+
 $("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`);
 
-const render=()=>{paintCards(); paintSlice();};
-
-/* ── carousel: loops in both directions ───────────────────────── */
-const cards=$("cards");
-const width=()=>cards.firstElementChild ? cards.firstElementChild.offsetWidth+12 : cards.clientWidth;
-const jump=p=>cards.scrollTo({left:p*width(), behavior:"auto"});
-const glide=p=>cards.scrollTo({left:p*width(), behavior:reduce?"auto":"smooth"});
-function go(k){ S.i=((k%5)+5)%5; glide(S.i+1); paintSlice(); }
-function start(){ if(reduce) return; stop(); timer=setInterval(()=>{
-  const p=Math.round(cards.scrollLeft/width()); glide(p+1);
-},ROTATE); }
-function stop(){ clearInterval(timer); timer=null; }
-function pause(){ stop(); clearTimeout(idle); idle=setTimeout(start,RESUME); }
-
-let st;
-cards.addEventListener("scroll",()=>{clearTimeout(st); st=setTimeout(()=>{
-  let p=Math.round(cards.scrollLeft/width());
-  if(p>=SEQ.length-1){ jump(1); p=1; }        // past the tail clone → real first
-  else if(p<=0){ jump(SEQ.length-2); p=SEQ.length-2; }  // past the head clone → real last
-  const k=p-1;
-  if(k!==S.i && k>=0 && k<5){ S.i=k; paintSlice(); }
-},120);},{passive:true});
-cards.addEventListener("pointerdown",pause);
-cards.addEventListener("wheel",pause,{passive:true});
-cards.addEventListener("keydown",e=>{
-  if(e.key==="ArrowRight"){pause();go(S.i+1);} if(e.key==="ArrowLeft"){pause();go(S.i-1);}});
-$("nav").addEventListener("click",e=>{const b=e.target.closest("button"); if(b){pause();go(+b.dataset.i);}});
-addEventListener("resize",()=>jump(S.i+1));
-
-/* ── segmented toggle ─────────────────────────────────────────── */
-$("modeToggle").addEventListener("change",e=>{
-  S.mode = e.target.checked ? "chill" : "move"; render();
-});
-$("push").addEventListener("input",e=>{
-  S.push=+e.target.value; $("pushVal").textContent=S.push;
-  S.slices=simulate(S.push); render();
+/* ── controls ──────────────────────────────────────────────────── */
+$("time").addEventListener("input",e=>{ S.h=+e.target.value; paint(); },{passive:true});
+$("units").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  S.unit=b.dataset.u;
+  [...$("units").querySelectorAll("button")].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  paint();
 });
 
 (async()=>{
-  try{ S.slices=await fetchLive(); }
-  catch(err){ S.slices=simulate(S.push); $("simWrap").hidden=false; }
-  render(); start();
+  [...$("units").querySelectorAll("button")]
+    .forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.u===S.unit)));
+  try{ S.frames=await fetchLive(); }
+  catch(err){ S.frames=simulate(); }
+  paint();
 })();
 })();
 </script>
