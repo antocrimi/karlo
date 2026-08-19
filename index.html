@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NoKarl — where the fog isn't, in San Francisco</title>
-<meta name="description" content="Karl doesn't own the whole city. Go find the rest. Twelve San Francisco spots scored on low cloud, visibility, wind and comfort.">
+<meta name="description" content="Karl doesn't own the whole city. Here's where he isn't. Twelve San Francisco spots scored on low cloud, visibility, wind and comfort.">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -66,20 +66,20 @@ h1 img{display:block; width:clamp(150px, 40vw, 400px); height:auto; object-fit:c
 
 svg.g{fill:currentColor}
 
-.sub{max-width:50ch; color:var(--fog); font-size:16px; margin:0 0 24px}
+.sub{max-width:46ch; color:var(--fog); font-size:16px; margin:0 0 20px}
 
-/* ══ verdict — the answer, as the map's header ═════════════════ */
+/* ══ verdict — the answer, as the map's header ═════════════════
+   No tile behind the glyph: the mark stands on the page ground and
+   carries the accent, so icon and name together read as the pick. */
 .verdict{padding-bottom:17px; margin-bottom:14px; border-bottom:1px solid var(--line)}
-.v-when{font-family:var(--mono); font-size:11px; letter-spacing:.15em;
-  text-transform:uppercase; color:var(--fog-dim); display:block; margin-bottom:13px}
-.v-row{display:flex; align-items:center; gap:14px}
-.v-ico{flex:0 0 auto; width:54px; height:54px; border-radius:15px; background:var(--clear);
-  color:#12181C; display:grid; place-items:center}
-.v-ico svg{width:29px; height:29px}
-.v-name{display:block; font-family:var(--disp); font-weight:700; font-size:26px;
-  line-height:1.04; letter-spacing:-.026em; color:var(--paper)}
+.v-row{display:flex; align-items:center; gap:13px}
+.v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
+.v-ico svg{width:38px; height:38px; display:block}
+.v-name{display:block; font-family:var(--disp); font-weight:700; font-size:27px;
+  line-height:1.04; letter-spacing:-.026em; color:var(--clear)}
 .v-area{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--fog-dim); margin-top:6px}
+  text-transform:uppercase; color:var(--fog-dim); margin-top:5px}
+.v-row.quiet .v-ico,.v-row.quiet .v-name{color:var(--fog)}
 .v-stat{display:flex; align-items:center; gap:15px; margin-top:16px}
 .v-temp{font-family:var(--disp); font-weight:700; font-size:42px; line-height:1;
   letter-spacing:-.04em; color:var(--paper)}
@@ -93,7 +93,27 @@ svg.g{fill:currentColor}
 .tb-at{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.022em; color:var(--paper)}
 .tb-rel{font-family:var(--mono); font-size:11px; letter-spacing:.13em;
   text-transform:uppercase; color:var(--fog-dim)}
-#time{width:100%; accent-color:var(--clear); height:36px; margin:0; display:block}
+/* the thumb is Karl. You drag him off the city. */
+#time{-webkit-appearance:none; appearance:none; width:100%; height:46px;
+  margin:0; display:block; background:transparent; cursor:grab; --p:0%}
+#time:active{cursor:grabbing}
+#time::-webkit-slider-runnable-track{height:3px; border-radius:2px;
+  background:linear-gradient(90deg,var(--clear-dim) 0 var(--p),var(--fog-faint) var(--p) 100%)}
+#time::-moz-range-track{height:3px; border-radius:2px; background:var(--fog-faint)}
+#time::-moz-range-progress{height:3px; border-radius:2px; background:var(--clear-dim)}
+#time::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:38px; height:38px; margin-top:-17.5px; border:0; background:transparent;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/svg%3E");
+  background-size:contain; background-position:center; background-repeat:no-repeat;
+  transition:transform .22s cubic-bezier(.2,.7,.3,1)}
+#time::-moz-range-thumb{width:38px; height:38px; border:0; background:transparent;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/svg%3E");
+  background-size:contain; background-position:center; background-repeat:no-repeat;
+  transition:transform .22s cubic-bezier(.2,.7,.3,1)}
+#time:hover::-webkit-slider-thumb,#time:active::-webkit-slider-thumb{transform:scale(1.15)}
+#time:hover::-moz-range-thumb,#time:active::-moz-range-thumb{transform:scale(1.15)}
+#time:focus-visible::-webkit-slider-thumb{transform:scale(1.15)}
+#time:focus-visible{outline:2px solid var(--clear); outline-offset:4px; border-radius:4px}
 .tb-scale{display:flex; justify-content:space-between; font-family:var(--mono);
   font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--fog-faint)}
 
@@ -165,12 +185,14 @@ svg.g{fill:currentColor}
   .rail{height:40px}
   .rail .d0{--row:0}.rail .d1{--row:1}
   .rail b{font-size:12px}
-  .v-name{font-size:29px}
-  .v-ico{width:60px; height:60px}
+  .v-name{font-size:30px}
+  .v-ico svg{width:44px; height:44px}
   .tr{grid-template-columns:26px 30px 1fr 88px; gap:14px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
-@media(prefers-reduced-motion:reduce){ .dot,.bar i{transition:none} }
+@media(prefers-reduced-motion:reduce){
+  .dot,.bar i,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
+}
 </style>
 </head>
 <body>
@@ -183,7 +205,7 @@ svg.g{fill:currentColor}
     </div>
   </div>
 
-  <p class="sub">Karl doesn't own the whole city. Go find the rest.</p>
+  <p class="sub">Karl doesn't own the whole city. Here's where he isn't.</p>
 
   <div class="ridge">
     <div class="verdict" id="verdict" aria-live="polite"></div>
@@ -357,9 +379,8 @@ const rankAt=k=>S.frames[k].spots.map(d=>({...d,score:score(d)}))
 /* ── the answer, sitting on top of the map ─────────────────────── */
 function paintVerdict(rk,fr,k){
   const top=rk[0], next=rk[1], worst=rk[rk.length-1];
-  const when=`<span class="v-when">${stamp(fr.t,k)}${k===0?"":" · "+relLabel(k)}</span>`;
   if(top.score<55){                     /* quiet rule */
-    $("verdict").innerHTML=when+`<div class="v-row">
+    $("verdict").innerHTML=`<div class="v-row quiet">
       <span class="v-ico">${ico("fogx")}</span>
       <span><span class="v-name">Nothing's clear</span><span class="v-area">City-wide</span></span></div>
       <div class="v-stat"><span class="v-temp">—</span>
@@ -369,7 +390,7 @@ function paintVerdict(rk,fr,k){
         : "Scrub the slider — it lifts later."}</p>`;
     return;
   }
-  $("verdict").innerHTML=when+`<div class="v-row">
+  $("verdict").innerHTML=`<div class="v-row">
     <span class="v-ico">${ico(top.g)}</span>
     <span><span class="v-name">${top.n}</span><span class="v-area">${top.a}</span></span></div>
     <div class="v-stat"><span class="v-temp">${t2(top.temp)}°</span>
@@ -382,6 +403,7 @@ function paint(){
   const k=S.h, fr=S.frames[k], rk=rankAt(k);
   paintVerdict(rk,fr,k);
   $("tbAt").textContent=stamp(fr.t,k);
+  $("time").style.setProperty("--p",(k/(HOURS-1)*100).toFixed(1)+"%");
   $("tbRel").textContent=relLabel(k);
   $("time").setAttribute("aria-valuetext",stamp(fr.t,k));
   $("sliceTag").textContent=stamp(fr.t,k);
