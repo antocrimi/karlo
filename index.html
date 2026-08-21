@@ -67,18 +67,18 @@ h1 img{display:block; width:clamp(165px, 44vw, 440px); height:auto; object-fit:c
 
 svg.g{fill:currentColor}
 
-.sub{max-width:46ch; color:var(--fog); font-size:16px; margin:0 0 20px}
+.sub{max-width:46ch; color:var(--fog); font-size:16px; margin:2px 0 0}
 
 /* ══ section headings — label, then a rule to the edge ════════ */
-.sec{display:flex; align-items:center; gap:15px; margin:38px 0 20px;
+.sec{display:flex; align-items:center; gap:15px; margin:40px 0 16px;
   font-family:var(--disp); font-weight:700; font-size:20px;
   letter-spacing:-.024em; color:var(--paper)}
 .sec::after{content:""; flex:1 1 auto; height:1px; background:var(--line)}
-.sec:first-of-type{margin-top:30px}
+.sec:first-of-type{margin-top:24px}
 
 /* ══ verdict — the pick, in full accent ════════════════════════
    min-height holds the box so the quiet state doesn't jump the page */
-.verdict{min-height:86px; margin-bottom:34px}
+.verdict{min-height:80px; margin-bottom:26px}
 .v-row{display:flex; align-items:center; gap:12px}
 .v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
 .v-ico svg{width:30px; height:30px; display:block}
@@ -86,7 +86,7 @@ svg.g{fill:currentColor}
   line-height:1.05; letter-spacing:-.028em; color:var(--clear); min-width:0}
 .v-temp{margin-left:auto; flex:0 0 auto; font-family:var(--disp); font-weight:700;
   font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear)}
-.v-cond{display:block; margin-top:12px; font-family:var(--mono); font-size:13px;
+.v-cond{display:block; margin-top:9px; font-family:var(--mono); font-size:13px;
   letter-spacing:.02em; color:var(--fog-dim)}
 .v-cond b{color:var(--fog); font-weight:400}
 .v-row.quiet .v-ico,.v-row.quiet .v-name{color:var(--fog)}
@@ -152,15 +152,27 @@ svg.g{fill:currentColor}
 .dot.pick{width:22px; height:22px; margin:-11px 0 0 -11px; background:none; border:none;
   color:var(--clear); display:grid; place-items:center}
 .dot.pick svg{width:100%; height:100%}
+/* hilltops name themselves on the map; everything else names itself
+   in the rail below, and every spot keeps a tick for its position */
+.peaks{position:absolute; inset:0; pointer-events:none}
+.pk{position:absolute; transform:translate(-50%,-100%); white-space:nowrap;
+  font-family:var(--msg); font-size:11.5px; font-weight:400; line-height:1;
+  color:var(--fog); margin-top:-13px;
+  text-shadow:0 1px 4px var(--ink), 0 0 9px var(--ink), 0 0 3px var(--ink)}
+.pk.t1{margin-top:-29px}
+.pk.on{color:var(--clear)}
+.pk.pick{font-weight:600}
+@media(max-width:374px){ .pk{font-size:10.5px} }
+
 /* label rail: horizontal names in staggered rows, a tick per dot.
    Labels carry the container ground as background and sit above the
    ticks, so a tick crossing a row is masked — no line-over-name. */
-.rail{position:relative; height:68px}
+.rail{position:relative; height:54px}
 .rail .r0{--row:0}.rail .r1{--row:1}.rail .r2{--row:2}.rail .r3{--row:3}
 .rail i{position:absolute; top:0; width:1px; margin-left:-.5px; z-index:0;
-  height:calc(5px + var(--row)*15px); background:var(--fog-faint)}
+  height:7px; background:var(--fog-faint)}
 .rail i.on{background:var(--clear-dim)}
-.rail b{position:absolute; top:calc(6px + var(--row)*15px); transform:translateX(-50%);
+.rail b{position:absolute; top:calc(11px + var(--row)*15px); transform:translateX(-50%);
   font-family:var(--disp); font-size:11.5px; font-weight:400; letter-spacing:0;
   color:var(--fog); white-space:nowrap; line-height:1.3;
   background:var(--ink); padding:0 3px; z-index:1}
@@ -177,16 +189,13 @@ svg.g{fill:currentColor}
 .rows .tr:last-child{border-bottom:0}
 .ri{color:var(--paper); display:grid; place-items:center}
 .ri svg{width:29px; height:29px}
-.tr.top .ri{color:var(--clear)}
 .nm{display:block; font-family:var(--disp); font-weight:700; font-size:19px;
   line-height:1.1; letter-spacing:-.022em; color:var(--paper)}
-.tr.top .nm{color:var(--clear)}
 .strip{display:block; margin-top:6px; font-family:var(--mono); font-size:12.5px;
   letter-spacing:.02em; color:var(--fog-dim); line-height:1.45}
 .strip b{color:var(--fog); font-weight:400}
-.tp{font-family:var(--disp); font-weight:700; font-size:26px; line-height:1;
-  letter-spacing:-.038em; color:var(--paper); text-align:right}
-.tr.top .tp{color:var(--clear)}
+.tp{font-family:var(--disp); font-weight:700; font-size:21px; line-height:1;
+  letter-spacing:-.032em; color:var(--paper); text-align:right}
 
 .attr{margin-top:30px; padding-top:16px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; line-height:1.8; color:var(--fog-faint)}
 .attr a{color:var(--fog-dim)}
@@ -197,8 +206,7 @@ svg.g{fill:currentColor}
   :root{--pad:24px}
   h1 img{width:clamp(264px, 37.4vw, 440px)}
   .stage{aspect-ratio:900/220}
-  .rail{height:40px}
-  .rail .d0{--row:0}.rail .d1{--row:1}
+  .rail{height:42px}
   .rail b{font-size:12px}
   .verdict{min-height:126px}
   .v-name{font-size:30px}
@@ -206,12 +214,12 @@ svg.g{fill:currentColor}
   .v-ico svg{width:30px; height:30px}
   .tr{grid-template-columns:40px 1fr auto; gap:18px}
   .ri svg{width:33px; height:33px}
-  .sec{font-size:22px; margin:44px 0 22px}
+  .sec{font-size:22px; margin:46px 0 18px}
   .nm{font-size:20px}
-  .tp{font-size:28px}
+  .tp{font-size:23px}
   .v-name{font-size:30px}
   .v-temp{font-size:48px}
-  .verdict{min-height:94px}
+  .verdict{min-height:88px}
   .nm{font-size:18px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
@@ -247,6 +255,7 @@ svg.g{fill:currentColor}
         <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
+      <div class="peaks" id="peaks"></div>
     </div>
     <div class="rail" id="rail"></div>
 
@@ -281,21 +290,21 @@ const G={
  palm:'<path d="M237.79,53.23a66.86,66.86,0,0,0-97.74,0,72.21,72.21,0,0,0-12.05,17,72.21,72.21,0,0,0-12-17,66.86,66.86,0,0,0-97.74,0,8,8,0,0,0,2.6,12.85L77,90.55a71.42,71.42,0,0,0-43.36,33.21,70.64,70.64,0,0,0-7.2,54.32A8,8,0,0,0,39,182.36l81-61.68V224a8,8,0,0,0,16,0V120.68l81,61.68a8,8,0,0,0,12.57-4.28,70.64,70.64,0,0,0-7.2-54.32A71.42,71.42,0,0,0,179,90.55l56.22-24.47a8,8,0,0,0,2.6-12.85ZM67.08,48a51.13,51.13,0,0,1,37.28,16.26,56.53,56.53,0,0,1,14.26,26.93L39,56.53A50.5,50.5,0,0,1,67.08,48ZM40,161.5a54.82,54.82,0,0,1,7.47-29.7,55.55,55.55,0,0,1,34-25.89A56.52,56.52,0,0,1,96.1,104a55.82,55.82,0,0,1,16.23,2.41ZM208.5,131.8A54.82,54.82,0,0,1,216,161.5l-72.3-55.1a56.3,56.3,0,0,1,64.83,25.4ZM137.38,91.19a56.53,56.53,0,0,1,14.26-26.93A51.13,51.13,0,0,1,188.92,48,50.5,50.5,0,0,1,217,56.53Z"/>',
  sail:'<path d="M247.21,172.53A8,8,0,0,0,240,168H144V144h72a8,8,0,0,0,5.92-13.38L144,44.91V8a8,8,0,0,0-14.21-5l-104,128A8,8,0,0,0,32,144h96v24H16a8,8,0,0,0-6.25,13l29.6,37a15.93,15.93,0,0,0,12.49,6H204.16a15.93,15.93,0,0,0,12.49-6l29.6-37A8,8,0,0,0,247.21,172.53ZM197.92,128H144V68.69ZM48.81,128,128,30.53V128Zm155.35,80H51.84l-19.2-24H223.36Z"/>',
  fogx:'<path d="M120,208H72a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Zm64-16H160a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Zm-24,32H104a8,8,0,0,0,0,16h56a8,8,0,0,0,0-16Zm72-124a76.08,76.08,0,0,1-76,76H76A52,52,0,0,1,76,72a53.26,53.26,0,0,1,8.92.76A76.08,76.08,0,0,1,232,100Zm-16,0A60.06,60.06,0,0,0,96,96.46a8,8,0,0,1-16-.92q.21-3.66.77-7.23A38.11,38.11,0,0,0,76,88a36,36,0,0,0,0,72h80A60.07,60.07,0,0,0,216,100Z"/>',
- sun:'<path d="M116,36V20a12,12,0,0,1,24,0V36a12,12,0,0,1-24,0Zm80,92a68,68,0,1,1-68-68A68.07,68.07,0,0,1,196,128Zm-24,0a44,44,0,1,0-44,44A44.05,44.05,0,0,0,172,128ZM51.51,68.49a12,12,0,1,0,17-17l-12-12a12,12,0,0,0-17,17Zm0,119-12,12a12,12,0,0,0,17,17l12-12a12,12,0,1,0-17-17ZM196,72a12,12,0,0,0,8.49-3.51l12-12a12,12,0,0,0-17-17l-12,12A12,12,0,0,0,196,72Zm8.49,115.51a12,12,0,0,0-17,17l12,12a12,12,0,0,0,17-17ZM48,128a12,12,0,0,0-12-12H20a12,12,0,0,0,0,24H36A12,12,0,0,0,48,128Zm80,80a12,12,0,0,0-12,12v16a12,12,0,0,0,24,0V220A12,12,0,0,0,128,208Zm108-92H220a12,12,0,0,0,0,24h16a12,12,0,0,0,0-24Z"/>'
+ sun:'<path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm8,24a64,64,0,1,0,64,64A64.07,64.07,0,0,0,128,64ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/>'
 };
 const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 256 256" aria-hidden="true">${G[k]}</svg>`;
 
 const SPOTS=[
  {n:"Ocean Beach",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40, y:218},
  {n:"GG Park",        g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:248,y:200},
- {n:"Twin Peaks",     g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:330,y:104},
+ {n:"Twin Peaks",     g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:330,y:104,h:1},
  {n:"Glen Canyon",    g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:387,y:158},
- {n:"Corona Heights", g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:444,y:142},
+ {n:"Corona Heights", g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:444,y:142,h:1},
  {n:"Fort Mason",     g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:505,y:190},
  {n:"Dolores Park",   g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:563,y:196},
  {n:"McLaren",        g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:628,y:172},
- {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:690,y:156},
- {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:780,y:182},
+ {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:690,y:156,h:1},
+ {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:780,y:182,h:1},
  {n:"Dogpatch",       g:"dog"  ,lat:37.7615,lon:-122.3872,rel:85,x:860,y:212}
 ];
 /* one profile. clarity-forward, since fog is the whole point;
@@ -450,13 +459,19 @@ function paint(){
     return `<span class="dot ${on?'on':''} ${p?'pick':''}" title="${s.n}"
       style="left:${(s.x/VBW*100).toFixed(2)}%; top:${(s.y/VBH*100).toFixed(2)}%">${p?ico("sun"):""}</span>`;
   }).join("");
-  $("rail").innerHTML=fr.spots.map((s,j)=>{
-    const on=s.lowCloud<CLEAR, L=(s.x/VBW*100).toFixed(2),
-          rows=`r${j%4} d${j%2}`,
-          edge=j===0?'el':(j===fr.spots.length-1?'er':'');
-    return `<i class="${rows} ${on?'on':''}" style="left:${L}%"></i>`
-         + `<b class="${rows} ${edge} ${on?'on':''} ${s.n===pick?'pick':''}" style="left:${L}%">${s.n}</b>`;
+  const hills=fr.spots.filter(s=>s.h), flats=fr.spots.filter(s=>!s.h);
+  $("peaks").innerHTML=hills.map((s,i)=>{
+    const L=s.x/VBW*100;
+    return `<b class="pk t${i%2} ${s.lowCloud<CLEAR?'on':''} ${s.n===pick?'pick':''}"
+      style="left:${L.toFixed(2)}%; top:${(s.y/VBH*100).toFixed(2)}%">${s.n}</b>`;
   }).join("");
+  $("rail").innerHTML=
+    fr.spots.map(s=>`<i class="r0 ${s.lowCloud<CLEAR?'on':''}" style="left:${(s.x/VBW*100).toFixed(2)}%"></i>`).join("")
+   +flats.map((s,j)=>{
+      const L=(s.x/VBW*100).toFixed(2), rows=`r${j%4}`,
+            edge=+L<6?'el':(+L>94?'er':'');
+      return `<b class="${rows} ${edge} ${s.lowCloud<CLEAR?'on':''} ${s.n===pick?'pick':''}" style="left:${L}%">${s.n}</b>`;
+    }).join("");
 
   const w=fr.spots.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4,
         e=fr.spots.slice(-4).reduce((t,s)=>t+s.lowCloud,0)/4,
