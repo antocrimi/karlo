@@ -53,16 +53,16 @@ body{
 h1{margin:0; flex:0 1 auto; min-width:0}
 /* wordmark is width-driven: 40vw on phones for prominence without dominance,
    climbing to a 400px ceiling on desktop */
-h1 img{display:block; width:clamp(150px, 40vw, 400px); height:auto; object-fit:contain}
+h1 img{display:block; width:clamp(165px, 44vw, 440px); height:auto; object-fit:contain}
 
 /* unit override — muted, secondary. Default is inferred from locale. */
 .units{display:flex; align-items:center; gap:1px; flex:0 0 auto}
-.units button{font-family:var(--mono); font-size:12.5px; letter-spacing:.04em;
-  background:none; border:0; padding:9px 7px; min-height:40px; cursor:pointer;
+.units button{font-family:var(--mono); font-size:15px; letter-spacing:.04em;
+  background:none; border:0; padding:10px 9px; min-height:44px; cursor:pointer;
   color:var(--fog-faint); transition:color .2s; -webkit-tap-highlight-color:transparent}
 .units button[aria-pressed="true"]{color:var(--fog)}
 .units button:focus-visible{outline:2px solid var(--clear); outline-offset:2px; border-radius:3px}
-.units s{text-decoration:none; color:var(--fog-faint); font-family:var(--mono); font-size:11px}
+.units s{text-decoration:none; color:var(--fog-faint); font-family:var(--mono); font-size:13px}
 
 svg.g{fill:currentColor}
 
@@ -73,10 +73,10 @@ svg.g{fill:currentColor}
    page never jumps while the scrubber is moving. */
 .verdict{min-height:118px; display:flex; align-items:center;
   padding-bottom:18px; margin-bottom:14px; border-bottom:1px solid var(--line)}
-.v-row{display:flex; align-items:center; gap:17px; width:100%}
-.v-temp{flex:0 0 auto; font-family:var(--disp); font-weight:700; font-size:52px;
+.v-row{display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%}
+.v-temp{flex:0 0 auto; order:2; font-family:var(--disp); font-weight:700; font-size:52px;
   line-height:.9; letter-spacing:-.045em; color:var(--paper)}
-.v-body{min-width:0}
+.v-body{min-width:0; order:1}
 .v-head{display:flex; align-items:center; gap:9px}
 .v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
 .v-ico svg{width:27px; height:27px; display:block}
@@ -144,7 +144,8 @@ svg.g{fill:currentColor}
   background:var(--fog-faint); border:1px solid var(--fog-dim);
   transition:background .18s linear, border-color .18s linear}
 .dot.on{background:var(--clear); border-color:var(--clear)}
-.dot.pick{width:26px; height:26px; margin:-13px 0 0 -13px; background:none; border:none;
+/* 22px box puts the sun's disc at ~11.7px, the width of a plain dot */
+.dot.pick{width:22px; height:22px; margin:-11px 0 0 -11px; background:none; border:none;
   color:var(--clear); display:grid; place-items:center}
 .dot.pick svg{width:100%; height:100%}
 /* label rail: horizontal names in staggered rows, a tick per dot.
@@ -167,26 +168,29 @@ svg.g{fill:currentColor}
 
 /* ══ full data — split at the fog line ═════════════════════════ */
 .ph{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
-  color:var(--fog-dim); margin:0 0 4px; padding-bottom:9px; border-bottom:1px solid var(--line-hi);
+  color:var(--fog-dim); margin:0; padding-bottom:4px;
   display:flex; justify-content:space-between; gap:10px}
 .ph b{color:var(--fog-dim); font-weight:400}
-.grp{font-family:var(--mono); font-size:10.5px; letter-spacing:.17em; text-transform:uppercase;
-  color:var(--fog-dim); margin:22px 0 0; padding:0 0 7px; display:flex;
-  justify-content:space-between; gap:10px; border-bottom:1px solid var(--line-hi)}
-.grp:first-child{margin-top:14px}
+
+/* group headers borrow the scrubber readout's type, so the two moments
+   the page names — the hour, and the side of the fog line — match */
+.grp{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.022em;
+  color:var(--fog); margin:34px 0 14px}
 .grp.sun{color:var(--clear)}
+
+.rows{display:block}
 .tr{display:grid; grid-template-columns:32px 1fr; gap:13px; align-items:center;
-  padding:12px 0; border-bottom:1px solid var(--line)}
-.ri{color:var(--fog-faint); display:grid; place-items:center}
+  padding:13px 0; border-bottom:1px solid var(--line)}
+.rows .tr:last-child{border-bottom:0}
+.ri{color:var(--paper); display:grid; place-items:center}
 .ri svg{width:28px; height:28px}
-.tr.clear .ri{color:var(--clear)}
-.nm{font-size:17px; font-weight:500; line-height:1.2; color:var(--fog)}
-.tr.clear .nm{color:var(--paper)}
+.tr.top .ri{color:var(--clear)}
+.nm{font-size:17px; font-weight:500; line-height:1.2; color:var(--paper)}
 .tr.top .nm{color:var(--clear); font-weight:600}
-.strip{display:block; margin-top:5px; color:var(--fog-faint)}
-.strip s{text-decoration:none; font-family:var(--msg); font-size:13px; color:var(--fog-dim)}
-.tr.clear .strip s{color:var(--fog)}
-.strip u{text-decoration:none; font-family:var(--mono); font-size:12px; letter-spacing:.02em}
+.strip{display:block; margin-top:2px; font-family:var(--mono); font-size:12.5px;
+  letter-spacing:.02em; color:var(--fog-dim); line-height:1.5}
+.strip s{text-decoration:none; font-family:var(--msg); font-size:13.5px; color:var(--fog)}
+.strip b{color:var(--fog); font-weight:400}
 
 .method{margin-top:26px; padding-top:15px; border-top:1px solid var(--line);
   font-family:var(--mono); font-size:12px; line-height:1.85; color:var(--fog-dim)}
@@ -196,7 +200,7 @@ svg.g{fill:currentColor}
 
 @media(min-width:560px){
   :root{--pad:24px}
-  h1 img{width:clamp(240px, 34vw, 400px)}
+  h1 img{width:clamp(264px, 37.4vw, 440px)}
   .stage{aspect-ratio:900/220}
   .rail{height:40px}
   .rail .d0{--row:0}.rail .d1{--row:1}
@@ -207,6 +211,7 @@ svg.g{fill:currentColor}
   .v-ico svg{width:30px; height:30px}
   .tr{grid-template-columns:38px 1fr; gap:16px}
   .ri svg{width:32px; height:32px}
+  .grp{font-size:21px; margin:38px 0 16px}
   .nm{font-size:18px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
@@ -432,12 +437,12 @@ function paint(){
     <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
       <span class="ri">${ico(s.g)}</span>
       <span><span class="nm">${s.n}</span>
-        <span class="strip"><s>${t2(s.temp)}°</s> <u>${w2(s.wind)} ${wu()} · ${Math.round(s.lowCloud)}% low cloud</u></span></span>
+        <span class="strip"><s>${t2(s.temp)}°</s> &nbsp;<b>${w2(s.wind)}</b> ${wu()} · <b>${Math.round(s.lowCloud)}%</b> low cloud</span></span>
     </div>`;
-  const head=(t,n,c)=>`<div class="grp ${c}"><span>${t}</span><span>${n} ${n===1?"spot":"spots"}</span></div>`;
+  /* rows are wrapped so the rule falls only between them, never at an edge */
   $("board").innerHTML=
-    head("Clear",sun.length,sun.length?"sun":"")+sun.map((s,i)=>row(s,i,"clear")).join("")+
-    head("Under Karl",fog.length,"")+fog.map((s,i)=>row(s,i,"fog")).join("");
+    `<h3 class="grp sun">Clear spots</h3><div class="rows">${sun.map((s,i)=>row(s,i,"clear")).join("")}</div>`+
+    `<h3 class="grp">Under Karl</h3><div class="rows">${fog.map((s,i)=>row(s,i,"fog")).join("")}</div>`;
 
   const pick=sun.length?sun[0].n:null;
   $("dots").innerHTML=fr.spots.map(s=>{
