@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NoKarl — where the fog isn't, in San Francisco</title>
-<meta name="description" content="Here comes the sun. Eleven San Francisco spots scored on low cloud, visibility, wind and comfort.">
+<meta name="description" content="Your SF sun chasing guide. Eleven San Francisco spots scored on low cloud, visibility, wind and comfort.">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -62,27 +62,31 @@ h1 img{display:block; width:clamp(165px, 44vw, 440px); height:auto; object-fit:c
   color:var(--fog-faint); transition:color .2s; -webkit-tap-highlight-color:transparent}
 .units button[aria-pressed="true"]{color:var(--fog)}
 .units button:focus-visible{outline:2px solid var(--clear); outline-offset:2px; border-radius:3px}
-.units s{text-decoration:none; color:var(--fog-faint); font-family:var(--mono); font-size:13px}
+.units s{display:inline-block; width:1px; height:15px; margin:0 3px;
+  background:var(--fog-faint); text-decoration:none}
 
 svg.g{fill:currentColor}
 
 .sub{max-width:46ch; color:var(--fog); font-size:16px; margin:0 0 20px}
 
-/* ══ verdict — temperature leads, place and conditions stack ═══
-   Fixed min-height so the quiet state occupies the same box and the
-   page never jumps while the scrubber is moving. */
-.verdict{min-height:118px; display:flex; align-items:center;
-  padding-bottom:18px; margin-bottom:14px; border-bottom:1px solid var(--line)}
-.v-row{display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%}
-.v-temp{flex:0 0 auto; order:2; font-family:var(--disp); font-weight:700; font-size:52px;
-  line-height:.9; letter-spacing:-.045em; color:var(--paper)}
-.v-body{min-width:0; order:1}
-.v-head{display:flex; align-items:center; gap:9px}
+/* ══ section headings — label, then a rule to the edge ════════ */
+.sec{display:flex; align-items:center; gap:15px; margin:38px 0 20px;
+  font-family:var(--disp); font-weight:700; font-size:20px;
+  letter-spacing:-.024em; color:var(--paper)}
+.sec::after{content:""; flex:1 1 auto; height:1px; background:var(--line)}
+.sec:first-of-type{margin-top:30px}
+
+/* ══ verdict — the pick, in full accent ════════════════════════
+   min-height holds the box so the quiet state doesn't jump the page */
+.verdict{min-height:86px; margin-bottom:34px}
+.v-row{display:flex; align-items:center; gap:12px}
 .v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
-.v-ico svg{width:27px; height:27px; display:block}
+.v-ico svg{width:30px; height:30px; display:block}
 .v-name{font-family:var(--disp); font-weight:700; font-size:27px;
-  line-height:1.04; letter-spacing:-.026em; color:var(--clear)}
-.v-cond{display:block; margin-top:8px; font-family:var(--mono); font-size:12.5px;
+  line-height:1.05; letter-spacing:-.028em; color:var(--clear); min-width:0}
+.v-temp{margin-left:auto; flex:0 0 auto; font-family:var(--disp); font-weight:700;
+  font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear)}
+.v-cond{display:block; margin-top:12px; font-family:var(--mono); font-size:13px;
   letter-spacing:.02em; color:var(--fog-dim)}
 .v-cond b{color:var(--fog); font-weight:400}
 .v-row.quiet .v-ico,.v-row.quiet .v-name{color:var(--fog)}
@@ -166,37 +170,28 @@ svg.g{fill:currentColor}
 .rail b.pick{font-weight:700}
 @media(max-width:374px){ .rail b{font-size:10.5px} }
 
-/* ══ full data — split at the fog line ═════════════════════════ */
-.ph{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
-  color:var(--fog-dim); margin:0; padding-bottom:4px;
-  display:flex; justify-content:space-between; gap:10px}
-.ph b{color:var(--fog-dim); font-weight:400}
-
-/* group headers borrow the scrubber readout's type, so the two moments
-   the page names — the hour, and the side of the fog line — match */
-.grp{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.022em;
-  color:var(--fog); margin:34px 0 14px}
-.grp.sun{color:var(--clear)}
-
+/* ══ full data — split at the fog line ════════════════════════ */
 .rows{display:block}
-.tr{display:grid; grid-template-columns:32px 1fr; gap:13px; align-items:center;
-  padding:13px 0; border-bottom:1px solid var(--line)}
+.tr{display:grid; grid-template-columns:34px 1fr auto; gap:14px; align-items:center;
+  padding:15px 0; border-bottom:1px solid var(--line)}
 .rows .tr:last-child{border-bottom:0}
 .ri{color:var(--paper); display:grid; place-items:center}
-.ri svg{width:28px; height:28px}
+.ri svg{width:29px; height:29px}
 .tr.top .ri{color:var(--clear)}
-.nm{font-size:17px; font-weight:500; line-height:1.2; color:var(--paper)}
-.tr.top .nm{color:var(--clear); font-weight:600}
-.strip{display:block; margin-top:2px; font-family:var(--mono); font-size:12.5px;
-  letter-spacing:.02em; color:var(--fog-dim); line-height:1.5}
-.strip s{text-decoration:none; font-family:var(--msg); font-size:13.5px; color:var(--fog)}
+.nm{display:block; font-family:var(--disp); font-weight:700; font-size:19px;
+  line-height:1.1; letter-spacing:-.022em; color:var(--paper)}
+.tr.top .nm{color:var(--clear)}
+.strip{display:block; margin-top:6px; font-family:var(--mono); font-size:12.5px;
+  letter-spacing:.02em; color:var(--fog-dim); line-height:1.45}
 .strip b{color:var(--fog); font-weight:400}
+.tp{font-family:var(--disp); font-weight:700; font-size:26px; line-height:1;
+  letter-spacing:-.038em; color:var(--paper); text-align:right}
+.tr.top .tp{color:var(--clear)}
 
-.method{margin-top:26px; padding-top:15px; border-top:1px solid var(--line);
-  font-family:var(--mono); font-size:12px; line-height:1.85; color:var(--fog-dim)}
-.method b{color:var(--fog); font-weight:400}
-.attr{margin-top:18px; font-family:var(--mono); font-size:11px; line-height:1.8; color:var(--fog-faint)}
+.attr{margin-top:30px; padding-top:16px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; line-height:1.8; color:var(--fog-faint)}
 .attr a{color:var(--fog-dim)}
+.sign{margin:24px 0 0; padding-top:17px; border-top:1px solid var(--line);
+  text-align:right; font-size:15px; color:var(--fog-dim)}
 
 @media(min-width:560px){
   :root{--pad:24px}
@@ -209,9 +204,14 @@ svg.g{fill:currentColor}
   .v-name{font-size:30px}
   .v-temp{font-size:58px}
   .v-ico svg{width:30px; height:30px}
-  .tr{grid-template-columns:38px 1fr; gap:16px}
-  .ri svg{width:32px; height:32px}
-  .grp{font-size:21px; margin:38px 0 16px}
+  .tr{grid-template-columns:40px 1fr auto; gap:18px}
+  .ri svg{width:33px; height:33px}
+  .sec{font-size:22px; margin:44px 0 22px}
+  .nm{font-size:20px}
+  .tp{font-size:28px}
+  .v-name{font-size:30px}
+  .v-temp{font-size:48px}
+  .verdict{min-height:94px}
   .nm{font-size:18px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
@@ -226,15 +226,16 @@ svg.g{fill:currentColor}
   <div class="titlerow">
     <h1><img src="logo.png" alt="Karl" width="638" height="196"></h1>
     <div class="units" id="units" role="group" aria-label="Temperature unit">
-      <button data-u="C" aria-pressed="false">°C</button><s>/</s><button data-u="F" aria-pressed="true">°F</button>
+      <button data-u="C" aria-pressed="false">°C</button><s aria-hidden="true"></s><button data-u="F" aria-pressed="true">°F</button>
     </div>
   </div>
 
-  <p class="sub">Here comes the sun.</p>
+  <p class="sub">Your SF sun chasing guide.</p>
 
   <div class="ridge">
+    <h2 class="sec">Top Spot</h2>
     <div class="verdict" id="verdict" aria-live="polite"></div>
-    <div class="ridge-head"><span>← West</span><b id="ridgeState">Marine layer</b><span>East →</span></div>
+    <div class="ridge-head"><span>← West</span><span>East →</span></div>
     <div class="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
         <defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
@@ -257,14 +258,13 @@ svg.g{fill:currentColor}
     </div>
   </div>
 
-  <h2 class="ph"><span>All eleven spots</span><b>Ranked calmest first</b></h2>
   <div id="board"></div>
 
-  <div class="method" id="method"></div>
   <p class="attr">
     Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a>, CC BY 4.0.
     Non-commercial use. Fog climatology is a static local estimate, not measured.
   </p>
+  <p class="sign">Enjoy your day! Anto</p>
 </div>
 
 <script>
@@ -413,16 +413,15 @@ function paintVerdict(sun,k){
   if(!sun.length){                      /* quiet rule: nothing above the line */
     $("verdict").innerHTML=`<div class="v-row quiet">
       <span class="v-ico">${ico("fogx")}</span>
-      <span class="v-body"><span class="v-name">Karl's winning${k===0?" right now":""}.</span></span></div>`;
+      <span class="v-name">Karl's winning${k===0?" right now":""}.</span></div>`;
     return;
   }
   const t=sun[0];
   $("verdict").innerHTML=`<div class="v-row">
-    <span class="v-temp">${t2(t.temp)}°</span>
-    <span class="v-body">
-      <span class="v-head"><span class="v-ico">${ico(t.g)}</span><span class="v-name">${t.n}</span></span>
-      <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> low cloud · <b>${w2(t.wind)}</b> ${wu()} wind</span>
-    </span></div>`;
+      <span class="v-ico">${ico(t.g)}</span>
+      <span class="v-name">${t.n}</span>
+      <span class="v-temp">${t2(t.temp)}°</span></div>
+    <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> low cloud · <b>${w2(t.wind)}</b> ${wu()} wind</span>`;
 }
 
 function paint(){
@@ -437,12 +436,13 @@ function paint(){
     <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
       <span class="ri">${ico(s.g)}</span>
       <span><span class="nm">${s.n}</span>
-        <span class="strip"><s>${t2(s.temp)}°</s> &nbsp;<b>${w2(s.wind)}</b> ${wu()} · <b>${Math.round(s.lowCloud)}%</b> low cloud</span></span>
+        <span class="strip"><b>${Math.round(s.lowCloud)}%</b> low cloud · <b>${w2(s.wind)}</b> ${wu()} wind</span></span>
+      <span class="tp">${t2(s.temp)}°</span>
     </div>`;
   /* rows are wrapped so the rule falls only between them, never at an edge */
   $("board").innerHTML=
-    `<h3 class="grp sun">Clear spots</h3><div class="rows">${sun.map((s,i)=>row(s,i,"clear")).join("")}</div>`+
-    `<h3 class="grp">Under Karl</h3><div class="rows">${fog.map((s,i)=>row(s,i,"fog")).join("")}</div>`;
+    `<h2 class="sec">Clear spots</h2><div class="rows">${sun.map((s,i)=>row(s,i,"clear")).join("")}</div>`+
+    `<h2 class="sec">Under Karl</h2><div class="rows">${fog.map((s,i)=>row(s,i,"fog")).join("")}</div>`;
 
   const pick=sun.length?sun[0].n:null;
   $("dots").innerHTML=fr.spots.map(s=>{
@@ -463,13 +463,7 @@ function paint(){
         wy=GROUND-w*1.55, ey=GROUND-e*1.55;
   $("fogBody").setAttribute("d",
     `M0,${GROUND} L0,${wy} C240,${wy-18} 330,${wy+12} 400,${(wy+ey)/2} C520,${ey-10} 700,${ey} ${VBW},${ey} L${VBW},${GROUND} Z`);
-  $("ridgeState").textContent=w>60?(e>55?"City-wide marine layer":"Fog held at the ridge"):"Clear west to east";
 
-  $("method").innerHTML=`<b>Clear</b> means low cloud under ${CLEAR}%. That line splits the list. `+
-   `<b>Inside each group</b> the calmest spot sits on top, so exposed places sink. `+
-   `<b>Score</b> = clarity×${W.c} + visibility×${W.v} + wind comfort×${W.w} + temperature fit×${W.t}, `+
-   `centred on ${t2(W.ideal)}°${S.unit}, and it breaks ties on equal wind. `+
-   `<b>Quiet rule</b>: when nothing is above the line, no place is named.`;
 }
 
 $("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`);
