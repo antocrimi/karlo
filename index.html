@@ -68,24 +68,25 @@ svg.g{fill:currentColor}
 
 .sub{max-width:46ch; color:var(--fog); font-size:16px; margin:0 0 20px}
 
-/* ══ verdict — the answer, as the map's header ═════════════════
-   No tile behind the glyph: the mark stands on the page ground and
-   carries the accent, so icon and name together read as the pick. */
-.verdict{padding-bottom:17px; margin-bottom:14px; border-bottom:1px solid var(--line)}
-.v-row{display:flex; align-items:center; gap:13px}
+/* ══ verdict — temperature leads, place and conditions stack ═══
+   Fixed min-height so the quiet state occupies the same box and the
+   page never jumps while the scrubber is moving. */
+.verdict{min-height:118px; display:flex; align-items:center;
+  padding-bottom:18px; margin-bottom:14px; border-bottom:1px solid var(--line)}
+.v-row{display:flex; align-items:center; gap:17px; width:100%}
+.v-temp{flex:0 0 auto; font-family:var(--disp); font-weight:700; font-size:52px;
+  line-height:.9; letter-spacing:-.045em; color:var(--paper)}
+.v-body{min-width:0}
+.v-head{display:flex; align-items:center; gap:9px}
 .v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
-.v-ico svg{width:38px; height:38px; display:block}
-.v-name{display:block; font-family:var(--disp); font-weight:700; font-size:27px;
+.v-ico svg{width:27px; height:27px; display:block}
+.v-name{font-family:var(--disp); font-weight:700; font-size:27px;
   line-height:1.04; letter-spacing:-.026em; color:var(--clear)}
-.v-area{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--fog-dim); margin-top:5px}
-.v-row.quiet .v-ico,.v-row.quiet .v-name{color:var(--fog)}
-.v-name.sml{font-size:23px; letter-spacing:-.022em}
-.v-stat{display:flex; align-items:center; gap:15px; margin-top:16px}
-.v-temp{font-family:var(--disp); font-weight:700; font-size:42px; line-height:1;
-  letter-spacing:-.04em; color:var(--paper)}
-.v-cond{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--fog-dim)}
+.v-cond{display:block; margin-top:8px; font-family:var(--mono); font-size:12.5px;
+  letter-spacing:.02em; color:var(--fog-dim)}
 .v-cond b{color:var(--fog); font-weight:400}
+.v-row.quiet .v-ico,.v-row.quiet .v-name{color:var(--fog)}
+.v-row.quiet .v-name{font-size:24px}
 
 /* ══ time scrubber ═════════════════════════════════════════════ */
 .timebar{margin-top:15px; padding-top:13px; border-top:1px solid var(--line)}
@@ -93,27 +94,41 @@ svg.g{fill:currentColor}
 .tb-at{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.022em; color:var(--paper)}
 .tb-rel{font-family:var(--mono); font-size:11px; letter-spacing:.13em;
   text-transform:uppercase; color:var(--fog-dim)}
-/* the thumb is Karl. You drag him off the city. */
-#time{-webkit-appearance:none; appearance:none; width:100%; height:46px;
-  margin:0; display:block; background:transparent; cursor:grab; --p:0%}
+/* the thumb is Karl, mirrored to face the way the logo does.
+   Track thickens and the fill goes full amber while you drag. */
+#time{-webkit-appearance:none; appearance:none; width:100%; height:48px;
+  margin:0; display:block; background:transparent; cursor:grab; --p:0%;
+  touch-action:pan-y}
 #time:active{cursor:grabbing}
-#time::-webkit-slider-runnable-track{height:3px; border-radius:2px;
-  background:linear-gradient(90deg,var(--clear-dim) 0 var(--p),var(--fog-faint) var(--p) 100%)}
-#time::-moz-range-track{height:3px; border-radius:2px; background:var(--fog-faint)}
-#time::-moz-range-progress{height:3px; border-radius:2px; background:var(--clear-dim)}
+
+#time::-webkit-slider-runnable-track{
+  height:11px; border-radius:999px;
+  background:linear-gradient(90deg,var(--clear-dim) 0 var(--p),rgba(169,183,190,.15) var(--p) 100%);
+  transition:background .2s linear}
+#time:active::-webkit-slider-runnable-track,
+#time:focus-visible::-webkit-slider-runnable-track{
+  background:linear-gradient(90deg,var(--clear) 0 var(--p),rgba(169,183,190,.24) var(--p) 100%)}
 #time::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
-  width:34px; height:34px; margin-top:-15.5px; border:0; background:transparent;
+  width:34px; height:34px; margin-top:-11.5px; border:0; background:transparent;
   background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cg%20transform='translate(256,0)%20scale(-1,1)'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/g%3E%3C/svg%3E");
   background-size:contain; background-position:center; background-repeat:no-repeat;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.45));
   transition:transform .26s cubic-bezier(.34,1.16,.42,1)}
+#time:hover::-webkit-slider-thumb,
+#time:active::-webkit-slider-thumb,
+#time:focus-visible::-webkit-slider-thumb{transform:scale(1.15)}
+
+#time::-moz-range-track{height:11px; border-radius:999px; background:rgba(169,183,190,.15)}
+#time::-moz-range-progress{height:11px; border-radius:999px; background:var(--clear-dim);
+  transition:background .2s linear}
+#time:active::-moz-range-progress,#time:focus-visible::-moz-range-progress{background:var(--clear)}
 #time::-moz-range-thumb{width:34px; height:34px; border:0; background:transparent;
   background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cg%20transform='translate(256,0)%20scale(-1,1)'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/g%3E%3C/svg%3E");
   background-size:contain; background-position:center; background-repeat:no-repeat;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.45));
   transition:transform .26s cubic-bezier(.34,1.16,.42,1)}
-#time:hover::-webkit-slider-thumb,#time:active::-webkit-slider-thumb{transform:scale(1.15)}
 #time:hover::-moz-range-thumb,#time:active::-moz-range-thumb{transform:scale(1.15)}
-#time:focus-visible::-webkit-slider-thumb{transform:scale(1.15)}
-#time:focus-visible{outline:2px solid var(--clear); outline-offset:4px; border-radius:4px}
+#time:focus-visible{outline:none}
 .tb-scale{display:flex; justify-content:space-between; font-family:var(--mono);
   font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--fog-faint)}
 
@@ -154,16 +169,16 @@ svg.g{fill:currentColor}
 .ph{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--fog-dim); margin:0 0 4px; padding-bottom:9px; border-bottom:1px solid var(--line-hi);
   display:flex; justify-content:space-between; gap:10px}
-.ph b{color:var(--clear); font-weight:400}
+.ph b{color:var(--fog-dim); font-weight:400}
 .grp{font-family:var(--mono); font-size:10.5px; letter-spacing:.17em; text-transform:uppercase;
   color:var(--fog-dim); margin:22px 0 0; padding:0 0 7px; display:flex;
   justify-content:space-between; gap:10px; border-bottom:1px solid var(--line-hi)}
 .grp:first-child{margin-top:14px}
 .grp.sun{color:var(--clear)}
-.tr{display:grid; grid-template-columns:26px 1fr 72px; gap:12px; align-items:center;
+.tr{display:grid; grid-template-columns:32px 1fr; gap:13px; align-items:center;
   padding:12px 0; border-bottom:1px solid var(--line)}
 .ri{color:var(--fog-faint); display:grid; place-items:center}
-.ri svg{width:22px; height:22px}
+.ri svg{width:28px; height:28px}
 .tr.clear .ri{color:var(--clear)}
 .nm{font-size:17px; font-weight:500; line-height:1.2; color:var(--fog)}
 .tr.clear .nm{color:var(--paper)}
@@ -172,10 +187,6 @@ svg.g{fill:currentColor}
 .strip s{text-decoration:none; font-family:var(--msg); font-size:13px; color:var(--fog-dim)}
 .tr.clear .strip s{color:var(--fog)}
 .strip u{text-decoration:none; font-family:var(--mono); font-size:12px; letter-spacing:.02em}
-.bar{height:4px; background:var(--fog-faint); border-radius:2px; overflow:hidden}
-.tr.clear .bar i{background:var(--clear-dim)}
-.tr.top .bar i{background:var(--clear)}
-.bar i{display:block; height:100%; background:var(--fog-faint); transition:width .18s linear}
 
 .method{margin-top:26px; padding-top:15px; border-top:1px solid var(--line);
   font-family:var(--mono); font-size:12px; line-height:1.85; color:var(--fog-dim)}
@@ -190,9 +201,12 @@ svg.g{fill:currentColor}
   .rail{height:40px}
   .rail .d0{--row:0}.rail .d1{--row:1}
   .rail b{font-size:12px}
+  .verdict{min-height:126px}
   .v-name{font-size:30px}
-  .v-ico svg{width:44px; height:44px}
-  .tr{grid-template-columns:30px 1fr 96px; gap:16px}
+  .v-temp{font-size:58px}
+  .v-ico svg{width:30px; height:30px}
+  .tr{grid-template-columns:38px 1fr; gap:16px}
+  .ri svg{width:32px; height:32px}
   .nm{font-size:18px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
@@ -238,7 +252,7 @@ svg.g{fill:currentColor}
     </div>
   </div>
 
-  <h2 class="ph"><span>All eleven spots</span><b id="sliceTag">Now</b></h2>
+  <h2 class="ph"><span>All eleven spots</span><b>Ranked calmest first</b></h2>
   <div id="board"></div>
 
   <div class="method" id="method"></div>
@@ -256,6 +270,7 @@ const G={
  wave:'<path d="M222.16,177.25a8,8,0,0,1-1,11.25c-17.36,14.39-32.86,19.5-47,19.5-18.58,0-34.82-8.82-49.93-17-25.35-13.76-47.24-25.64-79.07.74a8,8,0,1,1-10.22-12.31c40.17-33.28,70.32-16.92,96.93-2.48,25.35,13.75,47.24,25.63,79.07-.74A8,8,0,0,1,222.16,177.25Zm-11.27-57c-31.83,26.38-53.72,14.5-79.07.74-26.61-14.43-56.76-30.79-96.93,2.49a8,8,0,0,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.19,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31ZM45.11,79.8c31.83-26.37,53.72-14.49,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.12,47-19.5a8,8,0,1,0-10.22-12.31c-31.83,26.38-53.72,14.5-79.07.74C105.21,50.58,75.06,34.22,34.89,67.5A8,8,0,1,0,45.11,79.8Z"/>',
  tree:'<path d="M230.32,187.09l-46-59.09H208a8,8,0,0,0,6.34-12.88l-80-104a8,8,0,0,0-12.68,0l-80,104A8,8,0,0,0,48,128H71.64l-46,59.09A8,8,0,0,0,32,200h88v40a8,8,0,0,0,16,0V200h88a8,8,0,0,0,6.32-12.91ZM48.36,184l46-59.09A8,8,0,0,0,88,112H64.25L128,29.12,191.75,112H168a8,8,0,0,0-6.31,12.91L207.64,184Z"/>',
  peak:'<path d="M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm90.88,155.92-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84L146.63,148l-44.84-76.1a16,16,0,0,0-27.58,0L1.11,195.94A8,8,0,0,0,8,208H248a8,8,0,0,0,6.88-12.08ZM88,80l23.57,40H64.43ZM22,192l33-56h66l18.74,31.8,0,0L154,192Zm150.57,0-16.66-28.28L186.55,112,234,192Z"/>',
+ dog:'<path d="M239.71,125l-16.42-88a16,16,0,0,0-19.61-12.58l-.31.09L150.85,40h-45.7L52.63,24.56l-.31-.09A16,16,0,0,0,32.71,37.05L16.29,125a15.77,15.77,0,0,0,9.12,17.52A16.26,16.26,0,0,0,32.12,144,15.48,15.48,0,0,0,40,141.84V184a40,40,0,0,0,40,40h96a40,40,0,0,0,40-40V141.85a15.5,15.5,0,0,0,7.87,2.16,16.31,16.31,0,0,0,6.72-1.47A15.77,15.77,0,0,0,239.71,125ZM32,128h0L48.43,40,90.5,52.37Zm144,80H136V195.31l13.66-13.65a8,8,0,0,0-11.32-11.32L128,180.69l-10.34-10.35a8,8,0,0,0-11.32,11.32L120,195.31V208H80a24,24,0,0,1-24-24V123.11L107.92,56h40.15L200,123.11V184A24,24,0,0,1,176,208Zm48-80L165.5,52.37,207.57,40,224,128ZM104,140a12,12,0,1,1-12-12A12,12,0,0,1,104,140Zm72,0a12,12,0,1,1-12-12A12,12,0,0,1,176,140Z"/>',
  crane:'<path d="M228.12,17.14a8,8,0,0,0-7.88-.2L102,80H32A16,16,0,0,0,16,96V200a16,16,0,0,0,16,16h88a16,16,0,0,0,16-16V168a7.81,7.81,0,0,0-.34-2.3L113.54,92,216,37.33V160H200v-8a8,8,0,0,0-16,0v8a16,16,0,0,0,16,16h16a16,16,0,0,0,16-16V24A8,8,0,0,0,228.12,17.14ZM98.05,96l19.2,64H64V96ZM48,96v64H32V96ZM32,200h0V176h88v24Z"/>',
  slope:'<path d="M248,56a8,8,0,0,1-8,8H192v40a8,8,0,0,1-8,8H136v40a8,8,0,0,1-8,8H80v40a8,8,0,0,1-8,8H16a8,8,0,0,1,0-16H64V152a8,8,0,0,1,8-8h48V104a8,8,0,0,1,8-8h48V56a8,8,0,0,1,8-8h56A8,8,0,0,1,248,56Z"/>',
  palm:'<path d="M237.79,53.23a66.86,66.86,0,0,0-97.74,0,72.21,72.21,0,0,0-12.05,17,72.21,72.21,0,0,0-12-17,66.86,66.86,0,0,0-97.74,0,8,8,0,0,0,2.6,12.85L77,90.55a71.42,71.42,0,0,0-43.36,33.21,70.64,70.64,0,0,0-7.2,54.32A8,8,0,0,0,39,182.36l81-61.68V224a8,8,0,0,0,16,0V120.68l81,61.68a8,8,0,0,0,12.57-4.28,70.64,70.64,0,0,0-7.2-54.32A71.42,71.42,0,0,0,179,90.55l56.22-24.47a8,8,0,0,0,2.6-12.85ZM67.08,48a51.13,51.13,0,0,1,37.28,16.26,56.53,56.53,0,0,1,14.26,26.93L39,56.53A50.5,50.5,0,0,1,67.08,48ZM40,161.5a54.82,54.82,0,0,1,7.47-29.7,55.55,55.55,0,0,1,34-25.89A56.52,56.52,0,0,1,96.1,104a55.82,55.82,0,0,1,16.23,2.41ZM208.5,131.8A54.82,54.82,0,0,1,216,161.5l-72.3-55.1a56.3,56.3,0,0,1,64.83,25.4ZM137.38,91.19a56.53,56.53,0,0,1,14.26-26.93A51.13,51.13,0,0,1,188.92,48,50.5,50.5,0,0,1,217,56.53Z"/>',
@@ -276,7 +291,7 @@ const SPOTS=[
  {n:"McLaren",        g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:628,y:172},
  {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:690,y:156},
  {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:780,y:182},
- {n:"Dogpatch",       g:"crane",lat:37.7615,lon:-122.3872,rel:85,x:860,y:212}
+ {n:"Dogpatch",       g:"dog"  ,lat:37.7615,lon:-122.3872,rel:85,x:860,y:212}
 ];
 /* one profile. clarity-forward, since fog is the whole point;
    ideal sits at 66°F, the midpoint of the old Move/Chill pair. */
@@ -393,16 +408,16 @@ function paintVerdict(sun,k){
   if(!sun.length){                      /* quiet rule: nothing above the line */
     $("verdict").innerHTML=`<div class="v-row quiet">
       <span class="v-ico">${ico("fogx")}</span>
-      <span class="v-name sml">Karl's winning${k===0?" right now":""}.</span></div>`;
+      <span class="v-body"><span class="v-name">Karl's winning${k===0?" right now":""}.</span></span></div>`;
     return;
   }
-  const top=sun[0];
+  const t=sun[0];
   $("verdict").innerHTML=`<div class="v-row">
-    <span class="v-ico">${ico(top.g)}</span>
-    <span class="v-name">${top.n}</span></div>
-    <div class="v-stat"><span class="v-temp">${t2(top.temp)}°</span>
-      <span class="v-cond"><b>${Math.round(top.lowCloud)}%</b> low cloud<br>
-        <b>${w2(top.wind)}</b> ${wu()} wind</span></div>`;
+    <span class="v-temp">${t2(t.temp)}°</span>
+    <span class="v-body">
+      <span class="v-head"><span class="v-ico">${ico(t.g)}</span><span class="v-name">${t.n}</span></span>
+      <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> low cloud · <b>${w2(t.wind)}</b> ${wu()} wind</span>
+    </span></div>`;
 }
 
 function paint(){
@@ -412,19 +427,17 @@ function paint(){
   $("time").style.setProperty("--p",(k/(HOURS-1)*100).toFixed(1)+"%");
   $("tbRel").textContent=relLabel(k);
   $("time").setAttribute("aria-valuetext",stamp(fr.t,k));
-  $("sliceTag").textContent=stamp(fr.t,k);
 
   const row=(s,i,cls)=>`
     <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
       <span class="ri">${ico(s.g)}</span>
       <span><span class="nm">${s.n}</span>
         <span class="strip"><s>${t2(s.temp)}°</s> <u>${w2(s.wind)} ${wu()} · ${Math.round(s.lowCloud)}% low cloud</u></span></span>
-      <span class="bar"><i style="width:${s.score}%"></i></span>
     </div>`;
   const head=(t,n,c)=>`<div class="grp ${c}"><span>${t}</span><span>${n} ${n===1?"spot":"spots"}</span></div>`;
   $("board").innerHTML=
-    (sun.length?head("Clear",sun.length,"sun")+sun.map((s,i)=>row(s,i,"clear")).join(""):"")+
-    (fog.length?head("Under Karl",fog.length,"")+fog.map((s,i)=>row(s,i,"fog")).join(""):"");
+    head("Clear",sun.length,sun.length?"sun":"")+sun.map((s,i)=>row(s,i,"clear")).join("")+
+    head("Under Karl",fog.length,"")+fog.map((s,i)=>row(s,i,"fog")).join("");
 
   const pick=sun.length?sun[0].n:null;
   $("dots").innerHTML=fr.spots.map(s=>{
@@ -450,7 +463,7 @@ function paint(){
   $("method").innerHTML=`<b>Clear</b> means low cloud under ${CLEAR}%. That line splits the list. `+
    `<b>Inside each group</b> the calmest spot sits on top, so exposed places sink. `+
    `<b>Score</b> = clarity×${W.c} + visibility×${W.v} + wind comfort×${W.w} + temperature fit×${W.t}, `+
-   `centred on ${t2(W.ideal)}°${S.unit}, and it draws the bar. `+
+   `centred on ${t2(W.ideal)}°${S.unit}, and it breaks ties on equal wind. `+
    `<b>Quiet rule</b>: when nothing is above the line, no place is named.`;
 }
 
