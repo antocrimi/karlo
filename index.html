@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NoKarl — where the fog isn't, in San Francisco</title>
-<meta name="description" content="Karl doesn't own the whole city. Here's where he isn't. Twelve San Francisco spots scored on low cloud, visibility, wind and comfort.">
+<meta name="description" content="Here comes the sun. Eleven San Francisco spots scored on low cloud, visibility, wind and comfort.">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -80,12 +80,12 @@ svg.g{fill:currentColor}
 .v-area{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--fog-dim); margin-top:5px}
 .v-row.quiet .v-ico,.v-row.quiet .v-name{color:var(--fog)}
+.v-name.sml{font-size:23px; letter-spacing:-.022em}
 .v-stat{display:flex; align-items:center; gap:15px; margin-top:16px}
 .v-temp{font-family:var(--disp); font-weight:700; font-size:42px; line-height:1;
   letter-spacing:-.04em; color:var(--paper)}
 .v-cond{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--fog-dim)}
 .v-cond b{color:var(--fog); font-weight:400}
-.v-line{margin:14px 0 0; font-size:16px; line-height:1.4; color:var(--fog)}
 
 /* ══ time scrubber ═════════════════════════════════════════════ */
 .timebar{margin-top:15px; padding-top:13px; border-top:1px solid var(--line)}
@@ -102,14 +102,14 @@ svg.g{fill:currentColor}
 #time::-moz-range-track{height:3px; border-radius:2px; background:var(--fog-faint)}
 #time::-moz-range-progress{height:3px; border-radius:2px; background:var(--clear-dim)}
 #time::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
-  width:38px; height:38px; margin-top:-17.5px; border:0; background:transparent;
-  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/svg%3E");
+  width:34px; height:34px; margin-top:-15.5px; border:0; background:transparent;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cg%20transform='translate(256,0)%20scale(-1,1)'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/g%3E%3C/svg%3E");
   background-size:contain; background-position:center; background-repeat:no-repeat;
-  transition:transform .22s cubic-bezier(.2,.7,.3,1)}
-#time::-moz-range-thumb{width:38px; height:38px; border:0; background:transparent;
-  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/svg%3E");
+  transition:transform .26s cubic-bezier(.34,1.16,.42,1)}
+#time::-moz-range-thumb{width:34px; height:34px; border:0; background:transparent;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20256%20256'%3E%3Cg%20transform='translate(256,0)%20scale(-1,1)'%3E%3Cpath%20fill='%23F4F4F0'%20d='M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Z'/%3E%3C/g%3E%3C/svg%3E");
   background-size:contain; background-position:center; background-repeat:no-repeat;
-  transition:transform .22s cubic-bezier(.2,.7,.3,1)}
+  transition:transform .26s cubic-bezier(.34,1.16,.42,1)}
 #time:hover::-webkit-slider-thumb,#time:active::-webkit-slider-thumb{transform:scale(1.15)}
 #time:hover::-moz-range-thumb,#time:active::-moz-range-thumb{transform:scale(1.15)}
 #time:focus-visible::-webkit-slider-thumb{transform:scale(1.15)}
@@ -150,27 +150,32 @@ svg.g{fill:currentColor}
 .rail b.pick{font-weight:700}
 @media(max-width:374px){ .rail b{font-size:10.5px} }
 
-/* ══ full data ══════════════════════════════════════════════════ */
+/* ══ full data — split at the fog line ═════════════════════════ */
 .ph{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--fog-dim); margin:0 0 4px; padding-bottom:9px; border-bottom:1px solid var(--line-hi);
   display:flex; justify-content:space-between; gap:10px}
 .ph b{color:var(--clear); font-weight:400}
-.tr{display:grid; grid-template-columns:22px 26px 1fr 62px; gap:10px; align-items:center;
+.grp{font-family:var(--mono); font-size:10.5px; letter-spacing:.17em; text-transform:uppercase;
+  color:var(--fog-dim); margin:22px 0 0; padding:0 0 7px; display:flex;
+  justify-content:space-between; gap:10px; border-bottom:1px solid var(--line-hi)}
+.grp:first-child{margin-top:14px}
+.grp.sun{color:var(--clear)}
+.tr{display:grid; grid-template-columns:26px 1fr 72px; gap:12px; align-items:center;
   padding:12px 0; border-bottom:1px solid var(--line)}
-.rk{font-family:var(--mono); font-size:12px; color:var(--fog-faint)}
-.ri{color:var(--fog-dim); display:grid; place-items:center}
+.ri{color:var(--fog-faint); display:grid; place-items:center}
 .ri svg{width:22px; height:22px}
-.tr.top .ri{color:var(--clear)}
-.nm{font-size:16px; font-weight:500; line-height:1.25}
-.nm em{font-style:normal; display:block; font-size:13px; color:var(--fog-dim); font-weight:400; margin-top:2px}
-.strip{display:block; font-family:var(--mono); font-size:12px; color:var(--fog-dim); margin-top:5px}
-.strip s{text-decoration:none; color:var(--fog)}
-.sc{text-align:right}
-.sc u{font-family:var(--mono); font-size:14px; text-decoration:none; color:var(--fog); display:block; margin-bottom:5px}
+.tr.clear .ri{color:var(--clear)}
+.nm{font-size:17px; font-weight:500; line-height:1.2; color:var(--fog)}
+.tr.clear .nm{color:var(--paper)}
+.tr.top .nm{color:var(--clear); font-weight:600}
+.strip{display:block; margin-top:5px; color:var(--fog-faint)}
+.strip s{text-decoration:none; font-family:var(--msg); font-size:13px; color:var(--fog-dim)}
+.tr.clear .strip s{color:var(--fog)}
+.strip u{text-decoration:none; font-family:var(--mono); font-size:12px; letter-spacing:.02em}
 .bar{height:4px; background:var(--fog-faint); border-radius:2px; overflow:hidden}
-.bar i{display:block; height:100%; background:var(--fog-dim); transition:width .18s linear}
+.tr.clear .bar i{background:var(--clear-dim)}
 .tr.top .bar i{background:var(--clear)}
-.tr.top .nm,.tr.top .sc u{color:var(--clear)}
+.bar i{display:block; height:100%; background:var(--fog-faint); transition:width .18s linear}
 
 .method{margin-top:26px; padding-top:15px; border-top:1px solid var(--line);
   font-family:var(--mono); font-size:12px; line-height:1.85; color:var(--fog-dim)}
@@ -187,7 +192,8 @@ svg.g{fill:currentColor}
   .rail b{font-size:12px}
   .v-name{font-size:30px}
   .v-ico svg{width:44px; height:44px}
-  .tr{grid-template-columns:26px 30px 1fr 88px; gap:14px}
+  .tr{grid-template-columns:30px 1fr 96px; gap:16px}
+  .nm{font-size:18px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
 @media(prefers-reduced-motion:reduce){
@@ -205,7 +211,7 @@ svg.g{fill:currentColor}
     </div>
   </div>
 
-  <p class="sub">Karl doesn't own the whole city. Here's where he isn't.</p>
+  <p class="sub">Here comes the sun.</p>
 
   <div class="ridge">
     <div class="verdict" id="verdict" aria-live="polite"></div>
@@ -226,13 +232,13 @@ svg.g{fill:currentColor}
 
     <div class="timebar">
       <div class="tb-head"><span class="tb-at" id="tbAt">Now</span><span class="tb-rel" id="tbRel">Live</span></div>
-      <input type="range" id="time" min="0" max="47" step="1" value="0"
+      <input type="range" id="time" min="0" max="23" step="1" value="0"
              aria-label="Time, hours from now" aria-valuetext="Now">
-      <div class="tb-scale"><span>Now</span><span>+24h</span><span>+48h</span></div>
+      <div class="tb-scale"><span>Now</span><span>+12h</span><span>+24h</span></div>
     </div>
   </div>
 
-  <h2 class="ph"><span>All twelve spots</span><b id="sliceTag">Now</b></h2>
+  <h2 class="ph"><span>All eleven spots</span><b id="sliceTag">Now</b></h2>
   <div id="board"></div>
 
   <div class="method" id="method"></div>
@@ -260,23 +266,22 @@ const G={
 const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 256 256" aria-hidden="true">${G[k]}</svg>`;
 
 const SPOTS=[
- {n:"Ocean Beach",          a:"Outer Sunset",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40,y:218,m:"Ocean Beach"},
- {n:"Golden Gate Park",     a:"Conservatory",    g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:232,y:200,m:"GG Park"},
- {n:"Twin Peaks",           a:"the ridge",       g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:307,y:104,m:"Twin Peaks"},
- {n:"Glen Canyon Park",     a:"Glen Park",       g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:360,y:158,m:"Glen Park"},
- {n:"Corona Heights",       a:"Castro",          g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:414,y:142,m:"Corona"},
- {n:"Fort Mason",           a:"Marina Green",    g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:470,y:190,m:"Fort Mason"},
- {n:"Mission Dolores Park", a:"Mission",         g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:522,y:196,m:"Mission"},
- {n:"McLaren Park",         a:"Excelsior",       g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:578,y:172,m:"McLaren"},
- {n:"Bernal Heights Park",  a:"Bernal",          g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:640,y:156,m:"Bernal"},
- {n:"Potrero Hill",         a:"McKinley Square", g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:722,y:182,m:"Potrero"},
- {n:"Crane Cove Park",      a:"Dogpatch",        g:"crane",lat:37.7615,lon:-122.3872,rel:85,x:794,y:212,m:"Dogpatch"},
- {n:"India Basin",          a:"Bayview",         g:"crane",lat:37.7370,lon:-122.3775,rel:88,x:860,y:218,m:"Bayview"}
+ {n:"Ocean Beach",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40, y:218},
+ {n:"GG Park",        g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:248,y:200},
+ {n:"Twin Peaks",     g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:330,y:104},
+ {n:"Glen Canyon",    g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:387,y:158},
+ {n:"Corona Heights", g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:444,y:142},
+ {n:"Fort Mason",     g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:505,y:190},
+ {n:"Dolores Park",   g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:563,y:196},
+ {n:"McLaren",        g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:628,y:172},
+ {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:690,y:156},
+ {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:780,y:182},
+ {n:"Dogpatch",       g:"crane",lat:37.7615,lon:-122.3872,rel:85,x:860,y:212}
 ];
 /* one profile. clarity-forward, since fog is the whole point;
    ideal sits at 66°F, the midpoint of the old Move/Chill pair. */
 const W={c:.42, v:.13, w:.22, t:.23, ideal:66};
-const HOURS=48, VBW=900, VBH=250, GROUND=246;
+const HOURS=24, CLEAR=45, VBW=900, VBH=250, GROUND=246;
 
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
 function smooth(pts){
@@ -335,7 +340,7 @@ function simulate(){
   for(let k=0;k<HOURS;k++){
     const hr=(h0+k)%24;
     const diurnal=cl(50+38*Math.cos((hr-5)/24*2*Math.PI),0,100);
-    const deep=cl((k-26)/12,0,1);                 /* Karl takes the city */
+    const deep=cl((k-13)/7,0,1);                 /* Karl takes the city */
     const push=cl(diurnal+deep*26,0,100);
     out.push({t:now+k*3600, spots:SPOTS.map(s=>{
       const ex=(100-s.rel)/100;
@@ -373,62 +378,66 @@ async function fetchLive(){
   return out;
 }
 
-const rankAt=k=>S.frames[k].spots.map(d=>({...d,score:score(d)}))
-                 .sort((a,b)=>b.score-a.score||b.rel-a.rel);
+/* Clarity decides the side of the line. Wind decides the order within it,
+   so the calmest spot sits on top and the exposed ones sink. */
+function split(k){
+  const all=S.frames[k].spots.map(d=>({...d,score:score(d),clear:d.lowCloud<CLEAR}));
+  /* compare the wind the user can see, so equal readings tie and
+     fall through to score rather than to a hidden decimal */
+  const by=(a,b)=>Math.round(a.wind)-Math.round(b.wind)||b.score-a.score;
+  return {sun:all.filter(d=>d.clear).sort(by), fog:all.filter(d=>!d.clear).sort(by)};
+}
 
 /* ── the answer, sitting on top of the map ─────────────────────── */
-function paintVerdict(rk,fr,k){
-  const top=rk[0], next=rk[1], worst=rk[rk.length-1];
-  if(top.score<55){                     /* quiet rule */
+function paintVerdict(sun,k){
+  if(!sun.length){                      /* quiet rule: nothing above the line */
     $("verdict").innerHTML=`<div class="v-row quiet">
       <span class="v-ico">${ico("fogx")}</span>
-      <span><span class="v-name">Nothing's clear</span><span class="v-area">City-wide</span></span></div>
-      <div class="v-stat"><span class="v-temp">—</span>
-        <span class="v-cond">low cloud<br><b>Ocean Beach to the Bay</b></span></div>
-      <p class="v-line">${k===0
-        ? "I'd rather stay quiet than send you somewhere grey."
-        : "Scrub the slider — it lifts later."}</p>`;
+      <span class="v-name sml">Karl's winning${k===0?" right now":""}.</span></div>`;
     return;
   }
+  const top=sun[0];
   $("verdict").innerHTML=`<div class="v-row">
     <span class="v-ico">${ico(top.g)}</span>
-    <span><span class="v-name">${top.n}</span><span class="v-area">${top.a}</span></span></div>
+    <span class="v-name">${top.n}</span></div>
     <div class="v-stat"><span class="v-temp">${t2(top.temp)}°</span>
       <span class="v-cond"><b>${Math.round(top.lowCloud)}%</b> low cloud<br>
-        <b>${w2(top.wind)}</b> ${wu()} wind</span></div>
-    <p class="v-line">${next.n} is the backup at ${t2(next.temp)}°. ${worst.n} stays socked in.</p>`;
+        <b>${w2(top.wind)}</b> ${wu()} wind</span></div>`;
 }
 
 function paint(){
-  const k=S.h, fr=S.frames[k], rk=rankAt(k);
-  paintVerdict(rk,fr,k);
+  const k=S.h, fr=S.frames[k], {sun,fog}=split(k);
+  paintVerdict(sun,k);
   $("tbAt").textContent=stamp(fr.t,k);
   $("time").style.setProperty("--p",(k/(HOURS-1)*100).toFixed(1)+"%");
   $("tbRel").textContent=relLabel(k);
   $("time").setAttribute("aria-valuetext",stamp(fr.t,k));
   $("sliceTag").textContent=stamp(fr.t,k);
 
-  $("board").innerHTML=rk.map((s,i)=>`
-    <div class="tr ${i===0?'top':''}">
-      <span class="rk">${String(i+1).padStart(2,"0")}</span>
+  const row=(s,i,cls)=>`
+    <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
       <span class="ri">${ico(s.g)}</span>
-      <span><span class="nm">${s.n}<em>${s.a}</em></span>
-        <span class="strip"><s>${t2(s.temp)}°</s> · ${w2(s.wind)} ${wu()} · ${Math.round(s.lowCloud)}% low cloud · ${s.rel}% clear yr</span></span>
-      <span class="sc"><u>${s.score}</u><span class="bar"><i style="width:${s.score}%"></i></span></span>
-    </div>`).join("");
+      <span><span class="nm">${s.n}</span>
+        <span class="strip"><s>${t2(s.temp)}°</s> <u>${w2(s.wind)} ${wu()} · ${Math.round(s.lowCloud)}% low cloud</u></span></span>
+      <span class="bar"><i style="width:${s.score}%"></i></span>
+    </div>`;
+  const head=(t,n,c)=>`<div class="grp ${c}"><span>${t}</span><span>${n} ${n===1?"spot":"spots"}</span></div>`;
+  $("board").innerHTML=
+    (sun.length?head("Clear",sun.length,"sun")+sun.map((s,i)=>row(s,i,"clear")).join(""):"")+
+    (fog.length?head("Under Karl",fog.length,"")+fog.map((s,i)=>row(s,i,"fog")).join(""):"");
 
-  const pick=rk[0].score>=55?rk[0].n:null;   /* no pick, no sun */
+  const pick=sun.length?sun[0].n:null;
   $("dots").innerHTML=fr.spots.map(s=>{
-    const on=s.lowCloud<45, p=s.n===pick;
+    const on=s.lowCloud<CLEAR, p=s.n===pick;
     return `<span class="dot ${on?'on':''} ${p?'pick':''}" title="${s.n}"
       style="left:${(s.x/VBW*100).toFixed(2)}%; top:${(s.y/VBH*100).toFixed(2)}%">${p?ico("sun"):""}</span>`;
   }).join("");
   $("rail").innerHTML=fr.spots.map((s,j)=>{
-    const on=s.lowCloud<45, L=(s.x/VBW*100).toFixed(2),
+    const on=s.lowCloud<CLEAR, L=(s.x/VBW*100).toFixed(2),
           rows=`r${j%4} d${j%2}`,
           edge=j===0?'el':(j===fr.spots.length-1?'er':'');
     return `<i class="${rows} ${on?'on':''}" style="left:${L}%"></i>`
-         + `<b class="${rows} ${edge} ${on?'on':''} ${s.n===pick?'pick':''}" style="left:${L}%">${s.m}</b>`;
+         + `<b class="${rows} ${edge} ${on?'on':''} ${s.n===pick?'pick':''}" style="left:${L}%">${s.n}</b>`;
   }).join("");
 
   const w=fr.spots.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4,
@@ -438,17 +447,24 @@ function paint(){
     `M0,${GROUND} L0,${wy} C240,${wy-18} 330,${wy+12} 400,${(wy+ey)/2} C520,${ey-10} 700,${ey} ${VBW},${ey} L${VBW},${GROUND} Z`);
   $("ridgeState").textContent=w>60?(e>55?"City-wide marine layer":"Fog held at the ridge"):"Clear west to east";
 
-  $("method").innerHTML=`<b>Score</b> = clarity×${W.c} + visibility×${W.v} + wind comfort×${W.w} + temperature fit×${W.t}. `+
-   `<b>Clarity</b> = 100 − low cloud. <b>Wind comfort</b> falls off above 8 mph. `+
-   `<b>Temperature fit</b> centers on ${t2(W.ideal)}°${S.unit}. `+
-   `<b>Clear yr</b> is a static climatology estimate, not measured, used as the tiebreak. `+
-   `<b>Quiet rule</b>: no place is named below a score of 55.`;
+  $("method").innerHTML=`<b>Clear</b> means low cloud under ${CLEAR}%. That line splits the list. `+
+   `<b>Inside each group</b> the calmest spot sits on top, so exposed places sink. `+
+   `<b>Score</b> = clarity×${W.c} + visibility×${W.v} + wind comfort×${W.w} + temperature fit×${W.t}, `+
+   `centred on ${t2(W.ideal)}°${S.unit}, and it draws the bar. `+
+   `<b>Quiet rule</b>: when nothing is above the line, no place is named.`;
 }
 
 $("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`);
 
 /* ── controls ──────────────────────────────────────────────────── */
-$("time").addEventListener("input",e=>{ S.h=+e.target.value; paint(); },{passive:true});
+/* coalesce to one repaint per frame — a drag fires input far faster than
+   the browser paints, and each paint rebuilds the list, dots and rail */
+let raf=null;
+$("time").addEventListener("input",e=>{
+  S.h=+e.target.value;
+  if(raf) return;
+  raf=requestAnimationFrame(()=>{ raf=null; paint(); });
+},{passive:true});
 $("units").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   S.unit=b.dataset.u;
