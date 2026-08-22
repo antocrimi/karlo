@@ -79,7 +79,9 @@ svg.g{fill:currentColor}
 /* ══ verdict — the pick, in full accent ════════════════════════
    min-height holds the box so the quiet state doesn't jump the page */
 .verdict{min-height:80px; margin-bottom:26px}
-.v-row{display:flex; align-items:center; gap:12px}
+/* 42px display at .92 line-height ≈ 39px — the height .v-temp gives the
+   row. Held explicitly so the quiet state centres identically. */
+.v-row{display:flex; align-items:center; gap:12px; min-height:39px}
 .v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
 .v-ico svg{width:30px; height:30px; display:block}
 .v-name{font-family:var(--disp); font-weight:700; font-size:27px;
@@ -90,7 +92,7 @@ svg.g{fill:currentColor}
   letter-spacing:.02em; color:var(--fog-dim)}
 .v-cond b{color:var(--fog); font-weight:400}
 .v-row.quiet .v-ico,.v-row.quiet .v-name{color:var(--fog)}
-.v-row.quiet .v-name{font-size:24px}
+.v-row.quiet .v-ico svg{transform:scaleX(-1)}   /* Karl faces the way the logo does */
 
 /* ══ time scrubber ═════════════════════════════════════════════ */
 .timebar{margin-top:15px; padding-top:13px; border-top:1px solid var(--line)}
@@ -142,7 +144,7 @@ svg.g{fill:currentColor}
 .ridge-head{display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
   font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--fog-dim); margin-bottom:9px}
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
-.stage{position:relative; width:100%; aspect-ratio:900/250}
+.stage{position:relative; width:100%; aspect-ratio:900/380}
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
 .dot{position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%;
   background:var(--fog-faint); border:1px solid var(--fog-dim);
@@ -210,24 +212,21 @@ svg.g{fill:currentColor}
 @media(min-width:560px){
   :root{--pad:24px}
   h1 img{width:clamp(264px, 37.4vw, 440px)}
-  .stage{aspect-ratio:900/220}
-  .verdict{min-height:126px}
-  .v-name{font-size:30px}
-  .v-temp{font-size:58px}
-  .v-ico svg{width:30px; height:30px}
-  .tr{grid-template-columns:40px 1fr auto; gap:18px}
-  .ri svg{width:33px; height:33px}
-  .sec{font-size:22px; margin:46px 0 18px}
-  .nm{font-size:20px}
-  .tp{font-size:23px}
+  .stage{aspect-ratio:900/300}
+  .verdict{min-height:88px}
+  .v-row{min-height:45px}
+  .v-ico svg{width:33px; height:33px}
   .v-name{font-size:30px}
   .v-temp{font-size:48px}
-  .verdict{min-height:88px}
-  .nm{font-size:18px}
+  .sec{font-size:22px; margin:46px 0 18px}
+  .tr{grid-template-columns:40px 1fr auto; gap:18px}
+  .ri svg{width:33px; height:33px}
+  .nm{font-size:20px}
+  .tp{font-size:23px}
 }
-@media(min-width:860px){ .stage{aspect-ratio:900/190} }
+@media(min-width:860px){ .stage{aspect-ratio:900/250} }
 @media(prefers-reduced-motion:reduce){
-  .dot,.bar i,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
+  .dot,.dot .rays,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
 </style>
 </head>
