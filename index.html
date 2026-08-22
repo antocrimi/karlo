@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NoKarl — where the fog isn't, in San Francisco</title>
-<meta name="description" content="Your SF sun chasing guide. Eleven San Francisco spots scored on low cloud, visibility, wind and comfort.">
+<meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
+<link rel="canonical" href="https://antocrimi.github.io/">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,10 +212,34 @@ svg.g{fill:currentColor}
 .tp{font-family:var(--disp); font-weight:700; font-size:21px; line-height:1;
   letter-spacing:-.032em; color:var(--paper); text-align:right}
 
-.attr{margin-top:30px; padding-top:16px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; line-height:1.8; color:var(--fog-faint)}
-.attr a{color:var(--fog-dim)}
-.sign{margin:24px 0 0; padding-top:17px; border-top:1px solid var(--line);
-  text-align:right; font-size:15px; color:var(--fog-dim)}
+/* ══ footer ════════════════════════════════════════════════════
+   Three tiers and a close: prose that says what the thing is, a
+   definition list that says how it decides, a line separating what was
+   measured from what was estimated, then the colophon. */
+.foot{margin-top:16px}
+.ftxt{max-width:64ch; color:var(--fog); font-size:15.5px; line-height:1.6}
+.ftxt p{margin:0 0 15px}
+.ftxt p:last-child{margin-bottom:0}
+.ftxt a,.attr a{color:var(--paper); text-decoration:none;
+  border-bottom:1px solid var(--line-hi); transition:border-color .2s}
+.ftxt a:hover,.attr a:hover{border-color:var(--clear)}
+
+.meth{margin:0}
+.meth > div{padding:13px 0; border-bottom:1px solid var(--line)}
+.meth > div:last-child{border-bottom:0}
+.meth dt{font-family:var(--mono); font-size:11px; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--fog-dim)}
+.meth dd{margin:5px 0 0; color:var(--fog); font-size:15.5px; line-height:1.5}
+
+.attr{max-width:64ch; margin:34px 0 0; padding-top:17px;
+  border-top:1px solid var(--line); font-family:var(--mono);
+  font-size:11.5px; line-height:1.85; color:var(--fog-faint)}
+
+.colophon{margin-top:30px; padding-top:17px; border-top:1px solid var(--line-hi);
+  display:flex; justify-content:space-between; align-items:baseline; gap:10px 22px;
+  flex-wrap:wrap; font-family:var(--mono); font-size:11px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--fog-faint)}
+.colophon b{color:var(--fog); font-weight:400}
 
 @media(min-width:560px){
   :root{--pad:24px}
@@ -230,12 +255,25 @@ svg.g{fill:currentColor}
   .ri svg{width:33px; height:33px}
   .nm{font-size:20px}
   .tp{font-size:23px}
+  .ftxt{font-size:16px}
+  .meth > div{display:grid; grid-template-columns:130px 1fr; gap:20px; align-items:baseline}
+  .meth dd{margin:0}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
 @media(prefers-reduced-motion:reduce){
   .dot,.dot .rays,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
 </style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"NoKarl",
+"url":"https://antocrimi.github.io/","applicationCategory":"Weather",
+"operatingSystem":"Any","browserRequirements":"Requires JavaScript",
+"description":"A San Francisco microclimate app. It ranks eleven places across the city on low cloud, wind and temperature, splitting them by the fog line so you know where the sky is clear enough to go outside.",
+"about":{"@type":"Thing","name":"San Francisco marine layer","alternateName":"Karl the Fog"},
+"author":{"@type":"Person","name":"Anto"},
+"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+"isBasedOn":{"@type":"Dataset","name":"Open-Meteo forecast","url":"https://open-meteo.com/","license":"https://creativecommons.org/licenses/by/4.0/"}}
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -280,11 +318,41 @@ svg.g{fill:currentColor}
 
   <div id="board"></div>
 
-  <p class="attr">
-    Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a>, CC BY 4.0.
-    Non-commercial use. Fog climatology is a static local estimate, not measured.
-  </p>
-  <p class="sign">Enjoy your day! Anto</p>
+  <footer class="foot">
+    <h2 class="sec">How it works</h2>
+    <div class="ftxt">
+      <p>Karl is what San Francisco calls its fog. It comes in through the Golden Gate
+      and the low gap over the Sunset, meets the ridge at Twin Peaks and Mount Sutro,
+      and stops. Everything east of that line sits in the fog shadow, which is how
+      Dolores Park can be twenty degrees warmer than Ocean Beach in the same hour.</p>
+      <p>The marine layer is shallow, usually a thousand to sixteen hundred feet, so
+      hilltops stand above it while the streets below stay grey. Going up is a different
+      move from going east, and on the days Karl takes the whole city it is the only one
+      left.</p>
+      <p>NoKarl reads the next twenty-four hours across eleven places, from Ocean Beach
+      in the west to Dogpatch in the east, and tells you which side of the fog line each
+      one is on right now.</p>
+    </div>
+
+    <h2 class="sec">Method</h2>
+    <dl class="meth">
+      <div><dt>Clear</dt><dd>Low cloud under 45 per cent. That line splits the list in two.</dd></div>
+      <div><dt>Order</dt><dd>Calmest first inside each group, so exposed spots sink to the bottom.</dd></div>
+      <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
+      <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
+    </dl>
+
+    <p class="attr">
+      Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a>,
+      CC BY 4.0, non-commercial use. The year-round clear-sky figure used to break ties is
+      a local estimate rather than a measurement, and is marked as such wherever it appears.
+    </p>
+
+    <div class="colophon">
+      <span>NoKarl <b>·</b> San Francisco</span>
+      <span>Built by <b>Anto</b>, somewhere east of the ridge</span>
+    </div>
+  </footer>
 </div>
 
 <script>
