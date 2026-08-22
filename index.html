@@ -20,7 +20,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230E161C'/><circle cx='16' cy='13' r='6' fill='%23F0A03C'/><rect x='4' y='21' width='24' height='3.4' rx='1.7' fill='%23A9B7BE'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,700;12..96,75..100,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&display=swap" rel="stylesheet">
 
 <style>
 :root{
@@ -30,6 +30,8 @@
   --clear:#F0A03C; --clear-dim:#9A6520;
   --paper:#E9EAE4;
   --disp:'Bricolage Grotesque', system-ui, sans-serif;
+  /* opsz maps to the rendered size automatically, so the 19px row names get
+     a different cut from the 48px temperature rather than a scaled one */
   --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
   --msg:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;
   --pad:16px;
@@ -39,6 +41,7 @@
    the notch and home indicator stay dark too */
 html{-webkit-text-size-adjust:100%; background:var(--ink); min-height:100%}
 body{
+  font-optical-sizing:auto;
   margin:0; min-height:100dvh; background:var(--ink); color:var(--paper);
   font-family:var(--msg); line-height:1.45; font-size:17px;
   padding:calc(18px + env(safe-area-inset-top)) calc(var(--pad) + env(safe-area-inset-right))
@@ -84,8 +87,11 @@ svg.g{fill:currentColor}
 .v-row{display:flex; align-items:center; gap:12px; min-height:39px}
 .v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
 .v-ico svg{width:30px; height:30px; display:block}
+/* wdth carries no meaning here — it is copyfitting. A long name condenses
+   toward 82% instead of wrapping to a second line or shrinking its size. */
 .v-name{font-family:var(--disp); font-weight:700; font-size:27px;
-  line-height:1.05; letter-spacing:-.028em; color:var(--clear); min-width:0}
+  line-height:1.05; letter-spacing:-.028em; color:var(--clear);
+  min-width:0; flex:0 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .v-temp{margin-left:auto; flex:0 0 auto; font-family:var(--disp); font-weight:700;
   font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear)}
 .v-cond{display:block; margin-top:9px; font-family:var(--mono); font-size:13px;
@@ -197,7 +203,8 @@ svg.g{fill:currentColor}
 .ri{color:var(--paper); display:grid; place-items:center}
 .ri svg{width:29px; height:29px}
 .nm{display:block; font-family:var(--disp); font-weight:700; font-size:19px;
-  line-height:1.1; letter-spacing:-.022em; color:var(--paper)}
+  line-height:1.1; letter-spacing:-.022em; color:var(--paper);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .strip{display:block; margin-top:6px; font-family:var(--mono); font-size:12.5px;
   letter-spacing:.02em; color:var(--fog-dim); line-height:1.45}
 .strip b{color:var(--fog); font-weight:400}
@@ -474,6 +481,8 @@ function relayout(){
     n.style.height=(t===undefined?7:TOP+t*ROW)+"px";
   });
   $("rail").style.height=(TOP+ends.length*ROW+4)+"px";
+
+  for(const k in FIT) delete FIT[k];   /* box widths changed */
 }
 
 /* Clarity decides the side of the line. Wind decides the order within it,
@@ -486,12 +495,32 @@ function split(k){
   return {sun:all.filter(d=>d.clear).sort(by), fog:all.filter(d=>!d.clear).sort(by)};
 }
 
+/* ── copyfit ────────────────────────────────────────────────────
+   font-stretch drives the wdth axis without clobbering font-weight the
+   way font-variation-settings would. Only ever narrows, never widens,
+   and the result is cached per name and container width so a scrub
+   never triggers a measuring pass. ── */
+const FIT={}, FIT_MIN=75;   /* the axis floor for Bricolage */
+function copyfit(el){
+  if(!el) return;
+  const box=Math.round(el.clientWidth||0);
+  if(!box) return;
+  const key=el.textContent+"@"+box;
+  if(FIT[key]!==undefined){ el.style.fontStretch=FIT[key]+"%"; return; }
+  let w=100; el.style.fontStretch="";
+  for(let g=0; g<12 && w>FIT_MIN && el.scrollWidth>el.clientWidth+.5; g++){
+    w-=2; el.style.fontStretch=w+"%";
+  }
+  FIT[key]=w;
+}
+
 /* ── the answer, sitting on top of the map ─────────────────────── */
 function paintVerdict(sun,k){
   if(!sun.length){                      /* quiet rule: nothing above the line */
     $("verdict").innerHTML=`<div class="v-row quiet">
       <span class="v-ico">${ico("fogx")}</span>
       <span class="v-name">Karl's winning${k===0?" right now":""}.</span></div>`;
+    copyfit($("verdict").querySelector(".v-name"));
     return;
   }
   const t=sun[0];
@@ -500,6 +529,7 @@ function paintVerdict(sun,k){
       <span class="v-name">${t.n}</span>
       <span class="v-temp">${t2(t.temp)}°</span></div>
     <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> low cloud · <b>${w2(t.wind)}</b> ${wu()} wind</span>`;
+  copyfit($("verdict").querySelector(".v-name"));
 }
 
 function paint(){
@@ -521,6 +551,7 @@ function paint(){
   $("board").innerHTML=
     `<h2 class="sec">Clear spots</h2><div class="rows">${sun.map((s,i)=>row(s,i,"clear")).join("")}</div>`+
     `<h2 class="sec">Under Karl</h2><div class="rows">${fog.map((s,i)=>row(s,i,"fog")).join("")}</div>`;
+  [...$("board").querySelectorAll(".nm")].forEach(copyfit);
 
   const pick=sun.length?sun[0].n:null;
   const state={};
