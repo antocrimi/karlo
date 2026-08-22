@@ -86,7 +86,7 @@ svg.g{fill:currentColor}
    centres against that whole block rather than against the name alone,
    so the two sides read as optically level. .v-main leads the row, so
    glyph and name sit at the same height in the quiet state too. */
-.verdict{min-height:80px; margin-bottom:26px}
+.verdict{min-height:80px; margin-bottom:20px}
 .v-row{display:flex; align-items:center; justify-content:space-between; gap:16px}
 .v-main{min-width:0}
 .v-head{display:flex; align-items:center; gap:12px; min-height:36px}
@@ -106,7 +106,7 @@ svg.g{fill:currentColor}
 .v-row.quiet .v-ico svg{transform:scaleX(-1)}   /* Karl faces the way the logo does */
 
 /* ══ time scrubber ═════════════════════════════════════════════ */
-.timebar{margin-top:15px; padding-top:13px; border-top:1px solid var(--line)}
+.timebar{margin-top:6px}
 .tb-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:4px}
 .tb-at{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.022em; color:var(--paper)}
 .tb-rel{font-family:var(--mono); font-size:11px; letter-spacing:.13em;
@@ -151,8 +151,8 @@ svg.g{fill:currentColor}
 
 /* ══ ridge ══════════════════════════════════════════════════════ */
 /* no container: the map sits directly on the page ground */
-.ridge{margin-bottom:30px}
-.ridge-head{padding-top:20px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
+.ridge{margin-bottom:24px}
+.ridge-head{display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
   font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--fog-dim); margin-bottom:9px}
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
 .stage{position:relative; width:100%; aspect-ratio:900/380}
@@ -187,7 +187,7 @@ svg.g{fill:currentColor}
 
 /* rail: a tick per spot, tall enough to reach its own label. Labels carry
    the page ground and sit above, so a tick crossing a row is masked. */
-.rail{position:relative; height:54px}
+.rail{position:relative; height:50px}
 .rail i{position:absolute; top:0; width:1px; margin-left:-.5px; z-index:0;
   height:7px; background:var(--fog-faint)}
 .rail i.on{background:var(--clear-dim)}
