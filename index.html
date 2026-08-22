@@ -82,10 +82,14 @@ svg.g{fill:currentColor}
 
 /* ══ verdict — the pick, in full accent ════════════════════════
    min-height holds the box so the quiet state doesn't jump the page */
+/* The left block is two lines — name, then conditions. The temperature
+   centres against that whole block rather than against the name alone,
+   so the two sides read as optically level. .v-main leads the row, so
+   glyph and name sit at the same height in the quiet state too. */
 .verdict{min-height:80px; margin-bottom:26px}
-/* 42px display at .92 line-height ≈ 39px — the height .v-temp gives the
-   row. Held explicitly so the quiet state centres identically. */
-.v-row{display:flex; align-items:center; gap:12px; min-height:39px}
+.v-row{display:flex; align-items:center; justify-content:space-between; gap:16px}
+.v-main{min-width:0}
+.v-head{display:flex; align-items:center; gap:12px; min-height:36px}
 .v-ico{flex:0 0 auto; color:var(--clear); display:grid; place-items:center}
 .v-ico svg{width:30px; height:30px; display:block}
 /* wdth carries no meaning here — it is copyfitting. A long name condenses
@@ -93,7 +97,7 @@ svg.g{fill:currentColor}
 .v-name{font-family:var(--disp); font-weight:700; font-size:27px;
   line-height:1.05; letter-spacing:-.028em; color:var(--clear);
   min-width:0; flex:0 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.v-temp{margin-left:auto; flex:0 0 auto; font-family:var(--disp); font-weight:700;
+.v-temp{flex:0 0 auto; font-family:var(--disp); font-weight:700;
   font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear)}
 .v-cond{display:block; margin-top:9px; font-family:var(--mono); font-size:13px;
   letter-spacing:.02em; color:var(--fog-dim)}
@@ -148,7 +152,7 @@ svg.g{fill:currentColor}
 /* ══ ridge ══════════════════════════════════════════════════════ */
 /* no container: the map sits directly on the page ground */
 .ridge{margin-bottom:30px}
-.ridge-head{display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
+.ridge-head{padding-top:20px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; font-family:var(--mono);
   font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--fog-dim); margin-bottom:9px}
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
 .stage{position:relative; width:100%; aspect-ratio:900/380}
@@ -213,40 +217,90 @@ svg.g{fill:currentColor}
   letter-spacing:-.032em; color:var(--paper); text-align:right}
 
 /* ══ footer ════════════════════════════════════════════════════
-   Three tiers and a close: prose that says what the thing is, a
-   definition list that says how it decides, a line separating what was
-   measured from what was estimated, then the colophon. */
-.foot{margin-top:16px}
-.ftxt{max-width:64ch; color:var(--fog); font-size:15.5px; line-height:1.6}
-.ftxt p{margin:0 0 15px}
-.ftxt p:last-child{margin-bottom:0}
-.ftxt a,.attr a{color:var(--paper); text-decoration:none;
+   Four sections behind chevrons. Mono carries timestamps and small
+   labels; section names take the display face; panel prose stays in
+   the body face. Amber marks the open section and the live dot. */
+.foot{margin-top:44px; padding-top:26px; border-top:1px solid var(--line-hi)}
+
+.f-top{display:grid; gap:22px}
+.f-brand img{display:block; width:clamp(150px,38vw,190px); height:auto}
+.f-brand p{margin:11px 0 0; font-family:var(--mono); font-size:13px; color:var(--fog-dim)}
+
+.f-live{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  font-family:var(--mono); font-size:12.5px; color:var(--fog-dim)}
+.f-live-a{display:flex; align-items:center; gap:9px; min-width:0}
+.f-live-b{display:flex; align-items:center; gap:10px; flex:0 0 auto}
+.dotlive{width:8px; height:8px; border-radius:50%; background:var(--clear);
+  flex:0 0 auto; transition:background .3s ease}
+.dotlive.sim{background:var(--fog-faint)}
+#liveLabel{color:var(--fog); white-space:nowrap}
+.f-stamp{white-space:nowrap}
+.f-refresh{width:34px; height:34px; margin:-8px -6px -8px 0; padding:0; border:0;
+  background:none; cursor:pointer; color:var(--fog-dim); display:grid; place-items:center;
+  transition:color .2s; -webkit-tap-highlight-color:transparent}
+.f-refresh svg{width:17px; height:17px; fill:currentColor}
+.f-refresh:hover{color:var(--fog)}
+.f-refresh:focus-visible{outline:2px solid var(--clear); outline-offset:2px; border-radius:50%}
+.f-refresh.spin svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── accordion. Tabs and panels are interleaved in the markup, so on a
+      phone a panel opens directly beneath its own row. ── */
+.acc{margin-top:24px}
+.acc-t{display:flex; align-items:center; gap:14px; width:100%; min-height:58px;
+  padding:0; background:none; border:0; border-top:1px solid var(--line);
+  cursor:pointer; text-align:left; color:var(--fog);
+  font-family:var(--disp); font-weight:700; font-size:16px; letter-spacing:-.014em;
+  transition:color .2s; -webkit-tap-highlight-color:transparent}
+.acc-t:last-of-type{border-bottom:1px solid var(--line)}
+.acc-t:hover{color:var(--paper)}
+.acc-t:focus-visible{outline:2px solid var(--clear); outline-offset:-2px}
+.acc-t .ic{flex:0 0 auto; width:22px; height:22px; color:var(--fog-dim); transition:color .2s}
+.acc-t .ic svg{width:100%; height:100%; fill:currentColor; display:block}
+.acc-t .lb{flex:1 1 auto; min-width:0; white-space:nowrap}
+.acc-t .cv{flex:0 0 auto; width:15px; height:15px; color:var(--fog-faint);
+  transition:transform .3s cubic-bezier(.2,.7,.3,1), color .2s}
+.acc-t .cv svg{width:100%; height:100%; fill:currentColor; display:block}
+/* amber is the open state */
+.acc-t[aria-expanded="true"],
+.acc-t[aria-expanded="true"] .ic,
+.acc-t[aria-expanded="true"] .cv{color:var(--clear)}
+.acc-t[aria-expanded="true"] .cv{transform:rotate(180deg)}
+
+.acc-p{padding:4px 0 26px}
+.acc-p[hidden]{display:none}
+.cols{display:grid; gap:24px}
+.cols h3{margin:0 0 8px; font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--fog-dim); font-weight:400}
+.cols p{margin:0; font-size:15.5px; line-height:1.55; color:var(--fog); max-width:48ch}
+.cols a{color:var(--paper); text-decoration:none;
   border-bottom:1px solid var(--line-hi); transition:border-color .2s}
-.ftxt a:hover,.attr a:hover{border-color:var(--clear)}
+.cols a:hover{border-color:var(--clear)}
 
 .meth{margin:0}
 .meth > div{padding:13px 0; border-bottom:1px solid var(--line)}
 .meth > div:last-child{border-bottom:0}
-.meth dt{font-family:var(--mono); font-size:11px; letter-spacing:.15em;
+.meth dt{font-family:var(--mono); font-size:11px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--fog-dim)}
 .meth dd{margin:5px 0 0; color:var(--fog); font-size:15.5px; line-height:1.5}
 
-.attr{max-width:64ch; margin:34px 0 0; padding-top:17px;
-  border-top:1px solid var(--line); font-family:var(--mono);
-  font-size:11.5px; line-height:1.85; color:var(--fog-faint)}
-
-.colophon{margin-top:30px; padding-top:17px; border-top:1px solid var(--line-hi);
-  display:flex; justify-content:space-between; align-items:baseline; gap:10px 22px;
-  flex-wrap:wrap; font-family:var(--mono); font-size:11px; letter-spacing:.13em;
-  text-transform:uppercase; color:var(--fog-faint)}
-.colophon b{color:var(--fog); font-weight:400}
+/* ── colophon: one line at every width ── */
+.f-end{display:flex; justify-content:space-between; align-items:center;
+  gap:10px 18px; flex-wrap:wrap; margin-top:30px; padding-top:18px;
+  border-top:1px solid var(--line);
+  font-family:var(--mono); font-size:12px; color:var(--fog-dim)}
+.f-place{display:flex; align-items:center; gap:8px; min-width:0}
+.f-place svg{width:15px; height:15px; fill:currentColor; color:var(--fog-faint); flex:0 0 auto}
+.f-made{display:flex; align-items:center; gap:7px; flex:0 0 auto}
+.f-heart svg{width:14px; height:14px; fill:currentColor; color:var(--clear); display:block}
+@media(max-width:359px){ .f-end{font-size:11px; gap:8px 12px} }
 
 @media(min-width:560px){
   :root{--pad:24px}
   h1 img{width:clamp(264px, 37.4vw, 440px)}
   .stage{aspect-ratio:900/300}
   .verdict{min-height:88px}
-  .v-row{min-height:45px}
+  .v-head{min-height:40px}
   .v-ico svg{width:33px; height:33px}
   .v-name{font-size:30px}
   .v-temp{font-size:48px}
@@ -255,9 +309,31 @@ svg.g{fill:currentColor}
   .ri svg{width:33px; height:33px}
   .nm{font-size:20px}
   .tp{font-size:23px}
-  .ftxt{font-size:16px}
+  .cols p{font-size:16px}
+  /* brand and live status share a line, split by a rule */
+  .f-top{grid-template-columns:1fr auto; gap:34px; align-items:center}
+  .f-live{display:block; padding-left:34px; border-left:1px solid var(--line)}
+  .f-live-a{margin-bottom:8px}
+  .f-live-b{justify-content:flex-start; gap:12px}
+  .f-refresh{margin:-8px 0 -8px -8px}
+
   .meth > div{display:grid; grid-template-columns:130px 1fr; gap:20px; align-items:baseline}
   .meth dd{margin:0}
+
+}
+/* The horizontal strip needs room: "How it works" cannot fit a quarter
+   column below 720px, so the rows stay stacked until then. */
+@media(min-width:720px){
+  .acc{display:grid; grid-template-columns:repeat(4,1fr)}
+  .acc-t{grid-row:1; padding:0 13px; gap:10px; min-height:62px;
+    border-bottom:1px solid var(--line); font-size:15.5px}
+  .acc-t .lb{flex:0 1 auto}
+  .acc-t .cv{display:none; margin-left:2px}          /* only the open one shows it */
+  .acc-t[aria-expanded="true"] .cv{display:block}
+  .acc-p{grid-row:2; grid-column:1 / -1; padding:26px 0 30px}
+  .cols{grid-template-columns:repeat(4,1fr); gap:32px}
+  .cols.two{grid-template-columns:repeat(3,1fr)}
+  .cols p{font-size:16px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
 @media(prefers-reduced-motion:reduce){
@@ -288,11 +364,11 @@ svg.g{fill:currentColor}
   <p class="sub">Your SF sun chasing guide.</p>
 
   <div class="ridge">
-    <h2 class="sec">Top Spot</h2>
+    <h2 class="sec">Best spot</h2>
     <div class="verdict" id="verdict" aria-live="polite"></div>
     <div class="ridge-head"><span>← West</span><span>East →</span></div>
     <div class="stage" id="stage">
-      <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
+      <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to Dogpatch showing where cloud sits against the Twin Peaks ridge">
         <defs>
           <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stop-color="#A9B7BE" stop-opacity=".55"/>
@@ -319,38 +395,73 @@ svg.g{fill:currentColor}
   <div id="board"></div>
 
   <footer class="foot">
-    <h2 class="sec">How it works</h2>
-    <div class="ftxt">
-      <p>Karl is what San Francisco calls its fog. It comes in through the Golden Gate
-      and the low gap over the Sunset, meets the ridge at Twin Peaks and Mount Sutro,
-      and stops. Everything east of that line sits in the fog shadow, which is how
-      Dolores Park can be twenty degrees warmer than Ocean Beach in the same hour.</p>
-      <p>The marine layer is shallow, usually a thousand to sixteen hundred feet, so
-      hilltops stand above it while the streets below stay grey. Going up is a different
-      move from going east, and on the days Karl takes the whole city it is the only one
-      left.</p>
-      <p>NoKarl reads the next twenty-four hours across eleven places, from Ocean Beach
-      in the west to Dogpatch in the east, and tells you which side of the fog line each
-      one is on right now.</p>
+    <div class="f-top">
+      <div class="f-brand">
+        <img src="logo.png" alt="NoKarl" width="638" height="196">
+        <p>Find the sun. Not the fog.</p>
+      </div>
+      <div class="f-live">
+        <span class="f-live-a"><i class="dotlive" id="liveDot"></i><b id="liveLabel">Live forecast</b></span>
+        <span class="f-live-b">
+          <span class="f-stamp" id="updated">Updating…</span>
+          <button class="f-refresh" id="refresh" aria-label="Refresh the forecast"></button>
+        </span>
+      </div>
     </div>
 
-    <h2 class="sec">Method</h2>
-    <dl class="meth">
-      <div><dt>Clear</dt><dd>Low cloud under 45 per cent. That line splits the list in two.</dd></div>
-      <div><dt>Order</dt><dd>Calmest first inside each group, so exposed spots sink to the bottom.</dd></div>
-      <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
-      <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
-    </dl>
+    <div class="acc" id="acc">
+      <button class="acc-t" aria-expanded="false" id="t-how"></button>
+      <div class="acc-p" id="p-how" role="region" aria-labelledby="t-how" hidden>
+        <div class="cols">
+          <div><h3>The fog</h3><p>Karl is what San Francisco calls its fog. It comes in
+            through the Golden Gate and the low gap over the Sunset.</p></div>
+          <div><h3>The ridge</h3><p>It meets the ridge at Twin Peaks and Mount Sutro and
+            stops. East of that line is the fog shadow, which is how Dolores Park can be
+            twenty degrees warmer than Ocean Beach in the same hour.</p></div>
+          <div><h3>The hills</h3><p>The marine layer is shallow, usually a thousand to
+            sixteen hundred feet, so hilltops stand above it while the streets below stay
+            grey. Going up is a different move from going east.</p></div>
+          <div><h3>The forecast</h3><p>Eleven places, from Ocean Beach in the west to
+            Dogpatch in the east, twenty-four hours ahead, so you can see which side of
+            the fog line each one is on.</p></div>
+        </div>
+      </div>
+      <button class="acc-t" aria-expanded="false" id="t-met"></button>
+      <div class="acc-p" id="p-met" role="region" aria-labelledby="t-met" hidden>
+        <dl class="meth">
+          <div><dt>Clear</dt><dd>Cloud under 45 per cent. That line splits the list in two.</dd></div>
+          <div><dt>Order</dt><dd>Calmest first inside each group, so exposed spots sink to the bottom.</dd></div>
+          <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
+          <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
+        </dl>
+      </div>
+      <button class="acc-t" aria-expanded="false" id="t-dat"></button>
+      <div class="acc-p" id="p-dat" role="region" aria-labelledby="t-dat" hidden>
+        <div class="cols two">
+          <div><h3>Source</h3><p>Weather by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a>,
+            CC BY 4.0, non-commercial use.</p></div>
+          <div><h3>Measured, and not</h3><p>Cloud, wind and temperature are forecast data.
+            The year-round clear-sky figure used to break ties is a local estimate rather
+            than a measurement.</p></div>
+          <div><h3>Privacy</h3><p>No accounts, no tracking, nothing stored. The page talks
+            to one weather API and to nobody else.</p></div>
+        </div>
+      </div>
+      <button class="acc-t" aria-expanded="false" id="t-abo"></button>
+      <div class="acc-p" id="p-abo" role="region" aria-labelledby="t-abo" hidden>
+        <div class="cols two">
+          <div><h3>Why</h3><p>It started as a personal question: where in this city is it
+            actually clear right now, and is it worth the trip.</p></div>
+          <div><h3>What it is</h3><p>A prototype rather than a product. One rule about
+            where the fog stops, applied to live data, resolved to a single place.</p></div>
+          <div><h3>Who</h3><p>Made in San Francisco by Anto, somewhere east of the ridge.</p></div>
+        </div>
+      </div>
+    </div>
 
-    <p class="attr">
-      Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a>,
-      CC BY 4.0, non-commercial use. The year-round clear-sky figure used to break ties is
-      a local estimate rather than a measurement, and is marked as such wherever it appears.
-    </p>
-
-    <div class="colophon">
-      <span>NoKarl <b>·</b> San Francisco</span>
-      <span>Built by <b>Anto</b>, somewhere east of the ridge</span>
+    <div class="f-end">
+      <span class="f-place" id="fPlace"></span>
+      <span class="f-made">Built with <i class="f-heart" id="fHeart"></i> by Anto</span>
     </div>
   </footer>
 </div>
@@ -368,6 +479,14 @@ const G={
  slope:'<path d="M248,56a8,8,0,0,1-8,8H192v40a8,8,0,0,1-8,8H136v40a8,8,0,0,1-8,8H80v40a8,8,0,0,1-8,8H16a8,8,0,0,1,0-16H64V152a8,8,0,0,1,8-8h48V104a8,8,0,0,1,8-8h48V56a8,8,0,0,1,8-8h56A8,8,0,0,1,248,56Z"/>',
  palm:'<path d="M237.79,53.23a66.86,66.86,0,0,0-97.74,0,72.21,72.21,0,0,0-12.05,17,72.21,72.21,0,0,0-12-17,66.86,66.86,0,0,0-97.74,0,8,8,0,0,0,2.6,12.85L77,90.55a71.42,71.42,0,0,0-43.36,33.21,70.64,70.64,0,0,0-7.2,54.32A8,8,0,0,0,39,182.36l81-61.68V224a8,8,0,0,0,16,0V120.68l81,61.68a8,8,0,0,0,12.57-4.28,70.64,70.64,0,0,0-7.2-54.32A71.42,71.42,0,0,0,179,90.55l56.22-24.47a8,8,0,0,0,2.6-12.85ZM67.08,48a51.13,51.13,0,0,1,37.28,16.26,56.53,56.53,0,0,1,14.26,26.93L39,56.53A50.5,50.5,0,0,1,67.08,48ZM40,161.5a54.82,54.82,0,0,1,7.47-29.7,55.55,55.55,0,0,1,34-25.89A56.52,56.52,0,0,1,96.1,104a55.82,55.82,0,0,1,16.23,2.41ZM208.5,131.8A54.82,54.82,0,0,1,216,161.5l-72.3-55.1a56.3,56.3,0,0,1,64.83,25.4ZM137.38,91.19a56.53,56.53,0,0,1,14.26-26.93A51.13,51.13,0,0,1,188.92,48,50.5,50.5,0,0,1,217,56.53Z"/>',
  sail:'<path d="M247.21,172.53A8,8,0,0,0,240,168H144V144h72a8,8,0,0,0,5.92-13.38L144,44.91V8a8,8,0,0,0-14.21-5l-104,128A8,8,0,0,0,32,144h96v24H16a8,8,0,0,0-6.25,13l29.6,37a15.93,15.93,0,0,0,12.49,6H204.16a15.93,15.93,0,0,0,12.49-6l29.6-37A8,8,0,0,0,247.21,172.53ZM197.92,128H144V68.69ZM48.81,128,128,30.53V128Zm155.35,80H51.84l-19.2-24H223.36Z"/>',
+ book_open:'<path d="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z"/>',
+ chart_line_up:'<path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0V156.69l50.34-50.35a8,8,0,0,1,11.32,0L128,132.69,180.69,80H160a8,8,0,0,1,0-16h40a8,8,0,0,1,8,8v40a8,8,0,0,1-16,0V91.31l-58.34,58.35a8,8,0,0,1-11.32,0L96,123.31l-56,56V200H224A8,8,0,0,1,232,208Z"/>',
+ database:'<path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/>',
+ info:'<path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/>',
+ map_pin:'<path d="M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z"/>',
+ heart:'<path d="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"/>',
+ arrow_clockwise:'<path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z"/>',
+ caret_down:'<path d="M216.49,104.49l-80,80a12,12,0,0,1-17,0l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17Z"/>',
  fogx:'<path d="M120,208H72a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Zm64-16H160a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Zm-24,32H104a8,8,0,0,0,0,16h56a8,8,0,0,0,0-16Zm72-124a76.08,76.08,0,0,1-76,76H76A52,52,0,0,1,76,72a53.26,53.26,0,0,1,8.92.76A76.08,76.08,0,0,1,232,100Zm-16,0A60.06,60.06,0,0,0,96,96.46a8,8,0,0,1-16-.92q.21-3.66.77-7.23A38.11,38.11,0,0,0,76,88a36,36,0,0,0,0,72h80A60.07,60.07,0,0,0,216,100Z"/>',
 };
 const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 256 256" aria-hidden="true">${G[k]}</svg>`;
@@ -586,17 +705,20 @@ function copyfit(el){
 function paintVerdict(sun,k){
   if(!sun.length){                      /* quiet rule: nothing above the line */
     $("verdict").innerHTML=`<div class="v-row quiet">
-      <span class="v-ico">${ico("fogx")}</span>
-      <span class="v-name">Karl's winning${k===0?" right now":""}.</span></div>`;
+      <span class="v-main">
+        <span class="v-head"><span class="v-ico">${ico("fogx")}</span>
+          <span class="v-name">Karl's winning${k===0?" right now":""}.</span></span>
+      </span></div>`;
     copyfit($("verdict").querySelector(".v-name"));
     return;
   }
   const t=sun[0];
   $("verdict").innerHTML=`<div class="v-row">
-      <span class="v-ico">${ico(t.g)}</span>
-      <span class="v-name">${t.n}</span>
-      <span class="v-temp">${t2(t.temp)}°</span></div>
-    <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> low cloud · <b>${w2(t.wind)}</b> ${wu()} wind</span>`;
+      <span class="v-main">
+        <span class="v-head"><span class="v-ico">${ico(t.g)}</span><span class="v-name">${t.n}</span></span>
+        <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> cloud · <b>${w2(t.wind)}</b> ${wu()} wind</span>
+      </span>
+      <span class="v-temp">${t2(t.temp)}°</span></div>`;
   copyfit($("verdict").querySelector(".v-name"));
 }
 
@@ -612,13 +734,15 @@ function paint(){
     <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
       <span class="ri">${ico(s.g)}</span>
       <span><span class="nm">${s.n}</span>
-        <span class="strip"><b>${Math.round(s.lowCloud)}%</b> low cloud · <b>${w2(s.wind)}</b> ${wu()} wind</span></span>
+        <span class="strip"><b>${Math.round(s.lowCloud)}%</b> cloud · <b>${w2(s.wind)}</b> ${wu()} wind</span></span>
       <span class="tp">${t2(s.temp)}°</span>
     </div>`;
   /* rows are wrapped so the rule falls only between them, never at an edge */
-  $("board").innerHTML=
-    `<h2 class="sec">Clear spots</h2><div class="rows">${sun.map((s,i)=>row(s,i,"clear")).join("")}</div>`+
-    `<h2 class="sec">Under Karl</h2><div class="rows">${fog.map((s,i)=>row(s,i,"fog")).join("")}</div>`;
+  /* a group with nothing in it is dropped entirely — no ghost heading */
+  const group=(title,list,cls)=> list.length
+    ? `<h2 class="sec">${title}</h2><div class="rows">${list.map((s,i)=>row(s,i,cls)).join("")}</div>`
+    : "";
+  $("board").innerHTML = group("Clear spots",sun,"clear") + group("Under Karl",fog,"fog");
   [...$("board").querySelectorAll(".nm")].forEach(copyfit);
 
   const pick=sun.length?sun[0].n:null;
@@ -659,14 +783,63 @@ $("units").addEventListener("click",e=>{
   paint();
 });
 
+/* ── footer: accordion, live status, refresh on command ───────── */
+const F=[["how","book_open","How it works"],["met","chart_line_up","Method"],
+         ["dat","database","Data"],["abo","info","About"]];
+function buildFooter(){
+  F.forEach(([k,g,label])=>{
+    $("t-"+k).innerHTML=`<span class="ic">${ico(g)}</span>`
+      +`<span class="lb">${label}</span><span class="cv">${ico("caret_down")}</span>`;
+  });
+  $("refresh").innerHTML=ico("arrow_clockwise");
+  $("fPlace").innerHTML=ico("map_pin")+"<span>San Francisco, CA</span>";
+  $("fHeart").innerHTML=ico("heart");
+
+  /* one panel open at a time; all closed to begin with */
+  let openKey=null;
+  $("acc").addEventListener("click",e=>{
+    const t=e.target.closest(".acc-t"); if(!t) return;
+    const key=t.id.slice(2);              /* t-met → met, so ids cannot desync */
+    const next = key===openKey ? null : key;
+    F.forEach(([k])=>{
+      $("t-"+k).setAttribute("aria-expanded",String(k===next));
+      $("p-"+k).hidden = k!==next;
+    });
+    openKey=next;
+  });
+  $("refresh").addEventListener("click",()=>load(true));
+}
+
+function stampNow(live){
+  $("liveDot").classList.toggle("sim",!live);
+  $("liveLabel").textContent = live ? "Live forecast" : "Simulated";
+  $("updated").textContent = live
+    ? "Updated "+new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"})
+        .format(new Date())
+    : "No connection";
+}
+
+/* the only place data is fetched — on load, and on demand */
+let loading=false;
+async function load(user){
+  if(loading) return; loading=true;
+  $("refresh").classList.add("spin");
+  if(user) $("updated").textContent="Updating…";
+  let live=true;
+  try{ S.frames=await fetchLive(); }
+  catch(err){ live=false; S.frames=simulate(); }
+  if(user) S.h=0;                       /* a manual refresh returns you to now */
+  $("time").value=S.h;
+  paint(); safeLayout(); stampNow(live);
+  $("refresh").classList.remove("spin");
+  loading=false;
+}
+
 (async()=>{
   [...$("units").querySelectorAll("button")]
     .forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.u===S.unit)));
-  buildMap();                  /* masthead + ground, no data needed */
-  try{ S.frames=await fetchLive(); }
-  catch(err){ S.frames=simulate(); }
-  paint();                       /* content first — never gated on measurement */
-  safeLayout();
+  buildMap(); buildFooter();
+  await load(false);
   /* one observer covers first layout, webfont swap, rotation and resize */
   if(window.ResizeObserver) new ResizeObserver(()=>{
     clearTimeout(rz); rz=setTimeout(safeLayout,120);
