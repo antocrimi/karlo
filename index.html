@@ -146,12 +146,17 @@ svg.g{fill:currentColor}
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
 .dot{position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%;
   background:var(--fog-faint); border:1px solid var(--fog-dim);
-  transition:background .18s linear, border-color .18s linear}
+  transition:background .32s ease, border-color .32s ease,
+             transform .42s cubic-bezier(.22,.68,.3,1)}
 .dot.on{background:var(--clear); border-color:var(--clear)}
-.dot svg{display:none}
-.dot.pick{width:22px; height:22px; margin:-11px 0 0 -11px; background:none; border:none;
-  color:var(--clear); display:grid; place-items:center}
-.dot.pick svg{display:block; width:100%; height:100%}
+/* the pick keeps its amber disc and grows rays — it never swaps to an icon,
+   so there is no dark frame in between */
+.dot .rays{position:absolute; left:50%; top:50%; width:27px; height:27px;
+  margin:-13.5px 0 0 -13.5px; color:var(--clear); overflow:visible;
+  opacity:0; transform:scale(.5) rotate(-32deg); pointer-events:none;
+  transition:opacity .34s ease, transform .5s cubic-bezier(.22,.68,.3,1)}
+.dot.pick{transform:scale(1.16)}
+.dot.pick .rays{opacity:1; transform:scale(1) rotate(0deg)}
 
 /* Hilltops name themselves on the map at the height they sit; the rest
    name themselves in the rail. Tiers are not fixed — every label is
@@ -221,43 +226,27 @@ svg.g{fill:currentColor}
   .nm{font-size:18px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
-/* ══ reveal ═══════════════════════════════════════════════════ */
-html.pre .rv{opacity:0}
-.pk::after{transform-origin:50% 0; transform:scaleY(var(--ld,1))}
-.rail i{transform-origin:50% 0}
-
 @media(prefers-reduced-motion:reduce){
   .dot,.bar i,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js"></script>
-<script>
-(function(){
-  var ok = window.gsap && !matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(!ok) return;
-  document.documentElement.classList.add("pre");
-  /* failsafe: nothing may leave the page hidden */
-  setTimeout(function(){ document.documentElement.classList.remove("pre"); }, 5000);
-})();
-</script>
 </head>
 <body>
 <div class="wrap">
 
-  <div class="titlerow rv">
+  <div class="titlerow">
     <h1><img src="logo.png" alt="Karl" width="638" height="196"></h1>
     <div class="units" id="units" role="group" aria-label="Temperature unit">
       <button data-u="C" aria-pressed="false">°C</button><s aria-hidden="true"></s><button data-u="F" aria-pressed="true">°F</button>
     </div>
   </div>
 
-  <p class="sub rv">Your SF sun chasing guide.</p>
+  <p class="sub">Your SF sun chasing guide.</p>
 
   <div class="ridge">
-    <h2 class="sec rv">Top Spot</h2>
-    <div class="verdict rv" id="verdict" aria-live="polite"></div>
-    <div class="ridge-head rv"><span>← West</span><span>East →</span></div>
+    <h2 class="sec">Top Spot</h2>
+    <div class="verdict" id="verdict" aria-live="polite"></div>
+    <div class="ridge-head"><span>← West</span><span>East →</span></div>
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
         <defs>
@@ -266,18 +255,16 @@ html.pre .rv{opacity:0}
             <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
             <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
           </linearGradient>
-          <clipPath id="clipF"><rect id="wipeF" x="0" y="0" width="0" height="250"/></clipPath>
-          <clipPath id="clipT"><rect id="wipeT" x="0" y="0" width="0" height="250"/></clipPath>
         </defs>
-        <g clip-path="url(#clipF)"><path id="fogBody" d="" fill="url(#fg)"/></g>
-        <g clip-path="url(#clipT)"><path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/></g>
+        <path id="fogBody" d="" fill="url(#fg)"/>
+        <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
       <div class="peaks" id="peaks"></div>
     </div>
     <div class="rail" id="rail"></div>
 
-    <div class="timebar rv">
+    <div class="timebar">
       <div class="tb-head"><span class="tb-at" id="tbAt">Now</span><span class="tb-rel" id="tbRel">Live</span></div>
       <input type="range" id="time" min="0" max="23" step="1" value="0"
              aria-label="Time, hours from now" aria-valuetext="Now">
@@ -285,13 +272,13 @@ html.pre .rv{opacity:0}
     </div>
   </div>
 
-  <div id="board" class="rv"></div>
+  <div id="board"></div>
 
-  <p class="attr rv">
+  <p class="attr">
     Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a>, CC BY 4.0.
     Non-commercial use. Fog climatology is a static local estimate, not measured.
   </p>
-  <p class="sign rv">Enjoy your day! Anto</p>
+  <p class="sign">Enjoy your day! Anto</p>
 </div>
 
 <script>
@@ -308,7 +295,6 @@ const G={
  palm:'<path d="M237.79,53.23a66.86,66.86,0,0,0-97.74,0,72.21,72.21,0,0,0-12.05,17,72.21,72.21,0,0,0-12-17,66.86,66.86,0,0,0-97.74,0,8,8,0,0,0,2.6,12.85L77,90.55a71.42,71.42,0,0,0-43.36,33.21,70.64,70.64,0,0,0-7.2,54.32A8,8,0,0,0,39,182.36l81-61.68V224a8,8,0,0,0,16,0V120.68l81,61.68a8,8,0,0,0,12.57-4.28,70.64,70.64,0,0,0-7.2-54.32A71.42,71.42,0,0,0,179,90.55l56.22-24.47a8,8,0,0,0,2.6-12.85ZM67.08,48a51.13,51.13,0,0,1,37.28,16.26,56.53,56.53,0,0,1,14.26,26.93L39,56.53A50.5,50.5,0,0,1,67.08,48ZM40,161.5a54.82,54.82,0,0,1,7.47-29.7,55.55,55.55,0,0,1,34-25.89A56.52,56.52,0,0,1,96.1,104a55.82,55.82,0,0,1,16.23,2.41ZM208.5,131.8A54.82,54.82,0,0,1,216,161.5l-72.3-55.1a56.3,56.3,0,0,1,64.83,25.4ZM137.38,91.19a56.53,56.53,0,0,1,14.26-26.93A51.13,51.13,0,0,1,188.92,48,50.5,50.5,0,0,1,217,56.53Z"/>',
  sail:'<path d="M247.21,172.53A8,8,0,0,0,240,168H144V144h72a8,8,0,0,0,5.92-13.38L144,44.91V8a8,8,0,0,0-14.21-5l-104,128A8,8,0,0,0,32,144h96v24H16a8,8,0,0,0-6.25,13l29.6,37a15.93,15.93,0,0,0,12.49,6H204.16a15.93,15.93,0,0,0,12.49-6l29.6-37A8,8,0,0,0,247.21,172.53ZM197.92,128H144V68.69ZM48.81,128,128,30.53V128Zm155.35,80H51.84l-19.2-24H223.36Z"/>',
  fogx:'<path d="M120,208H72a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Zm64-16H160a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Zm-24,32H104a8,8,0,0,0,0,16h56a8,8,0,0,0,0-16Zm72-124a76.08,76.08,0,0,1-76,76H76A52,52,0,0,1,76,72a53.26,53.26,0,0,1,8.92.76A76.08,76.08,0,0,1,232,100Zm-16,0A60.06,60.06,0,0,0,96,96.46a8,8,0,0,1-16-.92q.21-3.66.77-7.23A38.11,38.11,0,0,0,76,88a36,36,0,0,0,0,72h80A60.07,60.07,0,0,0,216,100Z"/>',
- sun:'<path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm8,24a64,64,0,1,0,64,64A64.07,64.07,0,0,0,128,64ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/>'
 };
 const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 256 256" aria-hidden="true">${G[k]}</svg>`;
 
@@ -431,11 +417,11 @@ const HILLS=SPOTS.filter(s=>s.h), FLATS=SPOTS.filter(s=>!s.h);
 function buildMap(){
   $("dots").innerHTML=SPOTS.map(s=>
     `<span class="dot" data-k="${s.n}" title="${s.n}"
-      style="left:${(s.x/VBW*100).toFixed(3)}%; top:${(s.y/VBH*100).toFixed(3)}%">${ico("sun")}</span>`).join("");
+      style="left:${(s.x/VBW*100).toFixed(3)}%; top:${(s.y/VBH*100).toFixed(3)}%"><svg class="rays" viewBox="0 0 256 256" aria-hidden="true"><g stroke="currentColor" stroke-width="16" stroke-linecap="round" fill="none"><line x1="128" y1="16" x2="128" y2="40"/><line x1="128" y1="216" x2="128" y2="240"/><line x1="16" y1="128" x2="40" y2="128"/><line x1="216" y1="128" x2="240" y2="128"/><line x1="48.8" y1="48.8" x2="65.8" y2="65.8"/><line x1="207.2" y1="48.8" x2="190.2" y2="65.8"/><line x1="48.8" y1="207.2" x2="65.8" y2="190.2"/><line x1="207.2" y1="207.2" x2="190.2" y2="190.2"/></g></svg></span>`).join("");
   $("peaks").innerHTML=HILLS.map(s=>
     `<b class="pk" data-k="${s.n}" data-x="${s.x}" data-y="${s.y}">${s.n}</b>`).join("");
   $("rail").innerHTML=
-    SPOTS.map(s=>`<i data-k="${s.n}" style="left:${(s.x/VBW*100).toFixed(3)}%"></i>`).join("")
+    FLATS.map(s=>`<i data-k="${s.n}" style="left:${(s.x/VBW*100).toFixed(3)}%"></i>`).join("")
    +FLATS.map(s=>`<b data-k="${s.n}" data-x="${s.x}">${s.n}</b>`).join("");
 }
 
@@ -447,26 +433,32 @@ function relayout(){
   if(!rail||!stage) return;
   const W=rail.clientWidth, H=stage.clientHeight;
   if(!W||!H){ requestAnimationFrame(relayout); return; }   /* not laid out yet */
-  const PAD=7, boxes=[];
+  const PAD=7, DOTR=8, LEAD=7, boxes=[];
 
-  [...$("peaks").children].forEach(n=>{
-    const cx=+n.dataset.x/VBW*W, dotY=+n.dataset.y/VBH*H,
-          w=n.offsetWidth, lh=n.offsetHeight;
-    let l=cl(cx-w/2, 0, Math.max(0,W-w));
-    const r=l+w;
-    let y=dotY-13-lh;                       /* 13px of clearance above the dot */
-    for(let guard=0; guard<8; guard++){
-      const hit=boxes.find(b=>l<b.r+PAD && r>b.l-PAD && Math.abs(y-b.y)<lh+5);
-      if(!hit) break;
-      y=hit.y-lh-5;
-      if(y<0){ y=0; break; }
-    }
-    boxes.push({l,r,y});
-    n.style.left=((l+w/2)/W*100).toFixed(3)+"%";
-    n.style.top=y.toFixed(1)+"px";
-    n.style.setProperty("--gap",(dotY-(y+lh)).toFixed(1)+"px");
-    n.style.setProperty("--lx",(cx-l).toFixed(1)+"px");
-  });
+  /* Place hilltops from the lowest summit upward, and only ever raise.
+     Because each label processed is taller than the last, a shorter peak's
+     name can never end up sitting above a taller one — Twin Peaks stays
+     above Corona Heights, Bernal Heights above Potrero Hill, at any width.
+     The leader stops DOTR short of the dot so it never crosses the marker. */
+  [...$("peaks").children]
+    .sort((a,b)=>+b.dataset.y - +a.dataset.y)
+    .forEach(n=>{
+      const cx=+n.dataset.x/VBW*W, dotY=+n.dataset.y/VBH*H,
+            w=n.offsetWidth, lh=n.offsetHeight;
+      const l=cl(cx-w/2, 0, Math.max(0,W-w)), r=l+w;
+      let y=dotY-DOTR-LEAD-lh;
+      for(let guard=0; guard<8; guard++){
+        const hit=boxes.find(b=>l<b.r+PAD && r>b.l-PAD && Math.abs(y-b.y)<lh+5);
+        if(!hit) break;
+        y=hit.y-lh-5;
+        if(y<0){ y=0; break; }
+      }
+      boxes.push({l,r,y});
+      n.style.left=((l+w/2)/W*100).toFixed(3)+"%";
+      n.style.top=y.toFixed(1)+"px";
+      n.style.setProperty("--gap",Math.max(0,dotY-DOTR-(y+lh)).toFixed(1)+"px");
+      n.style.setProperty("--lx",(cx-l).toFixed(1)+"px");
+    });
 
   const ROW=15, TOP=13, ends=[], tier={};
   [...$("rail").querySelectorAll("b")].forEach(n=>{
@@ -495,69 +487,6 @@ function split(k){
   return {sun:all.filter(d=>d.clear).sort(by), fog:all.filter(d=>!d.clear).sort(by)};
 }
 
-/* ── the board is built once and its rows are permanent. Scrubbing
-     moves a row across the fog line rather than redrawing the list,
-     so you watch Karl take a spot instead of seeing a new list. ── */
-const ROWS={};
-let sig="", LIVE=false;
-
-function buildBoard(){
-  $("board").innerHTML=
-    `<h2 class="sec">Clear spots</h2><div class="rows" id="rowsSun"></div>`+
-    `<h2 class="sec">Under Karl</h2><div class="rows" id="rowsFog"></div>`;
-  const el=(tag,cls)=>{ const n=document.createElement(tag); if(cls) n.className=cls; return n; };
-  SPOTS.forEach(s=>{
-    const d=el("div","tr fog"); d.dataset.k=s.n;
-    const ri=el("span","ri"); ri.innerHTML=ico(s.g);
-    const mid=el("span"), nm=el("span","nm"), strip=el("span","strip"), tp=el("span","tp");
-    nm.textContent=s.n;
-    mid.appendChild(nm); mid.appendChild(strip);
-    d.appendChild(ri); d.appendChild(mid); d.appendChild(tp);
-    ROWS[s.n]={el:d, ri, strip, tp};      /* direct refs — never re-queried */
-    $("rowsFog").appendChild(d);
-  });
-}
-
-const prevSide={};
-function paintBoard(sun,fog){
-  const order=sun.map(s=>"S"+s.n).concat(fog.map(s=>"F"+s.n)).join("|");
-  const moved=order!==sig; sig=order;
-
-  /* crossing the fog line is an event; reordering by a mile per hour is not */
-  const crossed=[];
-  sun.forEach(s=>{ if(prevSide[s.n]===false) crossed.push([ROWS[s.n],1]); prevSide[s.n]=true; });
-  fog.forEach(s=>{ if(prevSide[s.n]===true ) crossed.push([ROWS[s.n],0]); prevSide[s.n]=false; });
-
-  const state = (moved && LIVE && window.Flip) ? Flip.getState(".tr") : null;
-
-  sun.concat(fog).forEach((s,i)=>{
-    const r=ROWS[s.n]; if(!r) return;
-    r.strip.innerHTML=`<b>${Math.round(s.lowCloud)}%</b> low cloud · <b>${w2(s.wind)}</b> ${wu()} wind`;
-    r.tp.textContent=t2(s.temp)+"°";
-    r.el.classList.toggle("clear",!!s.clear);
-    r.el.classList.toggle("fog",!s.clear);
-    r.el.classList.toggle("top",!!s.clear&&i===0);
-  });
-  if(moved){
-    sun.forEach(s=>$("rowsSun").appendChild(ROWS[s.n].el));
-    fog.forEach(s=>$("rowsFog").appendChild(ROWS[s.n].el));
-  }
-
-  /* No absolute:true — the rows have to keep holding the layout open,
-     or the page collapses under them mid-scrub. Total rows never change,
-     so the board's height is constant throughout. */
-  if(state) Flip.from(state,{
-    duration: crossed.length ? .55 : .26,     /* the event reads slower than a shuffle */
-    ease: crossed.length ? "power2.inOut" : "power2.out",
-    stagger:{amount: crossed.length ? .1 : .04}, nested:true});
-
-  /* the glyph says which way it went, then settles back */
-  if(crossed.length && LIVE && window.gsap)
-    crossed.forEach(([r,into])=>gsap.fromTo(r.ri,
-      {color: into ? "#F0A03C" : "#3B4A52"},
-      {color:"#E9EAE4", duration:.8, ease:"power2.out", clearProps:"color"}));
-}
-
 /* ── the answer, sitting on top of the map ─────────────────────── */
 function paintVerdict(sun,k){
   if(!sun.length){                      /* quiet rule: nothing above the line */
@@ -582,7 +511,17 @@ function paint(){
   $("tbRel").textContent=relLabel(k);
   $("time").setAttribute("aria-valuetext",stamp(fr.t,k));
 
-  paintBoard(sun,fog);
+  const row=(s,i,cls)=>`
+    <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
+      <span class="ri">${ico(s.g)}</span>
+      <span><span class="nm">${s.n}</span>
+        <span class="strip"><b>${Math.round(s.lowCloud)}%</b> low cloud · <b>${w2(s.wind)}</b> ${wu()} wind</span></span>
+      <span class="tp">${t2(s.temp)}°</span>
+    </div>`;
+  /* rows are wrapped so the rule falls only between them, never at an edge */
+  $("board").innerHTML=
+    `<h2 class="sec">Clear spots</h2><div class="rows">${sun.map((s,i)=>row(s,i,"clear")).join("")}</div>`+
+    `<h2 class="sec">Under Karl</h2><div class="rows">${fog.map((s,i)=>row(s,i,"fog")).join("")}</div>`;
 
   const pick=sun.length?sun[0].n:null;
   const state={};
@@ -622,90 +561,14 @@ $("units").addEventListener("click",e=>{
   paint();
 });
 
-/* ══ reveal ════════════════════════════════════════════════════
-   The entrance is the mechanism: ground draws west to east, the
-   marine layer floods in behind it and stops at the ridge, the spots
-   ignite in the order Karl reaches them. Two acts, so the masthead
-   isn't held hostage by the network.
-   Never load-bearing — if GSAP is absent or motion is reduced,
-   ANIM is false and every element is simply already there. ══ */
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const ANIM = !!window.gsap && !reduce && document.documentElement.classList.contains("pre");
-let tl=null;
-
-/* rects ship closed; if there is no reveal, open them immediately */
-if(!ANIM){ $("wipeT").setAttribute("width",VBW); $("wipeF").setAttribute("width",VBW); }
-
-function revealAct1(){
-  if(!ANIM) return;
-  tl=gsap.timeline({defaults:{ease:"power2.out"}});
-  tl.to(".titlerow",{opacity:1,duration:.55},0)
-    .from("h1 img",{y:16,duration:.8},0)
-    .to(".sub",{opacity:1,duration:.5},.18)
-    .to(".sec.rv",{opacity:1,duration:.45},.34)
-    .to(".ridge-head",{opacity:1,duration:.45},.42)
-    .to("#wipeT",{attr:{width:VBW},duration:.92,ease:"power2.inOut"},.38);
-}
-
-function revealAct2(){
-  if(!ANIM || !tl){ done(); return; }
-  const tEl=document.querySelector(".v-temp");
-  tl.to("#wipeF",{attr:{width:VBW},duration:1.15,ease:"power1.inOut"},.95)
-    /* dots only ever carry a transform during the reveal, so scale is safe */
-    .from("#dots .dot",{scale:0,opacity:0,duration:.45,stagger:.048,ease:"back.out(2.2)"},1.10)
-    /* labels are centred with translateX(-50%); animating opacity alone
-       keeps GSAP from taking over the transform and losing that */
-    .fromTo("#peaks .pk",{"--ld":0},{"--ld":1,duration:.4,stagger:.07,ease:"power2.out"},1.42)
-    .from("#peaks .pk",{opacity:0,duration:.45,stagger:.07},1.45)
-    .from("#rail i",{scaleY:0,duration:.32,stagger:.025},1.40)
-    .from("#rail b",{opacity:0,duration:.4,stagger:.04},1.54)
-    .to(".verdict",{opacity:1,duration:.5},1.50)
-    .from(".v-ico",{scale:.55,opacity:0,duration:.55,ease:"back.out(2.4)"},1.54)
-    .from(".v-name",{opacity:0,x:-12,duration:.55},1.60)
-    .from(".v-cond",{opacity:0,duration:.5},1.78)
-    .to(".timebar",{opacity:1,duration:.5},1.88)
-    .to("#board",{opacity:1,duration:.4},1.96)
-    .from("#board .sec",{opacity:0,x:-8,duration:.45,stagger:.26},1.96)
-    .from("#board .tr",{opacity:0,y:12,duration:.5,stagger:.04},2.02)
-    .to(".attr,.sign",{opacity:1,duration:.55},2.30)
-    .eventCallback("onComplete",done);
-
-  /* the temperature arrives by counting, not by appearing */
-  if(tEl){
-    const end=parseInt(tEl.textContent,10);
-    if(!isNaN(end)){
-      const o={v:Math.round(end*.72)};
-      tl.to(o,{v:end,duration:.95,ease:"power2.out",snap:{v:1},
-        onUpdate:()=>{ tEl.textContent=o.v+"°"; }},1.60);
-    }
-  }
-}
-
-function done(){ document.documentElement.classList.remove("pre"); LIVE=true; }
-
-/* any interaction wins over the reveal */
-function skipReveal(){
-  if(!tl) return;
-  tl.progress(1,true).kill(); tl=null;
-  gsap.set(["#wipeT","#wipeF"],{attr:{width:VBW}});
-  gsap.set([".rv","#dots .dot","#peaks .pk","#rail i","#rail b",".v-ico",".v-name",".v-cond"],
-    {clearProps:"transform,opacity"});
-  done(); paint();
-}
-["pointerdown","keydown","wheel","touchstart"].forEach(e=>
-  addEventListener(e,skipReveal,{once:true,passive:true}));
-
 (async()=>{
   [...$("units").querySelectorAll("button")]
     .forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.u===S.unit)));
-  buildMap(); buildBoard();
-  LIVE=!ANIM;
-  revealAct1();                  /* masthead + ground, no data needed */
+  buildMap();                  /* masthead + ground, no data needed */
   try{ S.frames=await fetchLive(); }
   catch(err){ S.frames=simulate(); }
   paint();                       /* content first — never gated on measurement */
   safeLayout();
-  revealAct2();
   /* one observer covers first layout, webfont swap, rotation and resize */
   if(window.ResizeObserver) new ResizeObserver(()=>{
     clearTimeout(rz); rz=setTimeout(safeLayout,120);
