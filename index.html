@@ -231,6 +231,7 @@ html.pre .rv{opacity:0}
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js"></script>
 <script>
 (function(){
   var ok = window.gsap && !matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -494,6 +495,69 @@ function split(k){
   return {sun:all.filter(d=>d.clear).sort(by), fog:all.filter(d=>!d.clear).sort(by)};
 }
 
+/* ── the board is built once and its rows are permanent. Scrubbing
+     moves a row across the fog line rather than redrawing the list,
+     so you watch Karl take a spot instead of seeing a new list. ── */
+const ROWS={};
+let sig="", LIVE=false;
+
+function buildBoard(){
+  $("board").innerHTML=
+    `<h2 class="sec">Clear spots</h2><div class="rows" id="rowsSun"></div>`+
+    `<h2 class="sec">Under Karl</h2><div class="rows" id="rowsFog"></div>`;
+  const el=(tag,cls)=>{ const n=document.createElement(tag); if(cls) n.className=cls; return n; };
+  SPOTS.forEach(s=>{
+    const d=el("div","tr fog"); d.dataset.k=s.n;
+    const ri=el("span","ri"); ri.innerHTML=ico(s.g);
+    const mid=el("span"), nm=el("span","nm"), strip=el("span","strip"), tp=el("span","tp");
+    nm.textContent=s.n;
+    mid.appendChild(nm); mid.appendChild(strip);
+    d.appendChild(ri); d.appendChild(mid); d.appendChild(tp);
+    ROWS[s.n]={el:d, ri, strip, tp};      /* direct refs — never re-queried */
+    $("rowsFog").appendChild(d);
+  });
+}
+
+const prevSide={};
+function paintBoard(sun,fog){
+  const order=sun.map(s=>"S"+s.n).concat(fog.map(s=>"F"+s.n)).join("|");
+  const moved=order!==sig; sig=order;
+
+  /* crossing the fog line is an event; reordering by a mile per hour is not */
+  const crossed=[];
+  sun.forEach(s=>{ if(prevSide[s.n]===false) crossed.push([ROWS[s.n],1]); prevSide[s.n]=true; });
+  fog.forEach(s=>{ if(prevSide[s.n]===true ) crossed.push([ROWS[s.n],0]); prevSide[s.n]=false; });
+
+  const state = (moved && LIVE && window.Flip) ? Flip.getState(".tr") : null;
+
+  sun.concat(fog).forEach((s,i)=>{
+    const r=ROWS[s.n]; if(!r) return;
+    r.strip.innerHTML=`<b>${Math.round(s.lowCloud)}%</b> low cloud · <b>${w2(s.wind)}</b> ${wu()} wind`;
+    r.tp.textContent=t2(s.temp)+"°";
+    r.el.classList.toggle("clear",!!s.clear);
+    r.el.classList.toggle("fog",!s.clear);
+    r.el.classList.toggle("top",!!s.clear&&i===0);
+  });
+  if(moved){
+    sun.forEach(s=>$("rowsSun").appendChild(ROWS[s.n].el));
+    fog.forEach(s=>$("rowsFog").appendChild(ROWS[s.n].el));
+  }
+
+  /* No absolute:true — the rows have to keep holding the layout open,
+     or the page collapses under them mid-scrub. Total rows never change,
+     so the board's height is constant throughout. */
+  if(state) Flip.from(state,{
+    duration: crossed.length ? .55 : .26,     /* the event reads slower than a shuffle */
+    ease: crossed.length ? "power2.inOut" : "power2.out",
+    stagger:{amount: crossed.length ? .1 : .04}, nested:true});
+
+  /* the glyph says which way it went, then settles back */
+  if(crossed.length && LIVE && window.gsap)
+    crossed.forEach(([r,into])=>gsap.fromTo(r.ri,
+      {color: into ? "#F0A03C" : "#3B4A52"},
+      {color:"#E9EAE4", duration:.8, ease:"power2.out", clearProps:"color"}));
+}
+
 /* ── the answer, sitting on top of the map ─────────────────────── */
 function paintVerdict(sun,k){
   if(!sun.length){                      /* quiet rule: nothing above the line */
@@ -518,17 +582,7 @@ function paint(){
   $("tbRel").textContent=relLabel(k);
   $("time").setAttribute("aria-valuetext",stamp(fr.t,k));
 
-  const row=(s,i,cls)=>`
-    <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
-      <span class="ri">${ico(s.g)}</span>
-      <span><span class="nm">${s.n}</span>
-        <span class="strip"><b>${Math.round(s.lowCloud)}%</b> low cloud · <b>${w2(s.wind)}</b> ${wu()} wind</span></span>
-      <span class="tp">${t2(s.temp)}°</span>
-    </div>`;
-  /* rows are wrapped so the rule falls only between them, never at an edge */
-  $("board").innerHTML=
-    `<h2 class="sec">Clear spots</h2><div class="rows">${sun.map((s,i)=>row(s,i,"clear")).join("")}</div>`+
-    `<h2 class="sec">Under Karl</h2><div class="rows">${fog.map((s,i)=>row(s,i,"fog")).join("")}</div>`;
+  paintBoard(sun,fog);
 
   const pick=sun.length?sun[0].n:null;
   const state={};
@@ -627,7 +681,7 @@ function revealAct2(){
   }
 }
 
-function done(){ document.documentElement.classList.remove("pre"); }
+function done(){ document.documentElement.classList.remove("pre"); LIVE=true; }
 
 /* any interaction wins over the reveal */
 function skipReveal(){
@@ -644,7 +698,8 @@ function skipReveal(){
 (async()=>{
   [...$("units").querySelectorAll("button")]
     .forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.u===S.unit)));
-  buildMap();
+  buildMap(); buildBoard();
+  LIVE=!ANIM;
   revealAct1();                  /* masthead + ground, no data needed */
   try{ S.frames=await fetchLive(); }
   catch(err){ S.frames=simulate(); }
