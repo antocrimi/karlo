@@ -221,43 +221,62 @@ svg.g{fill:currentColor}
   .nm{font-size:18px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/190} }
+/* ══ reveal ═══════════════════════════════════════════════════ */
+html.pre .rv{opacity:0}
+.pk::after{transform-origin:50% 0; transform:scaleY(var(--ld,1))}
+.rail i{transform-origin:50% 0}
+
 @media(prefers-reduced-motion:reduce){
   .dot,.bar i,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function(){
+  var ok = window.gsap && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!ok) return;
+  document.documentElement.classList.add("pre");
+  /* failsafe: nothing may leave the page hidden */
+  setTimeout(function(){ document.documentElement.classList.remove("pre"); }, 5000);
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
 
-  <div class="titlerow">
+  <div class="titlerow rv">
     <h1><img src="logo.png" alt="Karl" width="638" height="196"></h1>
     <div class="units" id="units" role="group" aria-label="Temperature unit">
       <button data-u="C" aria-pressed="false">°C</button><s aria-hidden="true"></s><button data-u="F" aria-pressed="true">°F</button>
     </div>
   </div>
 
-  <p class="sub">Your SF sun chasing guide.</p>
+  <p class="sub rv">Your SF sun chasing guide.</p>
 
   <div class="ridge">
-    <h2 class="sec">Top Spot</h2>
-    <div class="verdict" id="verdict" aria-live="polite"></div>
-    <div class="ridge-head"><span>← West</span><span>East →</span></div>
+    <h2 class="sec rv">Top Spot</h2>
+    <div class="verdict rv" id="verdict" aria-live="polite"></div>
+    <div class="ridge-head rv"><span>← West</span><span>East →</span></div>
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
-        <defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#A9B7BE" stop-opacity=".55"/>
-          <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
-          <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
-        </linearGradient></defs>
-        <path id="fogBody" d="" fill="url(#fg)"/>
-        <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <defs>
+          <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#A9B7BE" stop-opacity=".55"/>
+            <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
+            <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
+          </linearGradient>
+          <clipPath id="clipF"><rect id="wipeF" x="0" y="0" width="0" height="250"/></clipPath>
+          <clipPath id="clipT"><rect id="wipeT" x="0" y="0" width="0" height="250"/></clipPath>
+        </defs>
+        <g clip-path="url(#clipF)"><path id="fogBody" d="" fill="url(#fg)"/></g>
+        <g clip-path="url(#clipT)"><path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/></g>
       </svg>
       <div id="dots"></div>
       <div class="peaks" id="peaks"></div>
     </div>
     <div class="rail" id="rail"></div>
 
-    <div class="timebar">
+    <div class="timebar rv">
       <div class="tb-head"><span class="tb-at" id="tbAt">Now</span><span class="tb-rel" id="tbRel">Live</span></div>
       <input type="range" id="time" min="0" max="23" step="1" value="0"
              aria-label="Time, hours from now" aria-valuetext="Now">
@@ -265,13 +284,13 @@ svg.g{fill:currentColor}
     </div>
   </div>
 
-  <div id="board"></div>
+  <div id="board" class="rv"></div>
 
-  <p class="attr">
+  <p class="attr rv">
     Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a>, CC BY 4.0.
     Non-commercial use. Fog climatology is a static local estimate, not measured.
   </p>
-  <p class="sign">Enjoy your day! Anto</p>
+  <p class="sign rv">Enjoy your day! Anto</p>
 </div>
 
 <script>
@@ -549,14 +568,89 @@ $("units").addEventListener("click",e=>{
   paint();
 });
 
+/* ══ reveal ════════════════════════════════════════════════════
+   The entrance is the mechanism: ground draws west to east, the
+   marine layer floods in behind it and stops at the ridge, the spots
+   ignite in the order Karl reaches them. Two acts, so the masthead
+   isn't held hostage by the network.
+   Never load-bearing — if GSAP is absent or motion is reduced,
+   ANIM is false and every element is simply already there. ══ */
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ANIM = !!window.gsap && !reduce && document.documentElement.classList.contains("pre");
+let tl=null;
+
+/* rects ship closed; if there is no reveal, open them immediately */
+if(!ANIM){ $("wipeT").setAttribute("width",VBW); $("wipeF").setAttribute("width",VBW); }
+
+function revealAct1(){
+  if(!ANIM) return;
+  tl=gsap.timeline({defaults:{ease:"power2.out"}});
+  tl.to(".titlerow",{opacity:1,duration:.55},0)
+    .from("h1 img",{y:16,duration:.8},0)
+    .to(".sub",{opacity:1,duration:.5},.18)
+    .to(".sec.rv",{opacity:1,duration:.45},.34)
+    .to(".ridge-head",{opacity:1,duration:.45},.42)
+    .to("#wipeT",{attr:{width:VBW},duration:.92,ease:"power2.inOut"},.38);
+}
+
+function revealAct2(){
+  if(!ANIM || !tl){ done(); return; }
+  const tEl=document.querySelector(".v-temp");
+  tl.to("#wipeF",{attr:{width:VBW},duration:1.15,ease:"power1.inOut"},.95)
+    /* dots only ever carry a transform during the reveal, so scale is safe */
+    .from("#dots .dot",{scale:0,opacity:0,duration:.45,stagger:.048,ease:"back.out(2.2)"},1.10)
+    /* labels are centred with translateX(-50%); animating opacity alone
+       keeps GSAP from taking over the transform and losing that */
+    .fromTo("#peaks .pk",{"--ld":0},{"--ld":1,duration:.4,stagger:.07,ease:"power2.out"},1.42)
+    .from("#peaks .pk",{opacity:0,duration:.45,stagger:.07},1.45)
+    .from("#rail i",{scaleY:0,duration:.32,stagger:.025},1.40)
+    .from("#rail b",{opacity:0,duration:.4,stagger:.04},1.54)
+    .to(".verdict",{opacity:1,duration:.5},1.50)
+    .from(".v-ico",{scale:.55,opacity:0,duration:.55,ease:"back.out(2.4)"},1.54)
+    .from(".v-name",{opacity:0,x:-12,duration:.55},1.60)
+    .from(".v-cond",{opacity:0,duration:.5},1.78)
+    .to(".timebar",{opacity:1,duration:.5},1.88)
+    .to("#board",{opacity:1,duration:.4},1.96)
+    .from("#board .sec",{opacity:0,x:-8,duration:.45,stagger:.26},1.96)
+    .from("#board .tr",{opacity:0,y:12,duration:.5,stagger:.04},2.02)
+    .to(".attr,.sign",{opacity:1,duration:.55},2.30)
+    .eventCallback("onComplete",done);
+
+  /* the temperature arrives by counting, not by appearing */
+  if(tEl){
+    const end=parseInt(tEl.textContent,10);
+    if(!isNaN(end)){
+      const o={v:Math.round(end*.72)};
+      tl.to(o,{v:end,duration:.95,ease:"power2.out",snap:{v:1},
+        onUpdate:()=>{ tEl.textContent=o.v+"°"; }},1.60);
+    }
+  }
+}
+
+function done(){ document.documentElement.classList.remove("pre"); }
+
+/* any interaction wins over the reveal */
+function skipReveal(){
+  if(!tl) return;
+  tl.progress(1,true).kill(); tl=null;
+  gsap.set(["#wipeT","#wipeF"],{attr:{width:VBW}});
+  gsap.set([".rv","#dots .dot","#peaks .pk","#rail i","#rail b",".v-ico",".v-name",".v-cond"],
+    {clearProps:"transform,opacity"});
+  done(); paint();
+}
+["pointerdown","keydown","wheel","touchstart"].forEach(e=>
+  addEventListener(e,skipReveal,{once:true,passive:true}));
+
 (async()=>{
   [...$("units").querySelectorAll("button")]
     .forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.u===S.unit)));
   buildMap();
+  revealAct1();                  /* masthead + ground, no data needed */
   try{ S.frames=await fetchLive(); }
   catch(err){ S.frames=simulate(); }
   paint();                       /* content first — never gated on measurement */
   safeLayout();
+  revealAct2();
   /* one observer covers first layout, webfont swap, rotation and resize */
   if(window.ResizeObserver) new ResizeObserver(()=>{
     clearTimeout(rz); rz=setTimeout(safeLayout,120);
