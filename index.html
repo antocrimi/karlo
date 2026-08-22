@@ -242,7 +242,7 @@ svg.g{fill:currentColor}
     <h2 class="sec">Top Spot</h2>
     <div class="verdict" id="verdict" aria-live="polite"></div>
     <div class="ridge-head"><span>← West</span><span>East →</span></div>
-    <div class="stage">
+    <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to India Basin showing where low cloud sits against the Twin Peaks ridge">
         <defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stop-color="#A9B7BE" stop-opacity=".55"/>
@@ -423,8 +423,10 @@ function buildMap(){
    Hilltop labels are placed in 2D, since each sits above its own summit
    and two labels at different heights can share horizontal space. */
 function relayout(){
-  const W=$("rail").clientWidth, H=$("stage").clientHeight;
-  if(!W||!H) return;
+  const rail=$("rail"), stage=$("stage");
+  if(!rail||!stage) return;
+  const W=rail.clientWidth, H=stage.clientHeight;
+  if(!W||!H){ requestAnimationFrame(relayout); return; }   /* not laid out yet */
   const PAD=7, boxes=[];
 
   [...$("peaks").children].forEach(n=>{
@@ -534,6 +536,7 @@ $("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND}
 /* coalesce to one repaint per frame — a drag fires input far faster than
    the browser paints, and each paint rebuilds the list, dots and rail */
 let raf=null, rz=null;
+const safeLayout=()=>{ try{ relayout(); }catch(e){} };
 $("time").addEventListener("input",e=>{
   S.h=+e.target.value;
   if(raf) return;
@@ -552,9 +555,14 @@ $("units").addEventListener("click",e=>{
   buildMap();
   try{ S.frames=await fetchLive(); }
   catch(err){ S.frames=simulate(); }
-  relayout(); paint();
-  addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{relayout();paint();},140); });
-  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{relayout();paint();});
+  paint();                       /* content first — never gated on measurement */
+  safeLayout();
+  /* one observer covers first layout, webfont swap, rotation and resize */
+  if(window.ResizeObserver) new ResizeObserver(()=>{
+    clearTimeout(rz); rz=setTimeout(safeLayout,120);
+  }).observe($("rail"));
+  else addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(safeLayout,140); });
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(safeLayout);
 })();
 })();
 </script>
