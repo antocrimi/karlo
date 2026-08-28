@@ -239,6 +239,10 @@ On 22 August a photo from Noe Valley showed fog blanketing the hills toward Bern
 
 All three were failures of the *vertical* model. Keep looking out of the window.
 
+**The layer is drawn as a body of air, not a bar.** Each spot carries its own base and top, and the model varies the layer's *reach* far more than its height — so the surface runs through all eleven tops and terminates where the layer runs out, sloping down to meet the ground at a leading edge. Averaging eleven profiles into a west/east pair produced an inert grey rectangle; the wedge is both more accurate and the thing worth looking at.
+
+**Ground above the surface is lit.** The terrain is painted twice — cold, then a warmer fill clipped to everything above the fog surface and everything beyond its reach. The sunlit ridge standing over a grey city is the picture, and it is the same picture as the Bernal photograph that caught the second bug. The outline is drawn last so it reads through the fog.
+
 **The geometry is now single-sourced.** `layerOf()` walks the interpolated cover curve and returns the layer's base and top in metres. The band is drawn between them via `yM()`, and a spot is out of the layer when `elev >= top` — the same number. The picture cannot contradict the list because there is only one number. Mid-level cloud and visibility remain separate gates, since a summit above the marine layer can still sit under a high deck, and clear sky over 3 km of smoke is not a clear day. Verified: zero disagreements between dot position and verdict across a full 24-hour sweep.
 
 The band's top edge fades rather than ending in a line, because the height is an estimate with roughly ±50 m of slack and a crisp edge would claim precision the data does not have.
