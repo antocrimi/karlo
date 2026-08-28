@@ -387,17 +387,9 @@ svg.g{fill:currentColor}
             <stop offset="30%" stop-color="#A9B7BE" stop-opacity=".24"/>
             <stop offset="100%" stop-color="#A9B7BE" stop-opacity=".50"/>
           </linearGradient>
-          <!-- ground that stands above the layer is in daylight -->
-          <linearGradient id="lit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#4A4436"/>
-            <stop offset="100%" stop-color="#33383A"/>
-          </linearGradient>
-          <clipPath id="sunlit"><path id="sunClip" d=""/></clipPath>
         </defs>
-        <path id="terrain" d="" fill="#1B262C"/>
-        <g clip-path="url(#sunlit)"><path id="terrainLit" d="" fill="url(#lit)"/></g>
         <path id="fogBody" d="" fill="url(#fg)"/>
-        <path id="terrainEdge" d="" fill="none" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
       <div class="peaks" id="peaks"></div>
@@ -549,7 +541,6 @@ const HOURS=24, VBW=900, VBH=250, GROUND=246;
    could appear to stand above a layer it was actually inside. */
 const Y0=213, Y_PER_M=0.392;
 const yM = m => cl(Y0 - Y_PER_M*m, 2, GROUND);
-const FULL=`M0,0 L${VBW},0 L${VBW},${VBH} L0,${VBH} Z`;
 
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
 function smooth(pts){
@@ -892,66 +883,40 @@ function paint(){
     });
   });
 
-  /* ── the marine layer, drawn as the thing it is ──────────────────
-     Every spot carries its own base and top in metres, and the model
-     varies the layer's *reach* far more than its height. So the surface
-     runs through all eleven tops and stops where the layer runs out,
-     giving the mass a leading edge: air pouring in off the Pacific and
-     being dammed. Averaging eleven profiles into two numbers threw that
-     away and left a grey bar. */
-  const pts=fr.spots.map(s=>({x:s.x, top:s.top, base:s.base}));
-  const lay=pts.filter(p=>p.top!=null);
+  /* ── the marine layer ────────────────────────────────────────────
+     One level with a leading edge. Eleven samples across seven miles of a
+     3 km model give tops that differ by 60 px of chart or more — that is
+     grid noise, not relief, and drawing it made the surface look shredded.
+     The median is the honest level. The signal is the edge: how far inland
+     the layer has reached is what the model genuinely resolves. */
+  const inL=fr.spots.map(s=>s.top!=null);
+  const tops=fr.spots.filter(s=>s.top!=null).map(s=>s.top).sort((a,b)=>a-b);
 
-  if(!lay.length){
-    $("fogBody").setAttribute("d","");
-    $("sunClip").setAttribute("d",FULL);          /* the whole city is in sun */
-  } else {
-    /* the nose sits halfway to the first spot that is out of the layer,
-       so the edge falls between dots rather than on one */
-    const iFirst=pts.findIndex(p=>p.top!=null);
-    let iLast=pts.length-1; while(iLast>0 && pts[iLast].top==null) iLast--;
-    /* an advancing marine layer has a sloping nose, not a wall. Where the
-       layer ends inside the frame the surface descends to meet the ground;
-       where it runs off the edge it carries straight out. */
-    const noseW = iFirst===0 ? null : (pts[iFirst-1].x+pts[iFirst].x)/2;
-    const noseE = iLast===pts.length-1 ? null : (pts[iLast].x+pts[iLast+1].x)/2;
+  if(!tops.length){ $("fogBody").setAttribute("d",""); }
+  else{
+    const bs=fr.spots.filter(s=>s.base!=null).map(s=>s.base).sort((a,b)=>a-b);
+    const yTop=yM(tops[tops.length>>1]);
+    const yBot=(bs[bs.length>>1]??0)<=10 ? GROUND : yM(bs[bs.length>>1]);
 
-    const surf=lay.map(p=>({x:p.x, y:yM(p.top)}));
-    const und =lay.map(p=>({x:p.x, y:p.base<=10?GROUND:yM(p.base)}));
-    if(noseW===null){ surf.unshift({x:0,y:surf[0].y}); und.unshift({x:0,y:und[0].y}); }
-    else { surf.unshift({x:noseW,y:GROUND}); und.unshift({x:noseW,y:GROUND}); }
-    if(noseE===null){ surf.push({x:VBW,y:surf[surf.length-1].y}); und.push({x:VBW,y:und[und.length-1].y}); }
-    else { surf.push({x:noseE,y:GROUND}); und.push({x:noseE,y:GROUND}); }
+    /* contiguous extent, so one dropped grid cell mid-city cannot punch a
+       hole through a layer that plainly covers it */
+    const xs=fr.spots.map(s=>s.x);
+    const i0=inL.indexOf(true);
+    let i1=inL.length-1; while(i1>0 && !inL[i1]) i1--;
+    const openW=i0===0, openE=i1===xs.length-1;
+    const x0=openW?0:(xs[i0-1]+xs[i0])/2, x1=openE?VBW:(xs[i1]+xs[i1+1])/2;
+    const f=n=>(+n).toFixed(1);
 
-    /* horizontal-tangent cubics: the surface undulates instead of kinking */
-    const seg=p=>{ let d="";
-      for(let i=0;i<p.length-1;i++){
-        const c=(p[i].x+p[i+1].x)/2;
-        d+=` C${c.toFixed(1)},${p[i].y.toFixed(1)} ${c.toFixed(1)},${p[i+1].y.toFixed(1)} ${p[i+1].x.toFixed(1)},${p[i+1].y.toFixed(1)}`;
-      } return d; };
-    const rev=[...und].reverse();
-    $("fogBody").setAttribute("d",
-      `M${surf[0].x.toFixed(1)},${surf[0].y.toFixed(1)}${seg(surf)}`
-     +` L${rev[0].x.toFixed(1)},${rev[0].y.toFixed(1)}${seg(rev)} Z`);
-
-    /* ── daylight ────────────────────────────────────────────────────
-       Ground above the fog surface is lit, and so is everything beyond
-       the layer's reach. The clip runs along the top of the sky, down to
-       the surface, across it, and back up — so the sunlit region is the
-       sky plus any terrain poking into it. */
-    const sky=[{x:0, y: noseW!==null ? 2 : surf[0].y}, ...surf,
-               {x:VBW, y: noseE!==null ? 2 : surf[surf.length-1].y}];
-    $("sunClip").setAttribute("d",
-      `M0,2 L${sky[0].x.toFixed(1)},${sky[0].y.toFixed(1)}${seg(sky)} L${VBW},2 Z`);
+    const head=openW ? `M0,${f(yTop)}`
+      : `M${f(x0-54)},${f(yBot)} C${f(x0-18)},${f(yBot)} ${f(x0-14)},${f(yTop)} ${f(x0+20)},${f(yTop)}`;
+    const tail=openE ? ` L${VBW},${f(yTop)} L${VBW},${f(yBot)}`
+      : ` L${f(x1-20)},${f(yTop)} C${f(x1+14)},${f(yTop)} ${f(x1+18)},${f(yBot)} ${f(x1+54)},${f(yBot)}`;
+    $("fogBody").setAttribute("d", head+tail+` L${openW?"0":f(x0-54)},${f(yBot)} Z`);
   }
 
 }
 
-(()=>{ const d=`M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`;
-  $("terrain").setAttribute("d",d);
-  $("terrainLit").setAttribute("d",d);
-  $("terrainEdge").setAttribute("d",d);
-})();
+$("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`);
 
 /* ── controls ──────────────────────────────────────────────────── */
 /* coalesce to one repaint per frame — a drag fires input far faster than
