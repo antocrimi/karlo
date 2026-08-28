@@ -29,6 +29,8 @@ Nine variables is deliberate: requests covering more than ten variables bill as 
 
 A spot is **clear** when cloud overhead is under 45% *and* visibility is over 5 km. Both, because cloud alone can't tell a sunny smoke day from a sunny one, and can't see fog at street level.
 
+The chart's vertical axis is an elevation axis, and the cloud band is drawn on it as a real layer — between the height where cover begins and the height where it ends. A summit appears above the band only when it genuinely stands above the cloud. The same number decides the verdict, so the picture and the list cannot disagree.
+
 "Cloud overhead" is not the model's low-cloud figure. Cloud is sampled at four altitudes — roughly 110, 320, 540 and 760 metres — plus a mid-level field, and cover at any height in between is interpolated. Each spot then asks three separate questions of that curve using its own elevation: is there cloud at my altitude, is there cloud anywhere above me, and is there cloud below me. The second is what decides whether the sun is blocked, and it is the maximum across everything overhead — otherwise a high overcast deck with clear air beneath reads as a sunny day.
 
 Inside each group the calmest spot sits on top, so exposed places sink. A score combining clarity, visibility, wind and temperature breaks ties on equal wind; it isn't displayed.

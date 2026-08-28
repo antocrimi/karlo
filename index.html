@@ -379,10 +379,13 @@ svg.g{fill:currentColor}
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to Dogpatch showing where cloud sits against the Twin Peaks ridge">
         <defs>
-          <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#A9B7BE" stop-opacity=".55"/>
-            <stop offset="70%" stop-color="#A9B7BE" stop-opacity=".30"/>
-            <stop offset="100%" stop-color="#A9B7BE" stop-opacity="0"/>
+          <!-- vertical: the top edge fades, because the layer height is an
+               estimate with roughly ±50 m of slack and a crisp line would
+               claim a precision the data does not have -->
+          <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stop-color="#A9B7BE" stop-opacity="0"/>
+            <stop offset="34%" stop-color="#A9B7BE" stop-opacity=".26"/>
+            <stop offset="100%" stop-color="#A9B7BE" stop-opacity=".46"/>
           </linearGradient>
         </defs>
         <path id="fogBody" d="" fill="url(#fg)"/>
@@ -530,6 +533,15 @@ const CLEAR=45,        /* cloud overhead, per cent */
 const BUILD="2026.08.28";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
+/* The terrain's y coordinates are an elevation axis: fitting all eleven
+   spots' drawn y against their real elevation gives y = 213 − 0.392 × m,
+   r = 0.958. Anything else drawn on this axis must use the same mapping,
+   or it is measuring a different quantity in the same picture. The fog
+   band used to be cloud-cover percentage × 1.55, which is why a summit
+   could appear to stand above a layer it was actually inside. */
+const Y0=213, Y_PER_M=0.392;
+const yM = m => cl(Y0 - Y_PER_M*m, 2, GROUND);
+
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
 function smooth(pts){
   const p=[{x:-70,y:pts[0].y+8},...pts,{x:VBW+70,y:pts[pts.length-1].y+6}];
@@ -603,6 +615,7 @@ function simulate(){
       const p  = profile(s.e, lv, 0, lv[0]);
       const buried = p.inLayer;
       return {...s, elev:s.e, lowCloud:p.overhead, here:p.here, aboveFog:p.aboveFog,
+              base:p.base, top:p.top, mid:p.mid,
               rawLow:p.overhead,
               vis: buried ? 220+Math.random()*600 : (inReach ? 9000 : 22000),
               temp: 70 - (buried?9:0) - diurnal*4,
@@ -636,6 +649,7 @@ async function fetchLive(){
       const p = profile(elev, LEVELS.map(L=>h[L.k]?.[i]??0),
                         h.cloud_cover_mid?.[i], h.cloud_cover_low?.[i]);
       return {...s, elev, lowCloud:p.overhead, here:p.here, aboveFog:p.aboveFog,
+              base:p.base, top:p.top, mid:p.mid,
               rawLow:h.cloud_cover_low[i]??0, temp:h.temperature_2m[i],
               wind:h.wind_speed_10m[i], vis:h.visibility[i]??20000};
     })});
@@ -744,6 +758,20 @@ function coverCurve(P){
   };
 }
 
+/* Base and top of the lowest thick layer, in metres. Walks the interpolated
+   curve rather than snapping to samples, so a deck between two levels is
+   found where it actually sits. Returns null when there is no layer. */
+function layerOf(P){
+  const at=coverCurve(P);
+  let base=null;
+  for(let h=0; h<=800; h+=10){
+    const c=at(h);
+    if(base===null){ if(c>=CLEAR) base=h; }
+    else if(c<CLEAR) return {base, top:h};
+  }
+  return base===null ? null : {base, top:820};
+}
+
 function profile(elev, lv, mid, lowAgg){
   const P=LEVELS.map((L,i)=>({k:L.k,h:L.h,c:cl(lv[i]??0,0,100)}));
   const at=coverCurve(P);
@@ -755,7 +783,9 @@ function profile(elev, lv, mid, lowAgg){
   /* if every pressure level came back empty, fall back to the aggregate
      rather than silently reporting a clear sky */
   if(P.every(l=>l.c===0)) overhead=Math.max(overhead, cl(lowAgg??0,0,100));
-  return {overhead, here, beneath,
+  const L=layerOf(P);
+  return {overhead, here, beneath, mid: cl(mid??0,0,100),
+          base: L?L.base:null, top: L?L.top:null,
           inLayer:  here>=CLEAR,
           aboveFog: beneath>=60 && here<CLEAR && overhead<CLEAR};
 }
@@ -763,10 +793,13 @@ function profile(elev, lv, mid, lowAgg){
 /* Clarity decides the side of the line. Wind decides the order within it,
    so the calmest spot sits on top and the exposed ones sink. */
 function split(k){
-  /* Clear means clear overhead and clear air. Cloud alone cannot tell a
-     sunny smoke day from a sunny one, and it cannot see fog at street level. */
+  /* One geometry, one verdict. A spot is out of the layer when it stands at
+     or above the layer's top — the same number the band is drawn from, so the
+     picture can never contradict the list. Mid-level cloud and visibility are
+     separate gates: a summit above the marine layer can still sit under a high
+     deck, and clear sky over 3 km of smoke is not a clear day. */
   const all=S.frames[k].spots.map(d=>({...d, score:score(d),
-    clear: d.lowCloud<CLEAR && d.vis>VIS_CLEAR}));
+    clear: (d.top==null || d.elev>=d.top) && (d.mid??0)<CLEAR && d.vis>VIS_CLEAR}));
   /* compare the wind the user can see, so equal readings tie and
      fall through to score rather than to a hidden decimal */
   const by=(a,b)=>Math.round(a.wind)-Math.round(b.wind)||b.score-a.score;
@@ -847,12 +880,28 @@ function paint(){
     });
   });
 
-  const w=fr.spots.slice(0,4).reduce((t,s)=>t+s.lowCloud,0)/4,
-        e=fr.spots.slice(-4).reduce((t,s)=>t+s.lowCloud,0)/4,
-        wy=GROUND-w*1.55, ey=GROUND-e*1.55;
-  $("fogBody").setAttribute("d",
-    `M0,${GROUND} L0,${wy} C240,${wy-18} 330,${wy+12} 400,${(wy+ey)/2} C520,${ey-10} 700,${ey} ${VBW},${ey} L${VBW},${GROUND} Z`);
-
+  /* The band is now the cloud mass itself, drawn between its base and top
+     on the same elevation axis as the terrain. A summit appears above it
+     only when it genuinely is. Where there is no layer, nothing is drawn. */
+  const side=arr=>{
+    const withLayer=arr.filter(s=>s.top!=null);
+    if(withLayer.length < arr.length/2) return null;          /* mostly clear */
+    return {base: withLayer.reduce((t,s)=>t+s.base,0)/withLayer.length,
+            top:  withLayer.reduce((t,s)=>t+s.top ,0)/withLayer.length};
+  };
+  const W=side(fr.spots.slice(0,4)), E=side(fr.spots.slice(-4));
+  if(!W && !E){ $("fogBody").setAttribute("d",""); }
+  else{
+    const w=W||{base:E.base,top:E.base}, e=E||{base:W.top,top:W.top};
+    const wt=yM(w.top), et=yM(e.top),
+          wb=w.base<=10?GROUND:yM(w.base), eb=e.base<=10?GROUND:yM(e.base),
+          mt=(wt+et)/2, mb=(wb+eb)/2;
+    $("fogBody").setAttribute("d",
+      `M0,${wt.toFixed(1)} C240,${(wt-6).toFixed(1)} 340,${(mt-4).toFixed(1)} 450,${mt.toFixed(1)}`
+     +` C560,${(mt+4).toFixed(1)} 700,${et.toFixed(1)} ${VBW},${et.toFixed(1)}`
+     +` L${VBW},${eb.toFixed(1)} C700,${eb.toFixed(1)} 560,${(mb+3).toFixed(1)} 450,${mb.toFixed(1)}`
+     +` C340,${(mb-3).toFixed(1)} 240,${(wb+4).toFixed(1)} 0,${wb.toFixed(1)} Z`);
+  }
 }
 
 $("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`);
