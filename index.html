@@ -27,6 +27,10 @@
 <style>
 :root{
   --ink:#0E161C; --ink-2:#16222A;
+  /* the cross-section fill. A dot under Karl is painted in it and separated
+     by a hairline of --ink, so it reads as cut out of the ridge rather than
+     sitting on it. The two must stay identical, hence one variable. */
+  --ridge:#1E2B33;
   --line:rgba(169,183,190,.18); --line-hi:rgba(169,183,190,.34);
   --fog:#A9B7BE; --fog-dim:#63757C; --fog-faint:#3B4A52;
   --clear:#F0A03C; --clear-dim:#9A6520;
@@ -170,9 +174,14 @@ svg.g{fill:currentColor}
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
 .stage{position:relative; width:100%; aspect-ratio:900/380}
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
-/* no ring: the dot is a solid disc, the same call as the ridge below it */
-.dot{position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%;
-  background:var(--fog-dim);
+/* CSS wins over the fill attribute, which stays as a fallback */
+#terrain{fill:var(--ridge)}
+/* The ring is a hairline of background, not an outline. A spot under Karl is
+   painted in the ridge's own colour, so the ring is the only thing separating
+   it from the terrain and the dot reads as cut out of the section. 13px box
+   less the 1px border leaves the disc at the 11px it has always been. */
+.dot{position:absolute; width:13px; height:13px; margin:-6.5px 0 0 -6.5px; border-radius:50%;
+  background:var(--ridge); border:1px solid var(--ink);
   transition:background .32s ease,
              transform .42s cubic-bezier(.22,.68,.3,1)}
 .dot.on{background:var(--clear)}
