@@ -1,33 +1,48 @@
 # NoKarl
 
-Where the fog isn't, in San Francisco. One place at a time, five steps ahead.
+Where the fog isn't, in San Francisco. Eleven spots, twenty-four hours, one place at a time.
 
-An experience prototype for a microclimate notification product: twelve SF spots ranked west to east on low cloud, visibility, wind, and temperature fit for what you're going out to do.
+NoKarl reads live forecast data across the city and splits eleven places at the fog line — clear on one side, under Karl on the other. When nothing is clear it says so and names no place.
+
+Live at [antocrimi.github.io](https://antocrimi.github.io/).
 
 ## Deploy
 
-Drop `index.html` at the repo root, then Settings → Pages → Source: **Deploy from a branch**, branch `main`, folder `/ (root)`. Live at `https://<user>.github.io/<repo>/` in about a minute.
+Put `index.html` and `logo.png` at the repo root, then Settings → Pages → Source: **Deploy from a branch**, branch `main`, folder `/ (root)`.
 
-No build step. No dependencies. One file.
+`og-image.png` (1200×630) is optional and only feeds link previews.
+
+No build step. No dependencies. One code file plus the wordmark.
 
 ## Data
 
-Live conditions come from [Open-Meteo](https://open-meteo.com/) in a single batched request for all twelve coordinates, using the HRRR 3 km model where available. If the request fails, the page drops to a simulated mode with a marine-push slider so the message can be evaluated across the full condition range.
+One batched [Open-Meteo](https://open-meteo.com/) request covers all eleven coordinates and eight hourly variables for the next twenty-four hours. If it fails the page falls back to a simulator built on the same physics, so the interface still behaves correctly offline.
 
-Two constraints carried over from the RFC:
+Two constraints:
 
 - **Attribution is required.** Open-Meteo data is CC BY 4.0. The credit line in the footer stays.
-- **The free tier is non-commercial only.** Ads or a subscription move this to a paid plan. A public GitHub Pages demo with neither is fine.
+- **The free tier is non-commercial only.** 10,000 calls per day, rate-limited by IP. An ad or a subscription moves this to a paid plan at $29/month.
+
+Eight variables is deliberate: requests covering more than ten variables bill as multiple calls.
+
+## How it decides
+
+A spot is **clear** when cloud overhead is under 45% *and* visibility is over 5 km. Both, because cloud alone can't tell a sunny smoke day from a sunny one, and can't see fog at street level.
+
+"Cloud overhead" is not the model's low-cloud figure. Cloud is read at four altitudes — roughly 110, 320, 540 and 760 metres — and the height where cover crosses the threshold is interpolated to estimate the top of the marine layer. Each spot is compared against that using its own elevation. Levels sitting below a spot's ground are discarded first, which is what stops a hilltop above the fog being reported as fogged in.
+
+Inside each group the calmest spot sits on top, so exposed places sink. A score combining clarity, visibility, wind and temperature breaks ties on equal wind; it isn't displayed.
 
 ## What is and isn't measured
 
-- **Live:** low cloud, visibility, wind, temperature, and a four-hour lookahead for the hold time.
-- **Static:** the `Clear yr` column is a local climatology estimate of how often each spot is fog-free. It is hardcoded and unverified, and it exists as a tiebreak. Replace it with observed data before anyone relies on it.
+- **Model output:** cloud, visibility, wind, temperature. Forecast data, not station observations.
+- **Estimated:** the year-round clear-sky figure used as a tiebreak is a local estimate. Replace it before anyone relies on it.
+- **Read from the API:** each spot's elevation, from Open-Meteo's own 90 m digital elevation model.
 
-## Scoring
+## Units
 
-```
-score = clarity×Wc + visibility×Wv + wind comfort×Ww + temperature fit×Wt
-```
+Inferred from the browser's locale, with a manual override in the footer. Scoring always runs in °F and mph internally, so the ranking never shifts when units change.
 
-Weights shift by mode. Run weights wind highest and targets 59°F; relax weights clarity highest and targets 72°F. If the top score falls under 55, no place is named.
+## Known limits
+
+It's a 3 km model resolving a fog edge sharper than 3 km. It can be wrong, and it's verifiable by looking out of a window. See `BRIEFING.md` §9 for the accuracy work and what's planned next.
