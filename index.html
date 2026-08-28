@@ -27,10 +27,7 @@
 <style>
 :root{
   --ink:#0E161C; --ink-2:#16222A;
-  /* the cross-section fill. A dot under Karl is painted in it and separated
-     by a hairline of --ink, so it reads as cut out of the ridge rather than
-     sitting on it. The two must stay identical, hence one variable. */
-  --ridge:#1E2B33;
+  --ridge:#1E2B33;              /* the cross-section fill */
   --line:rgba(169,183,190,.18); --line-hi:rgba(169,183,190,.34);
   --fog:#A9B7BE; --fog-dim:#63757C; --fog-faint:#3B4A52;
   --clear:#F0A03C; --clear-dim:#9A6520;
@@ -176,19 +173,17 @@ svg.g{fill:currentColor}
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
 /* CSS wins over the fill attribute, which stays as a fallback */
 #terrain{fill:var(--ridge)}
-/* The ring is a hairline of background, not an outline. A spot under Karl is
-   painted in the ridge's own colour, so the ring is the only thing separating
-   it from the terrain and the dot reads as cut out of the section. 13px box
-   less the 1px border leaves the disc at the 11px it has always been. */
-.dot{position:absolute; width:13px; height:13px; margin:-6.5px 0 0 -6.5px; border-radius:50%;
-  background:var(--ridge); border:1px solid var(--ink);
+/* A solid disc, small enough to mark the spot without becoming the subject.
+   The ridge is the drawing; the dots annotate it. */
+.dot{position:absolute; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%;
+  background:var(--fog-dim);
   transition:background .32s ease,
              transform .42s cubic-bezier(.22,.68,.3,1)}
 .dot.on{background:var(--clear)}
 /* the pick keeps its amber disc and grows rays — it never swaps to an icon,
    so there is no dark frame in between */
-.dot .rays{position:absolute; left:50%; top:50%; width:27px; height:27px;
-  margin:-13.5px 0 0 -13.5px; color:var(--clear); overflow:visible;
+.dot .rays{position:absolute; left:50%; top:50%; width:22px; height:22px;
+  margin:-11px 0 0 -11px; color:var(--clear); overflow:visible;
   opacity:0; transform:scale(.5) rotate(-32deg); pointer-events:none;
   transition:opacity .34s ease, transform .5s cubic-bezier(.22,.68,.3,1)}
 .dot.pick{transform:scale(1.16)}
@@ -199,6 +194,15 @@ svg.g{fill:currentColor}
    measured and packed at the current width, so nothing ever collides.
    A hairline runs from each label back to the point it belongs to. */
 .peaks{position:absolute; inset:0; pointer-events:none}
+/* Every label is absolutely positioned and carries no left/top until the
+   measure-and-pack pass has run, so until then they all stack on the origin.
+   On a fast load that is invisible; on a pull-to-refresh, where the fetch
+   holds the page open, it shows as a heap of names in the top-left corner.
+   They stay hidden until they have been placed. safeLayout() reveals them
+   even when the pass throws, so a layout error costs their arrangement and
+   never the names themselves. */
+.peaks,.rail{opacity:0}
+.peaks.placed,.rail.placed{opacity:1; transition:opacity .18s ease}
 .pk{position:absolute; transform:translateX(-50%); white-space:nowrap;
   font-family:var(--msg); font-size:11.5px; font-weight:400; line-height:1.25;
   color:var(--fog); text-shadow:0 1px 4px var(--ink), 0 0 9px var(--ink), 0 0 3px var(--ink)}
@@ -702,7 +706,7 @@ function relayout(){
   if(!rail||!stage) return;
   const W=rail.clientWidth, H=stage.clientHeight;
   if(!W||!H){ requestAnimationFrame(relayout); return; }   /* not laid out yet */
-  const PAD=7, DOTR=8, LEAD=7, boxes=[];
+  const PAD=7, DOTR=6, LEAD=7, boxes=[];   /* DOTR tracks the dot's radius */
 
   /* Place hilltops from the lowest summit upward, and only ever raise.
      Because each label processed is taller than the last, a shorter peak's
@@ -746,6 +750,13 @@ function relayout(){
   $("rail").style.height=(TOP+ends.length*ROW+4)+"px";
 
   for(const k in FIT) delete FIT[k];   /* box widths changed */
+  placed();
+}
+
+/* the labels are positioned, so they can be shown */
+function placed(){
+  $("peaks").classList.add("placed");
+  $("rail").classList.add("placed");
 }
 
 /* At most one word, and only when visibility or elevation contradicts the
@@ -946,7 +957,9 @@ $("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND}
 /* coalesce to one repaint per frame — a drag fires input far faster than
    the browser paints, and each paint rebuilds the list, dots and rail */
 let raf=null, rz=null;
-const safeLayout=()=>{ try{ relayout(); }catch(e){} };
+/* an unpacked label is worth more than no label, so a failed pass still
+   reveals them rather than leaving the map nameless */
+const safeLayout=()=>{ try{ relayout(); }catch(e){ try{ placed(); }catch(_){} } };
 $("time").addEventListener("input",e=>{
   S.h=+e.target.value;
   if(raf) return;
@@ -1016,13 +1029,19 @@ async function load(user){
   [...$("units").querySelectorAll("button")]
     .forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.u===S.unit)));
   buildMap(); buildFooter();
-  await load(false);
+  /* Pack the labels before the network, not after. buildMap leaves them
+     stacked on the origin, and a reload holds that state open for as long as
+     the fetch takes — which is the heap of names in the corner you see when
+     the connection is slow. The observer goes up first for the same reason:
+     a font swap or a rotation during the fetch has to be answered. */
+  safeLayout();
   /* one observer covers first layout, webfont swap, rotation and resize */
   if(window.ResizeObserver) new ResizeObserver(()=>{
     clearTimeout(rz); rz=setTimeout(safeLayout,120);
   }).observe($("rail"));
   else addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(safeLayout,140); });
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(safeLayout);
+  await load(false);
 })();
 })();
 </script>

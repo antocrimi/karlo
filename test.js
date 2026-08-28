@@ -214,7 +214,13 @@ ok('one batched request for all spots', /latitude="?\+SPOTS\.map/.test(src) || s
 
 head('FAIL-SAFES');
 ok('paint runs before measurement', src.indexOf('paint();') < src.indexOf('safeLayout();'));
-ok('layout errors cannot blank the page', src.includes('try{ relayout(); }catch(e){}'));
+ok('layout errors cannot blank the page', /try\s*\{\s*relayout\(\);\s*\}\s*catch/.test(src));
+/* the labels are hidden until they have been packed, so every path out of the
+   layout pass has to reveal them. A heap of names on the origin is the bug
+   this replaced; nameless is the bug it must not introduce. */
+ok('a failed layout still reveals the labels', /catch\s*\([^)]*\)\s*\{[^{}]*\{\s*placed\(\)/.test(src));
+ok('labels are packed before the fetch, not after',
+   src.indexOf('safeLayout();\n  /* one observer') < src.indexOf('await load(false)'));
 ok('every $() id exists in the markup', (() => {
   const ids = new Set([...src.matchAll(/id="([^"]+)"/g)].map(m => m[1]));
   const js = src.slice(src.lastIndexOf('<script>'));
