@@ -15,9 +15,7 @@ A San Francisco microclimate product. It answers one question: *where in the cit
 
 Karl is local vernacular for the SF fog. NoKarl is where Karl isn't.
 
-**Header tagline:** "Your SF sun chasing guide."
-**Footer tagline:** "Find the sun. Not the fog."
-Both are Anto's. Two taglines is a known duplication, deliberately unresolved.
+**Tagline:** "Your SF sun chasing guide." — one line, used in both the masthead and the footer, both set in `--fog-dim`.
 
 ### The three altitudes it was specced at
 
@@ -150,10 +148,19 @@ Four pressure levels are read instead:
 | `cloud_cover_975hPa` | 320 m |
 | `cloud_cover_950hPa` | 540 m |
 | `cloud_cover_925hPa` | 760 m |
+| `cloud_cover_mid` | 2–7 km |
 
-Snapping a spot to its nearest level does **not** work — Bernal (132 m) and Twin Peaks (281 m) both land in the same band, which is the exact distinction the product exists for. So `layerTop()` interpolates the height at which cover crosses 45%, and each spot is compared against that. Levels beneath a spot's own ground are discarded before anything is read.
+`coverCurve()` interpolates cover at any height between the samples, because snapping a spot to its nearest level cannot tell Bernal (132 m) from Twin Peaks (281 m) — the exact distinction the product exists for. Three separate questions are then asked of that curve, and conflating them is what has broken this twice:
 
-Verified: with a shallow layer the derived top lands near 247 m, Twin Peaks reads "above the fog" and Bernal reads in the layer. With a deeper layer the top moves to 381 m and Twin Peaks goes under with everything else.
+| | Means | Used for |
+|---|---|---|
+| `here` | cloud at your own altitude | are you inside it |
+| `overhead` | **max** cover anywhere above you, plus mid-level | is the sun blocked |
+| `beneath` | cover below you | are you standing above the fog |
+
+**The 28 August failure:** `overhead` read only the *first* level above a spot. With clear air at 110 m and a solid deck at 540 m, the app reported 15% cloud on a completely grey morning. Overhead is now the maximum across everything above, and `cloud_cover_mid` catches decks higher than the top sample.
+
+Verified against five states: today's elevated deck, shallow fog (Twin Peaks above, Bernal inside), deep fog (all three inside), genuinely sunny, and a deck above 760 m visible only to the mid field.
 
 ### Ordering
 Clarity decides which side of the line. **Wind decides the order within it**, calmest first, so exposed spots sink. Comparison is on the *rounded* wind figure so equal displayed readings tie and fall through to score rather than to an invisible decimal.
@@ -181,18 +188,18 @@ README.md     deploy note + data constraints
 Deploy: repo root → Settings → Pages → Deploy from branch, `main`, `/ (root)`.
 
 ### Data flow
-One batched request covers all eleven coordinates and **eight** hourly variables:
+One batched request covers all eleven coordinates and **nine** hourly variables:
 
 ```
 /v1/forecast
   ?latitude=<11 csv>&longitude=<11 csv>
-  &hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m,
+  &hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m,cloud_cover_mid,
           cloud_cover_1000hPa,cloud_cover_975hPa,cloud_cover_950hPa,cloud_cover_925hPa
   &forecast_days=3&timeformat=unixtime
   &temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Los_Angeles
 ```
 
-Eight variables matters: **more than ten bills as multiple calls.** That headroom is what keeps this free. Spot elevation is read from the response's own 90 m DEM `elevation` field, falling back to the hardcoded `e` values offline.
+Nine variables matters: **more than ten bills as multiple calls.** That headroom is what keeps this free. Spot elevation is read from the response's own 90 m DEM `elevation` field, falling back to the hardcoded `e` values offline.
 
 `load()` is the only place data is fetched, used by both boot and the footer refresh button. On failure it drops to a simulator built on the same physics — a layer with a top in metres and an inland reach — so the offline mode exercises the real logic. A manual refresh returns the scrubber to now.
 
@@ -225,6 +232,8 @@ On 22 August a photo from Noe Valley showed fog blanketing the hills toward Bern
 
 **Phase one is done** (§6): visibility gate, height profile, real elevations.
 
+**Two failures caught in the wild so far, both from photographs.** 22 August: fog on the hills, app said clear — cause was `cloud_cover_low` reading pressure levels below ground. 28 August: high overcast with clear air beneath, app said 15% cloud — cause was reading only the first level above a spot. Both were failures of the *vertical* model, and both were found by looking out of a window rather than by any test. Keep doing that.
+
 **Phase two, not built.** METAR ceiling from KSFO, KOAK, KHAF. Free, no key, User-Agent header required. Two unknowns to test first: browsers cannot set a User-Agent header, and CORS from a static page is unverified. `aviationweather.gov` is the documented fallback.
 
 What METAR uniquely buys is *observation* rather than model. Open-Meteo is model output only — no station observations, no validated actuals. Phase one fixed the variable mismatch; it did not fix the 3 km resolution mismatch.
@@ -251,7 +260,7 @@ The pattern: motion and ornament have been proposed, built and rejected three ti
 
 Raised and deliberately left open.
 
-1. **Two taglines.** Header and footer say different things. Both are Anto's.
+1. **`cloud_cover_mid` covers 2–7 km, and nothing samples 760 m to 2 km.** A deck sitting in that gap is still invisible. Adding `cloud_cover` (total) would close it at the cost of over-triggering on high cirrus.
 2. **`rel` climatology is invented.** Eleven hardcoded, unverified numbers, still breaking ties. Highest-value data fix in the file.
 3. **The 3pm / 10am push requirement is unrepresented.**
 4. **Glyphs identify terrain, not place.** Three parks share `tree`; Dogpatch's dog is the only place-specific mark.
@@ -267,6 +276,10 @@ Raised and deliberately left open.
 **How Anto works.** Direction arrives as terse bullets. Execute exactly what is listed and nothing adjacent. Flag tradeoffs in a line; don't fix them unasked, because several flagged items are open on purpose. Present options at multiple altitudes and let him choose rather than collapsing to one recommendation. Be data-forward over opinion-forward. When something is supplied — an asset, a number, a name — it is the spec, not a starting point. On larger changes he will ask you to review and propose before building; do that rather than guessing.
 
 **Verify, don't recall.** Measurements in this file came from the font binary, the Phosphor package and live documentation, not from memory. Do the same. Font metrics via `fontTools` on `@fontsource-variable/bricolage-grotesque`; icons via `@phosphor-icons/core`; pricing and API behaviour via search, since it changes.
+
+### Version tag
+
+`const BUILD` near the top of the script renders as `v2026.08.28` beside the location in the footer colophon, and appears again as an HTML comment above `<title>`. Bump it on every deploy — it is how a cache-stale page is spotted.
 
 ### Known hazards in this file
 

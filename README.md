@@ -16,20 +16,20 @@ No build step. No dependencies. One code file plus the wordmark.
 
 ## Data
 
-One batched [Open-Meteo](https://open-meteo.com/) request covers all eleven coordinates and eight hourly variables for the next twenty-four hours. If it fails the page falls back to a simulator built on the same physics, so the interface still behaves correctly offline.
+One batched [Open-Meteo](https://open-meteo.com/) request covers all eleven coordinates and nine hourly variables for the next twenty-four hours. If it fails the page falls back to a simulator built on the same physics, so the interface still behaves correctly offline.
 
 Two constraints:
 
 - **Attribution is required.** Open-Meteo data is CC BY 4.0. The credit line in the footer stays.
 - **The free tier is non-commercial only.** 10,000 calls per day, rate-limited by IP. An ad or a subscription moves this to a paid plan at $29/month.
 
-Eight variables is deliberate: requests covering more than ten variables bill as multiple calls.
+Nine variables is deliberate: requests covering more than ten variables bill as multiple calls.
 
 ## How it decides
 
 A spot is **clear** when cloud overhead is under 45% *and* visibility is over 5 km. Both, because cloud alone can't tell a sunny smoke day from a sunny one, and can't see fog at street level.
 
-"Cloud overhead" is not the model's low-cloud figure. Cloud is read at four altitudes — roughly 110, 320, 540 and 760 metres — and the height where cover crosses the threshold is interpolated to estimate the top of the marine layer. Each spot is compared against that using its own elevation. Levels sitting below a spot's ground are discarded first, which is what stops a hilltop above the fog being reported as fogged in.
+"Cloud overhead" is not the model's low-cloud figure. Cloud is sampled at four altitudes — roughly 110, 320, 540 and 760 metres — plus a mid-level field, and cover at any height in between is interpolated. Each spot then asks three separate questions of that curve using its own elevation: is there cloud at my altitude, is there cloud anywhere above me, and is there cloud below me. The second is what decides whether the sun is blocked, and it is the maximum across everything overhead — otherwise a high overcast deck with clear air beneath reads as a sunny day.
 
 Inside each group the calmest spot sits on top, so exposed places sink. A score combining clarity, visibility, wind and temperature breaks ties on equal wind; it isn't displayed.
 
@@ -45,4 +45,6 @@ Inferred from the browser's locale, with a manual override in the footer. Scorin
 
 ## Known limits
 
-It's a 3 km model resolving a fog edge sharper than 3 km. It can be wrong, and it's verifiable by looking out of a window. See `BRIEFING.md` §9 for the accuracy work and what's planned next.
+It's a 3 km model resolving a fog edge sharper than 3 km. It can be wrong, and it's verifiable by looking out of a window — twice now that's exactly how a bug was found. See `BRIEFING.md` §9 for the accuracy work and what's planned next.
+
+The build tag in the footer (`v2026.08.28`) shows which version is actually being served, which is useful when a deploy looks like it hasn't landed.
