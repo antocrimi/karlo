@@ -795,14 +795,31 @@ function profile(elev, lv, mid, lowAgg){
 
 /* Clarity decides the side of the line. Wind decides the order within it,
    so the calmest spot sits on top and the exposed ones sink. */
+/* One layer for the whole city. The model cannot resolve horizontal
+   structure at this sample density — eleven points across seven miles of a
+   3 km grid means adjacent spots share cells, and a hard 45% threshold turns
+   a few points of scatter into a different map from one hour to the next.
+   Median of the per-spot readings, and a majority is required before a layer
+   is declared at all. The band and the verdict both read this, so they are
+   literally the same number. */
+function cityLayer(fr){
+  if(fr._L!==undefined) return fr._L;
+  const t=fr.spots.filter(s=>s.top!=null).map(s=>s.top).sort((a,b)=>a-b);
+  const b=fr.spots.filter(s=>s.base!=null).map(s=>s.base).sort((a,b)=>a-b);
+  fr._L = t.length < fr.spots.length/2 ? null
+        : {top:t[t.length>>1], base:b.length?b[b.length>>1]:0};
+  return fr._L;
+}
+
 function split(k){
   /* One geometry, one verdict. A spot is out of the layer when it stands at
      or above the layer's top — the same number the band is drawn from, so the
      picture can never contradict the list. Mid-level cloud and visibility are
      separate gates: a summit above the marine layer can still sit under a high
      deck, and clear sky over 3 km of smoke is not a clear day. */
+  const L=cityLayer(S.frames[k]);
   const all=S.frames[k].spots.map(d=>({...d, score:score(d),
-    clear: (d.top==null || d.elev>=d.top) && (d.mid??0)<CLEAR && d.vis>VIS_CLEAR}));
+    clear: (L==null || d.elev>=L.top) && (d.mid??0)<CLEAR && d.vis>VIS_CLEAR}));
   /* compare the wind the user can see, so equal readings tie and
      fall through to score rather than to a hidden decimal */
   const by=(a,b)=>Math.round(a.wind)-Math.round(b.wind)||b.score-a.score;
@@ -884,34 +901,21 @@ function paint(){
   });
 
   /* ── the marine layer ────────────────────────────────────────────
-     One level with a leading edge. Eleven samples across seven miles of a
-     3 km model give tops that differ by 60 px of chart or more — that is
-     grid noise, not relief, and drawing it made the surface look shredded.
-     The median is the honest level. The signal is the edge: how far inland
-     the layer has reached is what the model genuinely resolves. */
-  const inL=fr.spots.map(s=>s.top!=null);
-  const tops=fr.spots.filter(s=>s.top!=null).map(s=>s.top).sort((a,b)=>a-b);
-
-  if(!tops.length){ $("fogBody").setAttribute("d",""); }
+     Full width, one level, no horizontal structure. Not for want of trying:
+     a leading edge was built twice and the data will not carry it. Smoothing
+     the extent to a contiguous run then drew the band over spots the list
+     called clear — the picture contradicting the verdict again, spatially
+     this time instead of vertically. The height is what the model supports;
+     horizontal position is not. The dots carry per-spot truth, the band
+     carries the level, and because the band spans everything "clear" and
+     "above the band" are the same statement. */
+  const L=cityLayer(fr);
+  if(!L){ $("fogBody").setAttribute("d",""); }
   else{
-    const bs=fr.spots.filter(s=>s.base!=null).map(s=>s.base).sort((a,b)=>a-b);
-    const yTop=yM(tops[tops.length>>1]);
-    const yBot=(bs[bs.length>>1]??0)<=10 ? GROUND : yM(bs[bs.length>>1]);
-
-    /* contiguous extent, so one dropped grid cell mid-city cannot punch a
-       hole through a layer that plainly covers it */
-    const xs=fr.spots.map(s=>s.x);
-    const i0=inL.indexOf(true);
-    let i1=inL.length-1; while(i1>0 && !inL[i1]) i1--;
-    const openW=i0===0, openE=i1===xs.length-1;
-    const x0=openW?0:(xs[i0-1]+xs[i0])/2, x1=openE?VBW:(xs[i1]+xs[i1+1])/2;
     const f=n=>(+n).toFixed(1);
-
-    const head=openW ? `M0,${f(yTop)}`
-      : `M${f(x0-54)},${f(yBot)} C${f(x0-18)},${f(yBot)} ${f(x0-14)},${f(yTop)} ${f(x0+20)},${f(yTop)}`;
-    const tail=openE ? ` L${VBW},${f(yTop)} L${VBW},${f(yBot)}`
-      : ` L${f(x1-20)},${f(yTop)} C${f(x1+14)},${f(yTop)} ${f(x1+18)},${f(yBot)} ${f(x1+54)},${f(yBot)}`;
-    $("fogBody").setAttribute("d", head+tail+` L${openW?"0":f(x0-54)},${f(yBot)} Z`);
+    const yTop=yM(L.top), yBot=L.base<=10 ? GROUND : yM(L.base);
+    $("fogBody").setAttribute("d",
+      `M0,${f(yTop)} L${VBW},${f(yTop)} L${VBW},${f(yBot)} L0,${f(yBot)} Z`);
   }
 
 }

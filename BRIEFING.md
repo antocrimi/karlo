@@ -225,6 +225,8 @@ Map labels are measured and packed on load, on font swap and on resize, driven b
 
 **The architecture is client-direct, and for once that is the right call.** Open-Meteo rate-limits by IP, so each visitor spends their own quota rather than a pooled one. The exposure is CGNAT, where a mobile carrier puts many users behind one address. Unlikely at this traffic.
 
+**Unresolved:** whether a request covering eleven coordinates bills as one call or eleven. The published rule only describes the ten-variable and two-week thresholds "for a single location". Confirm with info@open-meteo.com before assuming the free tier covers commercial traffic.
+
 **The one thing that costs money:** the free tier is non-commercial only. The moment NoKarl carries an ad or a subscription it needs the $29 plan. That is a business decision, not a technical one.
 
 ---
@@ -239,9 +241,11 @@ On 22 August a photo from Noe Valley showed fog blanketing the hills toward Bern
 
 All three were failures of the *vertical* model. Keep looking out of the window.
 
-**The layer is drawn as a body of air, not a bar.** Each spot carries its own base and top, and the model varies the layer's *reach* far more than its height — so the surface runs through all eleven tops and terminates where the layer runs out, sloping down to meet the ground at a leading edge. Averaging eleven profiles into a west/east pair produced an inert grey rectangle; the wedge is both more accurate and the thing worth looking at.
+**The layer is one level, full width, with no horizontal structure.** A leading edge was built twice and the data will not carry it. Eleven points across seven miles of a 3 km grid means adjacent spots share cells, and a hard 45% threshold turns a few points of scatter into a different map of the city from one hour to the next — the 4am-versus-5am anomaly. Smoothing the extent into a contiguous run then drew the band over spots the list called clear, which is the picture contradicting the verdict again, spatially instead of vertically.
 
-**Ground above the surface is lit.** The terrain is painted twice — cold, then a warmer fill clipped to everything above the fog surface and everything beyond its reach. The sunlit ridge standing over a grey city is the picture, and it is the same picture as the Bernal photograph that caught the second bug. The outline is drawn last so it reads through the fog.
+`cityLayer()` takes the median of the per-spot readings and requires a majority before declaring a layer at all. **The band and the verdict both read that one number**, so "clear" and "drawn above the band" are the same statement. The dots carry per-spot truth; the band carries the level. `test.js` asserts both directions.
+
+**Lighting the terrain above the layer was tried and reverted.** Painting the ground twice — cold, then a warm fill clipped to everything above the fog surface — sounded right and looked awful: mottled brown patches across a silhouette that works precisely because it is a single clean dark shape. Fourth ornament proposed, built and rejected. See §10.
 
 **The geometry is now single-sourced.** `layerOf()` walks the interpolated cover curve and returns the layer's base and top in metres. The band is drawn between them via `yM()`, and a spot is out of the layer when `elev >= top` — the same number. The picture cannot contradict the list because there is only one number. Mid-level cloud and visibility remain separate gates, since a summit above the marine layer can still sit under a high deck, and clear sky over 3 km of smoke is not a clear day. Verified: zero disagreements between dot position and verdict across a full 24-hour sweep.
 
@@ -263,9 +267,12 @@ Each of these was built and reverted. A fresh session will be tempted by all of 
 2. **GSAP Flip on the fog line.** Rows physically travelling between Clear and Under Karl as you scrub. Built, tested, reverted with the above.
 3. **Full-page drifting fog layer** for the quiet state, with `feTurbulence` displacement and two banks at different drift rates. Built to spec. Called awful, reverted.
 4. **Webcams as a data layer.** Researched and declined: no unified API, per-operator terms, CV classification is a real problem, and Outside Now already occupies the niche. Useful for *validation*, not as a source.
-5. **Panel card in the footer.** Added, then removed — dividers do the nav-versus-content job without a box.
+5. **Lit terrain above the fog line.** Ground standing above the layer painted in a warm fill, clipped to the fog surface. The intent was the Bernal photograph — sunlit ridge over grey city. In practice it mottled the terrain silhouette and read as murky brown. Reverted the same session.
+6. **A leading edge on the fog band.** Built twice — once through all eleven per-spot tops, once as a single level with a sloping nose. The model's per-spot layer presence is not spatially coherent at this sample density, so the edge rendered grid noise as weather and could place a clear dot inside the drawn fog. The height is supportable; the horizontal extent is not.
+7. **A fog surface drawn through all eleven per-spot tops.** More data on screen, less signal: the 3 km grid produces sample-to-sample scatter that looks like noise. Collapsed to a median level plus the leading edge.
+8. **Panel card in the footer.** Added, then removed — dividers do the nav-versus-content job without a box.
 
-The pattern: motion and ornament have been proposed, built and rejected three times. The product's identity is restraint. Take that seriously before proposing the fourth.
+The pattern: motion and ornament have been proposed, built and rejected six times. Twice the mistake was adding representation to the cross-section, which works because it is abstract and quiet. The product's identity is restraint. Take that seriously before proposing the fourth.
 
 ---
 
@@ -295,6 +302,24 @@ Raised and deliberately left open.
 ### Version tag
 
 `const BUILD` near the top of the script renders as `v2026.08.28` beside the location in the footer colophon, and appears again as an HTML comment above `<title>`. Bump it on every deploy — it is how a cache-stale page is spotted.
+
+### Working in Claude Code
+
+```
+index.html      the whole app
+logo.png        required at repo root
+og-image.png    link previews only
+test.js         headless checks — node test.js
+BRIEFING.md     this file, read first
+README.md       public-facing
+CLAUDE.md       Anto's voice and working rules
+```
+
+`node test.js` boots the page against a small DOM stub and runs 33 checks: first paint, the vertical cloud model against all four sky states, the visibility gate, fog-line consistency across 24 hours, label placement, unit inference, the request budget, and the fail-safes. **Run it before every deploy.** It has caught every bug in this project that a glance at the screen did not.
+
+`node test.js --svg` also writes `map-preview.svg`, four hours of the cross-section geometry, so a change to the map can be judged without deploying.
+
+Bump `const BUILD` on every deploy. It renders in the footer colophon and as an HTML comment above `<title>`, and it is how a cache-stale page is spotted.
 
 ### Known hazards in this file
 
