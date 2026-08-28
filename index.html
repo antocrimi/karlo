@@ -101,8 +101,16 @@ svg.g{fill:currentColor}
 .v-name{font-family:var(--disp); font-weight:700; font-size:27px;
   line-height:1.05; letter-spacing:-.028em; color:var(--clear);
   min-width:0; flex:0 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+/* Digits have no descenders, so centring the line box leaves the number
+   sitting low between the rule under "Best spot" and the one above the
+   scrubber. The box is given a little more height than its .92 line box and
+   the text rides at the top of it, which lifts the glyphs onto the optical
+   centre. Both values are em, so the nudge holds at either type size.
+   min-width, not width, reserves the column without clipping a three-digit
+   reading. */
 .v-temp{flex:0 0 auto; font-family:var(--disp); font-weight:700;
-  font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear)}
+  font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear);
+  min-width:1.9375em; height:1.0833em; text-align:right}
 .v-cond{display:block; margin-top:9px; font-family:var(--mono); font-size:13px;
   letter-spacing:.02em; color:var(--fog-dim)}
 .v-cond b{color:var(--fog); font-weight:400}
@@ -389,7 +397,9 @@ svg.g{fill:currentColor}
           </linearGradient>
         </defs>
         <path id="fogBody" d="" fill="url(#fg)"/>
-        <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <!-- no outline: the silhouette carries itself, and the stroke only
+             lightened the ridge where it met the fog -->
+        <path id="terrain" d="" fill="#1E2B33" stroke-width="0" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
       <div class="peaks" id="peaks"></div>
