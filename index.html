@@ -433,10 +433,11 @@ svg.g{fill:currentColor}
       <button class="acc-t" aria-expanded="false" id="t-met"></button>
       <div class="acc-p" id="p-met" role="region" aria-labelledby="t-met" hidden>
         <dl class="meth">
-          <div><dt>Clear</dt><dd>Cloud under 45 per cent. That line splits the list in two.</dd></div>
+          <div><dt>Clear</dt><dd>Cloud overhead under 45 per cent and visibility over 5 km. Both, or it is not clear.</dd></div>
           <div><dt>Order</dt><dd>Calmest first inside each group, so exposed spots sink to the bottom.</dd></div>
           <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
-          <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
+          <div><dt>Height</dt><dd>Cloud is read at four altitudes and compared against each spot's own elevation, so a hilltop standing above the layer is not counted as fogged in.</dd></div>
+      <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
         </dl>
       </div>
       <button class="acc-t" aria-expanded="false" id="t-dat"></button>
@@ -444,9 +445,9 @@ svg.g{fill:currentColor}
         <div class="cols two">
           <div><h3>Source</h3><p>Weather by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a>,
             CC BY 4.0, non-commercial use.</p></div>
-          <div><h3>Measured, and not</h3><p>Cloud, wind and temperature are forecast data.
-            The year-round clear-sky figure used to break ties is a local estimate rather
-            than a measurement.</p></div>
+          <div><h3>Measured, and not</h3><p>Cloud, visibility, wind and temperature are forecast model output, not
+            station observations. The year-round clear-sky figure used to break ties is a
+            local estimate rather than a measurement.</p></div>
           <div><h3>Privacy</h3><p>No accounts, no tracking, nothing stored. The page talks
             to one weather API and to nobody else.</p></div>
         </div>
@@ -496,22 +497,32 @@ const G={
 const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 256 256" aria-hidden="true">${G[k]}</svg>`;
 
 const SPOTS=[
- {n:"Ocean Beach",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40, y:218},
- {n:"GG Park",        g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:248,y:200},
- {n:"Twin Peaks",     g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:330,y:104,h:1},
- {n:"Glen Canyon",    g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:387,y:158},
- {n:"Corona Heights", g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:444,y:142,h:1},
- {n:"Fort Mason",     g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:505,y:190},
- {n:"Dolores Park",   g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:563,y:196},
- {n:"McLaren",        g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:628,y:172},
- {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:690,y:156,h:1},
- {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:780,y:182,h:1},
- {n:"Dogpatch",       g:"dog"  ,lat:37.7615,lon:-122.3872,rel:85,x:860,y:212}
+ {n:"Ocean Beach",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40, y:218,e:5},
+ {n:"GG Park",        g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:248,y:200,e:60},
+ {n:"Twin Peaks",     g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:330,y:104,h:1,e:281},
+ {n:"Glen Canyon",    g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:387,y:158,e:110},
+ {n:"Corona Heights", g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:444,y:142,h:1,e:156},
+ {n:"Fort Mason",     g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:505,y:190,e:25},
+ {n:"Dolores Park",   g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:563,y:196,e:45},
+ {n:"McLaren",        g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:628,y:172,e:150},
+ {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:690,y:156,h:1,e:132},
+ {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:780,y:182,h:1,e:85},
+ {n:"Dogpatch",       g:"dog"  ,lat:37.7615,lon:-122.3872,rel:85,x:860,y:212,e:5}
 ];
 /* one profile. clarity-forward, since fog is the whole point;
    ideal sits at 66°F, the midpoint of the old Move/Chill pair. */
 const W={c:.42, v:.13, w:.22, t:.23, ideal:66};
-const HOURS=24, CLEAR=45, VBW=900, VBH=250, GROUND=246;
+/* Pressure levels are heights above SEA level, so a level can sit below
+   the ground at an elevated spot — that is exactly the artefact that made
+   the model call a fogged Bernal clear. Every read discards levels beneath
+   the spot before looking at anything. Heights are Open-Meteo's published
+   approximations; they drift a little with pressure. */
+const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
+              {k:"cloud_cover_950hPa",h:540},{k:"cloud_cover_925hPa",h:760}];
+const CLEAR=45,        /* cloud overhead, per cent */
+      VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
+      VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
+const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
 function smooth(pts){
@@ -569,14 +580,22 @@ function simulate(){
   const out=[];
   for(let k=0;k<HOURS;k++){
     const hr=(h0+k)%24;
-    const diurnal=cl(50+38*Math.cos((hr-5)/24*2*Math.PI),0,100);
-    const deep=cl((k-13)/7,0,1);                 /* Karl takes the city */
-    const push=cl(diurnal+deep*26,0,100);
+    const diurnal=cl(50+38*Math.cos((hr-5)/24*2*Math.PI),0,100)/100;
+    const deep=cl((k-13)/7,0,1);
+    /* the layer has a top in metres and a reach eastward — the two things
+       that actually decide whether a given spot is inside it */
+    const top   = 90 + 300*diurnal + 160*deep;
+    const reach = cl(.25 + .75*diurnal + .6*deep, 0, 1);
     out.push({t:now+k*3600, spots:SPOTS.map(s=>{
-      const ex=(100-s.rel)/100;
-      const low=cl(Math.max(push*1.55*ex-8, deep*92*(.78+.22*ex)),0,100);
-      return {...s, lowCloud:low, temp:70-low*.17-push*.03,
-              wind:6+push*.11+ex*13, vis:low>70?1800:16000-low*100};
+      const inReach = (s.x/VBW) <= reach;
+      const lv = LEVELS.map(L => inReach ? cl(94-(L.h-top)*.34, 3, 96) : 4+Math.random()*5);
+      const p  = profile(s.e, lv, lv[0]);
+      const buried = p.inLayer;
+      return {...s, elev:s.e, lowCloud:p.overhead, top:p.top, aboveFog:p.aboveFog,
+              rawLow:p.overhead,
+              vis: buried ? 220+Math.random()*600 : (inReach ? 9000 : 22000),
+              temp: 70 - (buried?9:0) - diurnal*4,
+              wind: 6 + diurnal*9 + (100-s.rel)/100*13};
     })});
   }
   return out;
@@ -588,6 +607,7 @@ async function fetchLive(){
   const u="https://api.open-meteo.com/v1/forecast"
    +"?latitude="+SPOTS.map(s=>s.lat).join(",")+"&longitude="+SPOTS.map(s=>s.lon).join(",")
    +"&hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
+   +","+LEVELS.map(L=>L.k).join(",")     /* 8 variables — under the 10 that bill as 2 */
    +"&forecast_days=3&timeformat=unixtime&temperature_unit=fahrenheit"
    +"&wind_speed_unit=mph&timezone="+TZ;
   const c=new AbortController(), to=setTimeout(()=>c.abort(),8000);
@@ -601,8 +621,11 @@ async function fetchLive(){
     const i=Math.min(base+k,T.length-1);
     out.push({t:T[i], spots:SPOTS.map((s,n)=>{
       const h=A[n].hourly;
-      return {...s, lowCloud:h.cloud_cover_low[i]??0, temp:h.temperature_2m[i],
-              wind:h.wind_speed_10m[i], vis:h.visibility[i]??16000};
+      const elev = Number.isFinite(A[n].elevation) ? A[n].elevation : s.e;
+      const p = profile(elev, LEVELS.map(L=>h[L.k]?.[i]??0), h.cloud_cover_low[i]);
+      return {...s, elev, lowCloud:p.overhead, top:p.top, aboveFog:p.aboveFog,
+              rawLow:h.cloud_cover_low[i]??0, temp:h.temperature_2m[i],
+              wind:h.wind_speed_10m[i], vis:h.visibility[i]??20000};
     })});
   }
   return out;
@@ -676,10 +699,50 @@ function relayout(){
   for(const k in FIT) delete FIT[k];   /* box widths changed */
 }
 
+/* At most one word, and only when visibility or elevation contradicts the
+   cloud reading. On a plain sunny day the line reads exactly as before. */
+function note(d){
+  if(d.vis<VIS_FOG)   return " · fogged in";
+  if(d.aboveFog)      return " · above the fog";
+  if(d.vis<VIS_MIST)  return " · misty";
+  if(d.vis<VIS_HAZE)  return " · hazy";
+  return "";
+}
+
+/* The four levels sit 110, 320, 540 and 760 m up, so snapping a spot to the
+   nearest one cannot tell Bernal (132 m) from Twin Peaks (281 m) — the very
+   distinction the product exists for. Instead the height where cover crosses
+   the threshold is interpolated, giving an estimated top for the layer, and
+   each spot is compared against that. */
+function layerTop(P){
+  if(P[0].c<CLEAR) return 0;                       /* nothing at the surface */
+  for(let i=0;i<P.length-1;i++){
+    if(P[i].c>=CLEAR && P[i+1].c<CLEAR){
+      const f=cl((P[i].c-CLEAR)/Math.max(1,P[i].c-P[i+1].c),0,1);
+      return P[i].h+(P[i+1].h-P[i].h)*f;
+    }
+  }
+  return P[P.length-1].h;                          /* cloudy all the way up */
+}
+
+function profile(elev, lv, fallback){
+  const P=LEVELS.map((L,i)=>({h:L.h,c:cl(lv[i]??0,0,100)}));
+  const top=layerTop(P);
+  const inLayer = top>0 && elev < top-15;
+  const above   = P.filter(l=>l.h>elev+15);
+  const overhead = inLayer
+    ? Math.max(...P.filter(l=>l.h<=top+15).map(l=>l.c))
+    : (above.length ? above[0].c : (fallback??0));
+  return {overhead, top, inLayer, aboveFog: top>=80 && elev>=top};
+}
+
 /* Clarity decides the side of the line. Wind decides the order within it,
    so the calmest spot sits on top and the exposed ones sink. */
 function split(k){
-  const all=S.frames[k].spots.map(d=>({...d,score:score(d),clear:d.lowCloud<CLEAR}));
+  /* Clear means clear overhead and clear air. Cloud alone cannot tell a
+     sunny smoke day from a sunny one, and it cannot see fog at street level. */
+  const all=S.frames[k].spots.map(d=>({...d, score:score(d),
+    clear: d.lowCloud<CLEAR && d.vis>VIS_CLEAR}));
   /* compare the wind the user can see, so equal readings tie and
      fall through to score rather than to a hidden decimal */
   const by=(a,b)=>Math.round(a.wind)-Math.round(b.wind)||b.score-a.score;
@@ -720,7 +783,7 @@ function paintVerdict(sun,k){
   $("verdict").innerHTML=`<div class="v-row">
       <span class="v-main">
         <span class="v-head"><span class="v-ico">${ico(t.g)}</span><span class="v-name">${t.n}</span></span>
-        <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> cloud · <b>${w2(t.wind)}</b> ${wu()} wind</span>
+        <span class="v-cond"><b>${Math.round(t.lowCloud)}%</b> cloud${note(t)} · <b>${w2(t.wind)}</b> ${wu()} wind</span>
       </span>
       <span class="v-temp">${t2(t.temp)}°</span></div>`;
   copyfit($("verdict").querySelector(".v-name"));
@@ -738,7 +801,7 @@ function paint(){
     <div class="tr ${cls} ${cls==="clear"&&i===0?"top":""}">
       <span class="ri">${ico(s.g)}</span>
       <span><span class="nm">${s.n}</span>
-        <span class="strip"><b>${Math.round(s.lowCloud)}%</b> cloud · <b>${w2(s.wind)}</b> ${wu()} wind</span></span>
+        <span class="strip"><b>${Math.round(s.lowCloud)}%</b> cloud${note(s)} · <b>${w2(s.wind)}</b> ${wu()} wind</span></span>
       <span class="tp">${t2(s.temp)}°</span>
     </div>`;
   /* rows are wrapped so the rule falls only between them, never at an edge */
