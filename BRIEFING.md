@@ -1,9 +1,11 @@
 # NoKarl — Project Briefing
 
-**Purpose of this file:** hand the whole project to a fresh session without losing state. Read top to bottom before touching anything.
+**Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
-**Status:** shipped prototype, live at `antocrimi.github.io`. Single-file, no build step.
-**Last worked:** July 2026.
+**Status:** shipped prototype, live at `antocrimi.github.io`. One HTML file, no build step, no dependencies, plus two image assets.
+**Last worked:** August 2026 — visibility gate, pressure-level height profile, spot elevations, structured footer.
+
+**Companion file:** `CLAUDE.md` carries Anto's voice rules, attribution tiers and working preferences. It governs every word written for or as him. This file governs the product.
 
 ---
 
@@ -11,256 +13,267 @@
 
 A San Francisco microclimate product. It answers one question: *where in the city is the sky clear enough to go outside right now.*
 
-The name is local vernacular. Karl is the personified SF fog. NoKarl is where Karl isn't.
+Karl is local vernacular for the SF fog. NoKarl is where Karl isn't.
 
-The tagline in production is **"Karl doesn't own the whole city. Go find the rest."**
+**Header tagline:** "Your SF sun chasing guide."
+**Footer tagline:** "Find the sun. Not the fog."
+Both are Anto's. Two taglines is a known duplication, deliberately unresolved.
 
 ### The three altitudes it was specced at
 
 | Altitude | Requirement |
 |---|---|
-| **User** | Reliably clear places to walk, run, or sit outside of work. A message at 3pm weekdays and 10am weekends telling them where to go. |
+| **User** | Reliably clear places to walk, run, or sit outside of work. |
 | **Maker** | A fast prototype to assess quality of experience, not a production build. |
 | **Business** | An honest viability read. |
 
-The 3pm/10am send windows were the original requirement and are **no longer represented in the prototype** — the five swipeable time cards replaced them. That's a known gap, not an oversight (see §9).
+The original brief also asked for a push at 3pm weekdays and 10am weekends. **That requirement is no longer represented anywhere.** It died when the notification framing was removed. Known gap, not an oversight.
 
 ---
 
-## 2 · Design ethos
+## 2 · Page structure
 
-Derived from decisions actually made across the build, not from a style guide written in advance. Each principle has its evidence.
+Single column, mobile-first, in this order:
+
+1. **Masthead** — `logo.png` wordmark at `clamp(165px, 44vw, 440px)`, plus a muted `°C / °F` control
+2. **Tagline**
+3. **"Best spot"** — section heading with a trailing rule
+4. **Verdict** — glyph + name + conditions on the left, temperature on the right, all amber
+5. **Map** — the west-to-east cross-section, bounded above and below by rules
+6. **Scrubber** — 24 hours, continuous, Karl the cloud as the thumb
+7. **"Clear spots" / "Under Karl"** — the ranked list, split at the fog line
+8. **Footer** — four-panel accordion, colophon
+
+---
+
+## 3 · Design ethos
+
+Derived from decisions actually made across the build. Each principle has its evidence.
 
 ### Respect a designed asset
-When a component is supplied, use it as sent. Adapt only what's required for context, and say which thing you adapted. The toggle came from Uiverse.io (MuhammadHasann); it was resized, recolored, and re-glyphed, and all three were rejected. It was restored verbatim with a single background change and it has been refined from there, one instruction at a time.
+When a component is supplied, use it as sent. Adapt only what context requires, and say which thing you adapted. The scrubber toggle came from Uiverse.io; it was resized, recoloured and re-glyphed, and all three were rejected. It was restored verbatim with a single background change and refined from there, one instruction at a time.
 
-**Corollary:** don't improvise iconography where a vetted asset exists. Hand-drawn glyphs invented mid-task were called bad design and cut.
+**Corollary:** don't improvise iconography where a vetted asset exists. Hand-drawn glyphs invented mid-task were called bad design and cut. The set is now Phosphor, inlined at its shipped weight.
 
 ### Size is a relationship, not a value
-Nothing is sized by taste. The headline is set so its x-height equals the toggle height. The pill's borders and background match the map container's. The toggle scales on mobile because it's too big *next to the headline*, not because 62px is wrong in the abstract.
+Nothing is sized by taste. The wordmark was once set so its x-height equalled the toggle pill height; when the toggle left, the number became free and was re-derived as 40% of viewport width. The masthead scales because it is *too big next to its neighbour*, never because a number is wrong in the abstract.
 
 ### Font choice encodes information class
 Three faces, three jobs, and the boundary is semantic:
-- **Display (Bricolage Grotesque)** — identity and headline numbers
-- **Mono** — telemetry, labels, chrome, anything the machine measured
-- **Body (system UI)** — content a person reads, including place names on the map
-
-When map area labels moved from mono to body copy, the head and foot lines stayed mono. Same map, different information class, different face.
+- **Display (Bricolage Grotesque)** — identity, headline numbers, section names
+- **Mono** — telemetry, labels, timestamps, anything the machine measured
+- **Body (system UI)** — content a person reads, including place names on the map and all footer prose
 
 ### Remove chrome, keep structure
-The phone frame, lock-screen row, and radial glow were all cut. Cards sit directly on the ground. Decoration that simulates a device is dishonest about what's being evaluated.
+The phone frame, lock-screen row, radial glow, map container and footer panel card were all cut in turn. Rules that separate meaning stay; boxes that decorate go.
 
 ### Binary over spectrum
-Three modes (relax / walk / run) collapsed to two (Move / Chill). Nobody picks the middle option. The send-window toggle was deleted outright once the cards subsumed it. Fewer knobs.
-
-### Icons carry meaning without labels
-The mode toggle is icon-only. Neighborhood glyphs are icon-first. Text labels alongside icons are redundancy, not clarity.
-
-### Legibility is non-negotiable, and you don't get it by hiding data
-Twelve map labels must all be readable. The answer was tiering and rotation, never culling. Same instinct behind "increase font for legibility."
-
-### Organic form for natural phenomena
-The city cross-section is generated by Catmull-Rom smoothing, not drawn as a polyline. Fog and terrain are curves. The play-triangle's corners were rounded so it shares a formal language with the square it morphs into.
-
-### No dead ends
-The carousel loops in both directions. Reaching the last card and having nowhere to go is a defect.
-
-### Mobile is the primary surface
-Base CSS is the phone. Media queries only add. Desktop is the enhancement.
-
-### The voice is wry, never earnest
-Weather copy defaults to cheerful and useless. NoKarl personifies the fog as an adversary you outmaneuver. Cheeky, concise, locally literate, and slightly presumptuous.
+Three modes collapsed to two, then to one. The send-window toggle was deleted once the cards subsumed it. Fewer knobs.
 
 ### Restraint as a feature
-The **quiet rule** — when the top score falls below 55, the product names no place and says so. This is the strongest moment in the design and the one most likely to get optimized away. Protect it.
+The **quiet rule**: when nothing sits above the fog line, no place is named. This is the strongest moment in the design and the one most likely to be optimised away. Protect it.
+
+### Amber is spent, not decorated
+`--clear` appears on the verdict, the clear map dots and labels, the open footer section, the live dot and the heart. Nowhere else. When the quiet rule fires the accent drains off the page automatically, because every amber element is gated on its own local predicate rather than on a "quiet mode" flag. Preserve that property.
+
+### Legibility is non-negotiable, and you don't get it by hiding data
+Map labels are measured and packed at the current width; no fixed tiers. Hilltops are placed lowest-summit-first so a shorter peak's name can never sit above a taller one's.
+
+### Optical over metric
+Two fixes came from this: the temperature centres against the whole two-line left block rather than against the name alone, and the verdict's `min-height` matches its content exactly so the block sits evenly between heading and rule.
+
+### Mobile is the primary surface
+Base CSS is the phone. Media queries only add. Breakpoints: 560px (type and layout), 720px (footer nav goes horizontal — below that "How it works" cannot fit a quarter column), 860px (map flattens).
+
+### The voice is wry, never earnest
+Weather copy defaults to cheerful and useless. NoKarl personifies the fog as an adversary you outmanoeuvre. Quiet-rule line: "Karl's winning right now."
 
 ---
 
-## 3 · Visual system
+## 4 · Visual system
 
-### Tokens
 ```css
---ink:#0E161C      /* page ground, and the inactive toggle dot */
---ink-2:#16222A    /* map container + toggle track */
+--ink:#0E161C      /* page ground */
+--ink-2:#16222A    /* rarely used since containers were removed */
 --line:rgba(169,183,190,.18)      --line-hi:rgba(169,183,190,.34)
 --fog:#A9B7BE      --fog-dim:#63757C      --fog-faint:#3B4A52
---clear:#F0A03C    /* the one accent — active state, top rank, clear sky */
---paper:#E9EAE4    /* cards */
+--clear:#F0A03C    --clear-dim:#9A6520
+--paper:#E9EAE4
 ```
-Color is information, not decoration. Fog gray and clear amber map to the product's core binary.
 
-### Type
-- Display: `Bricolage Grotesque` 700/800, tracking -.042 to -.048em
-- Mono: `ui-monospace, SF Mono, Menlo, Consolas`
-- Body: system UI stack
-- Base 17px. Nothing below 10px anywhere.
-- Headline: `clamp(44px, 15vw, 119px)` — 119 is 62px pill height ÷ ~0.52 x-height ratio.
+**Type.** Bricolage Grotesque loaded as a true variable font: `opsz,wdth,wght@12..96,75..100,400..800`. `font-optical-sizing: auto` is on, so a 19px row name gets a different cut from a 48px temperature. `wdth` is used **only** for copyfitting via `font-stretch`, never for expression, floored at 75 which is the axis minimum. Measured from the font binary: every place name fits at 100%; the only string that needs the axis is the quiet-state sentence.
 
-### Signature element
-The **west-to-east city cross-section**. Ocean Beach → Twin Peaks ridge → India Basin, with fog pushing in from the Pacific and stopping at the ridge. It encodes the actual physical mechanism, which is why the product works at all. It is the thing to protect if anything gets cut.
-
-### Component inventory
-| Component | Notes |
-|---|---|
-| Toggle | Uiverse.io asset. Yellow left = Move (default), dark right = Chill. `--h` drives all geometry: 50px desktop, 34px under 560px. Play → rounded-square clip-path morph on `cubic-bezier(1,0,0,1)`. |
-| Cards | Paper on dark, 18px radius, min 288px tall. Header, glyph tile + name, rule, big temp + conditions, reason line. Max 460px wide. |
-| Carousel | CSS scroll-snap. Seven DOM cards: clone of last, five real, clone of first. Silent re-seat on settle. Autoplay 5.6s, pauses on interaction, resumes after 14s, disabled under reduced motion. |
-| Cross-section | 900×250 viewBox, `preserveAspectRatio="none"`. Terrain and fog are SVG; dots are HTML at percentage coordinates so they stay circular at any aspect ratio. |
-| Data list | Rank, glyph, name + area + mono data strip, score bar. One rendering at all widths. |
-
-### Neighborhood glyph set
-Seven stroke glyphs on a 24px grid at 1.85 weight: `wave`, `tree`, `peak`, `crane`, `slope`, `palm`, `sail`, plus `fogx` for the quiet-rule state. They identify **terrain**, not place — three parks share `tree`, two waterfronts share `crane`. That's deliberate, since terrain is what drives the forecast, and it means a glyph can't be used as a wayfinding cue alone.
+**Signature element.** The west-to-east cross-section: Ocean Beach → Twin Peaks ridge → Dogpatch, generated by Catmull-Rom smoothing. It encodes the physical mechanism, which is why the product works at all. Protect it above everything else.
 
 ---
 
-## 4 · Current build
+## 5 · The eleven spots
+
+| Spot | Glyph | Elev (m) | Hill | rel | x | y |
+|---|---|---|---|---|---|---|
+| Ocean Beach | wave | 5 | | 26 | 40 | 218 |
+| GG Park | tree | 60 | | 48 | 248 | 200 |
+| Twin Peaks | peak | 281 | ✓ | 55 | 330 | 104 |
+| Glen Canyon | tree | 110 | | 68 | 387 | 158 |
+| Corona Heights | peak | 156 | ✓ | 62 | 444 | 142 |
+| Fort Mason | sail | 25 | | 52 | 505 | 190 |
+| Dolores Park | palm | 45 | | 78 | 563 | 196 |
+| McLaren | tree | 150 | | 79 | 628 | 172 |
+| Bernal Heights | peak | 132 | ✓ | 82 | 690 | 156 |
+| Potrero Hill | slope | 85 | ✓ | 84 | 780 | 182 |
+| Dogpatch | dog | 5 | | 85 | 860 | 212 |
+
+**One name per spot.** Earlier builds carried three fields — full name, neighbourhood, short map label — doing four inconsistent jobs. Collapsed to one string chosen for whichever name a San Franciscan recognises fastest. India Basin was folded into Dogpatch.
+
+`x` is **not** true longitude. It is blended halfway between true longitude and even spacing, because true longitude clusters seven spots into the middle third and their labels collide. `y` sits on the smoothed ridge and is a drawing coordinate only — `e` is the real elevation.
+
+`h:1` marks the four true hilltops, which label themselves on the map rather than in the rail. Explicit rather than inferred from `y`, because Glen Canyon sits high on the chart and is a canyon.
+
+---
+
+## 6 · How it decides
+
+### The fog line
+```
+clear  ⟺  cloud overhead < 45%  AND  visibility > 5000 m
+```
+Both conditions. Cloud alone cannot tell a sunny smoke day from a sunny one, and cannot see fog at street level.
+
+### Cloud overhead, not cloud cover
+`cloud_cover_low` is a layer fraction with no altitude, and on many models it is derived from pressure-level humidity where levels can sit **below ground** at elevated spots. That artefact is what once called a visibly fogged Bernal Heights clear.
+
+Four pressure levels are read instead:
+
+| Variable | Approx. height |
+|---|---|
+| `cloud_cover_1000hPa` | 110 m |
+| `cloud_cover_975hPa` | 320 m |
+| `cloud_cover_950hPa` | 540 m |
+| `cloud_cover_925hPa` | 760 m |
+
+Snapping a spot to its nearest level does **not** work — Bernal (132 m) and Twin Peaks (281 m) both land in the same band, which is the exact distinction the product exists for. So `layerTop()` interpolates the height at which cover crosses 45%, and each spot is compared against that. Levels beneath a spot's own ground are discarded before anything is read.
+
+Verified: with a shallow layer the derived top lands near 247 m, Twin Peaks reads "above the fog" and Bernal reads in the layer. With a deeper layer the top moves to 381 m and Twin Peaks goes under with everything else.
+
+### Ordering
+Clarity decides which side of the line. **Wind decides the order within it**, calmest first, so exposed spots sink. Comparison is on the *rounded* wind figure so equal displayed readings tie and fall through to score rather than to an invisible decimal.
+
+### Score
+```
+score = clarity×.42 + visibility×.13 + wind comfort×.22 + temperature fit×.23,  ideal 66°F
+```
+Score no longer drives ordering. It only breaks ties on equal wind and is not displayed.
+
+### One conditional word
+`note()` adds at most one word, and only when visibility or elevation contradicts the cloud reading: **fogged in** (<1 km), **above the fog**, **misty** (<5 km), **hazy** (<10 km). A plain sunny day reads exactly as before.
+
+---
+
+## 7 · Build
 
 ```
-index.html    single file, no dependencies, no build
+index.html    everything — markup, CSS, JS. No build, no dependencies.
+logo.png      masthead wordmark, 638×196, required at repo root
+og-image.png  1200×630 social card, link previews only
 README.md     deploy note + data constraints
 ```
 
 Deploy: repo root → Settings → Pages → Deploy from branch, `main`, `/ (root)`.
 
 ### Data flow
-One batched Open-Meteo request covers all twelve coordinates:
+One batched request covers all eleven coordinates and **eight** hourly variables:
+
 ```
 /v1/forecast
-  ?latitude=<12 csv>&longitude=<12 csv>
-  &current=temperature_2m,cloud_cover_low,visibility,wind_speed_10m
-  &hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m
+  ?latitude=<11 csv>&longitude=<11 csv>
+  &hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m,
+          cloud_cover_1000hPa,cloud_cover_975hPa,cloud_cover_950hPa,cloud_cover_925hPa
   &forecast_days=3&timeformat=unixtime
   &temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Los_Angeles
 ```
-Five time slices at hour offsets `0, 3, 6, 12, 24`. The **Now** card uses the `current` block (15-minutely HRRR); the other four index into `hourly`. Fresher, and it can disagree slightly with the +3 card — a known, accepted tradeoff.
 
-On failure: an 8s timeout drops to a **simulated** mode with a marine-push slider, so the message can be evaluated across the full condition range without waiting on weather.
+Eight variables matters: **more than ten bills as multiple calls.** That headroom is what keeps this free. Spot elevation is read from the response's own 90 m DEM `elevation` field, falling back to the hardcoded `e` values offline.
 
-### Scoring
-```
-score = clarity×Wc + visibility×Wv + wind comfort×Ww + temperature fit×Wt
-clarity      = 100 − low cloud cover
-visibility   = min(vis / 16000m, 1) × 100
-wind comfort = falls off above 8 mph, zero at 28
-temp fit     = falls off 5.5 pts per °F from ideal
-```
-| Mode | Wc | Wv | Ww | Wt | Ideal |
-|---|---|---|---|---|---|
-| Move | .35 | .15 | .30 | .20 | 60°F |
-| Chill | .48 | .10 | .18 | .24 | 72°F |
+`load()` is the only place data is fetched, used by both boot and the footer refresh button. On failure it drops to a simulator built on the same physics — a layer with a top in metres and an inland reach — so the offline mode exercises the real logic. A manual refresh returns the scrubber to now.
 
-Tiebreak is `rel`, a **hardcoded, unverified** climatology estimate of how often each spot is fog-free across a year. Replace before anyone relies on it.
+### Units
+Inferred from locale via `Intl.Locale.measurementSystem`, falling back to a region list for the Fahrenheit holdouts. Wind follows the system. **Scoring always runs in °F and mph internally**, so the ranking never moves when units flip. The `°C / °F` control is an override, deliberately muted, because inference is right most of the time and wrong sometimes.
 
-### The twelve spots (west → east)
-| Spot | Area | Map label | rel | x | y |
-|---|---|---|---|---|---|
-| Ocean Beach | Outer Sunset | Ocean Beach | 26 | 40 | 218 |
-| Golden Gate Park | Conservatory | GG Park | 48 | 232 | 200 |
-| Twin Peaks | the ridge | Twin Peaks | 55 | 307 | 104 |
-| Glen Canyon Park | Glen Park | Glen Park | 68 | 360 | 158 |
-| Corona Heights | Castro | Corona | 62 | 414 | 142 |
-| Fort Mason | Marina Green | Fort Mason | 52 | 470 | 190 |
-| Mission Dolores Park | Mission | Mission | 78 | 522 | 196 |
-| McLaren Park | Excelsior | McLaren | 79 | 578 | 172 |
-| Bernal Heights Park | Bernal | Bernal | 82 | 640 | 156 |
-| Potrero Hill | McKinley Square | Potrero | 84 | 722 | 182 |
-| Crane Cove Park | Dogpatch | Dogpatch | 85 | 794 | 212 |
-| India Basin | Bayview | Bayview | 88 | 860 | 218 |
-
-`x` is **not** true longitude. It's blended halfway between true longitude and even spacing to guarantee a 52-unit minimum separation, since true longitude clusters seven spots into the middle third and they collide. `y` sits on the smoothed ridge.
-
-### The domain fact the product rests on
-The marine layer enters through the Golden Gate and the low Sunset gap, hits the Twin Peaks and Mount Sutro ridge, and stops. East of roughly -122.43 is the fog shadow. Recorded swings: 90°F at Dolores Park and 69°F at Ocean Beach at the same hour, five miles apart. The city can vary 25°F at the same hour on the same day.
-
-Second mechanism worth exploiting: the marine layer is shallow, typically 1,000–1,600 ft, so hilltops sit above it while streets below are grey. "Go up" is a distinct strategy from "go east." Twin Peaks is scored to swing hard because it's either fully above the inversion or fully inside it.
+### Layout engine
+Map labels are measured and packed on load, on font swap and on resize, driven by one `ResizeObserver` on the rail. `paint()` runs before any measurement so content is never gated on layout succeeding, and `relayout()` is wrapped so an exception cannot blank the page.
 
 ---
 
-## 5 · RFC-001 — data source findings (preserve these numbers)
+## 8 · Cost
 
-Researched, not recalled. Verify before committing money.
+| | Limit | Cost |
+|---|---|---|
+| Open-Meteo free | 600/min, 5,000/hr, 10,000/day, 300,000/mo | $0 |
+| Open-Meteo Standard | 1M calls/mo | $29/mo |
+| Open-Meteo Professional | 5M calls/mo | $99/mo |
+| NWS / api.weather.gov | undocumented | $0 |
 
-### Resolution over SF
-| Source | Resolution | Cells over the city | Resolves fog edge |
-|---|---|---|---|
-| Open-Meteo HRRR | 3 km hourly, CONUS | ~13 | No |
-| Open-Meteo NBM | 2.5 km hourly, 11-day | ~20 | No |
-| Open-Meteo Air Quality | CAMS global 0.4° (~45 km), 3-hourly | 1 | **Unusable for SF** |
-| NWS API | 2.5 km forecast grid | ~20 | No |
-| PurpleAir | point observations | ~250 sensors | Yes, indirectly |
+**The architecture is client-direct, and for once that is the right call.** Open-Meteo rate-limits by IP, so each visitor spends their own quota rather than a pooled one. The exposure is CGNAT, where a mobile carrier puts many users behind one address. Unlikely at this traffic.
 
-Open-Meteo applies statistical downscaling from a 90m DEM and `cell_selection` picks a same-elevation land cell — real help for hills, useless for fog advection.
-
-### Costs at 1,000 DAU
-**Server-side aggregation (correct):** Open-Meteo $29/mo Standard, **$99 Professional if history is needed** — the $29 tier silently excludes the Historical, Ensemble, and Previous-Runs APIs that the free tier includes. NWS $0. PurpleAir ~$33–44/mo, ~$22 at bulk rates. **Total $62–143/mo.**
-
-**Client-direct (anti-pattern):** PurpleAir alone runs ~$1,830/mo moderate, ~$14,640/mo heavy. Architecture moves cost 30–100×; vendor choice barely matters by comparison.
-
-PurpleAir math: points = `base + (field cost × rows)`. 3 fields ≈ 6 pts/row, 250 sensors, 10-min polling = 216,720 pts/day. The free 1M starting points last **4.6 days**. Points sell at 100k/USD up to 1M/USD depending on purchase size.
-
-### Gotchas
-- **Open-Meteo free tier is non-commercial only.** Ads or a subscription move you to paid. Public GitHub Pages demo with neither is fine. CC BY 4.0 attribution is **required** and is in the footer.
-- **NWS:** no key today, User-Agent required (403 without), API key system planned. No SLA. Proxies flagged as more likely to hit undisclosed limits, and a server-side aggregator is exactly that shape. Never cache-bust — unrecognized query params return 400.
-- **PurpleAir:** temperature runs hot by 2.6°C, RH low by 17.4%. PurpleAir's own suggested corrections (4.4°C, 4%) *overcorrect* temperature and *undercorrect* RH. Access is revocable on usage grounds. Sensor density correlates with neighborhood income, so coverage gaps are themselves a finding.
-- Delivery channel matters more than data. SMS at ~$0.008/msg × 1.2/day × 1,000 users ≈ **$3,500/yr**. Push is effectively free.
+**The one thing that costs money:** the free tier is non-commercial only. The moment NoKarl carries an ad or a subscription it needs the $29 plan. That is a business decision, not a technical one.
 
 ---
 
-## 6 · Business read
+## 9 · Accuracy — the live problem
 
-Not venture-scale, and a good product. Those are separable.
+On 22 August a photo from Noe Valley showed fog blanketing the hills toward Bernal while the app showed every spot clear. That is the product's core risk made concrete: it is falsifiable by looking out of a window, and it names a place you then travel to.
 
-Ceiling: ~5,000 paying users at $3/mo ≈ $180k ARR, with a hard geographic wall — every new city needs its own climatology, sensor density, and ridge. Weather is the most commoditized consumer category; Dark Sky's exit killed its API, Mr. Chilly already holds the SF niche.
+**Phase one is done** (§6): visibility gate, height profile, real elevations.
 
-Four paths, ascending:
-1. **Craft object** — ship for a few hundred people, ~$60/mo with push. Portfolio piece and an argument about restraint in AI-era product design.
-2. **Data layer, not app** — the defensible asset is the *calibrated* microclimate mesh: PurpleAir corrected against NWS observations with the temperature bias properly fixed. Buyers with budget: real estate platforms, film and event production, outdoor retail siting, property insurance. **This is the undervalued path.**
-3. **Civic and health** — heat and pollution equity mapping. SFDPH, BAAQMD, health systems. Grant-shaped, identical data problem.
-4. **Wedge** — "where should I be right now" as a category, with weather as the first legible variable. Harder, no obvious moat.
+**Phase two, not built.** METAR ceiling from KSFO, KOAK, KHAF. Free, no key, User-Agent header required. Two unknowns to test first: browsers cannot set a User-Agent header, and CORS from a static page is unverified. `aviationweather.gov` is the documented fallback.
 
----
+What METAR uniquely buys is *observation* rather than model. Open-Meteo is model output only — no station observations, no validated actuals. Phase one fixed the variable mismatch; it did not fix the 3 km resolution mismatch.
 
-## 7 · Copy library
-
-15 taglines generated. **#14 is in production.**
-
-1. Karl's current whereabouts, and twelve places he hasn't got to yet.
-2. Karl takes the west side most afternoons. Here's where he doesn't.
-3. Twelve spots across the city, ranked by how much Karl is in the way, now and five steps ahead.
-4. Your weather app gives the whole city one number. San Francisco has never agreed to that.
-5. The answer is usually east. This tells you how far east, and how long it holds.
-6. The sun is out somewhere in this city. Here's the address.
-7. Twelve spots, one that's actually sunny, and Karl's ETA.
-8. One forecast for all of San Francisco? Cute. Here are twelve.
-9. Seven miles across, five climates. Here's the sunny one.
-10. Karl gets the west. You get everything else.
-11. Sun exists today. We know where it's parked.
-12. Stop guessing which jacket. Start knowing which neighborhood.
-13. Twelve spots, no fog, one tap.
-14. **Karl doesn't own the whole city. Go find the rest.** ← live
-15. Your afternoon is still salvageable. Here's where.
+**Before phase two, measure.** Log the verdict hourly against METAR and a few webcams for two or three weeks. Without an error rate per spot and per hour, every further fix is a guess. Expect the error to cluster at 7–10am and on the hills.
 
 ---
 
-## 8 · Working notes for the next session
+## 10 · Rejected directions — do not re-propose
 
-Direction arrives as terse bullets. Execute exactly what's listed and nothing adjacent. Flag tradeoffs in a line, don't fix them unasked — several flagged items are open on purpose (§9) and belong to the designer, not the implementer.
+Each of these was built and reverted. A fresh session will be tempted by all of them.
 
-Present options at multiple altitudes and let the choice be made rather than making it. Be data-forward over opinion-forward. Show method: the scoring formula is printed in the UI on purpose.
+1. **GSAP reveal timeline.** A two-act entrance drawing the terrain west to east, flooding the fog in, igniting the dots in sequence. Built, tested, reverted. Broke the map.
+2. **GSAP Flip on the fog line.** Rows physically travelling between Clear and Under Karl as you scrub. Built, tested, reverted with the above.
+3. **Full-page drifting fog layer** for the quiet state, with `feTurbulence` displacement and two banks at different drift rates. Built to spec. Called awful, reverted.
+4. **Webcams as a data layer.** Researched and declined: no unified API, per-operator terms, CV classification is a real problem, and Outside Now already occupies the niche. Useful for *validation*, not as a source.
+5. **Panel card in the footer.** Added, then removed — dividers do the nav-versus-content job without a box.
 
-When something is supplied — an asset, a number, a name — it is the spec, not a starting point.
+The pattern: motion and ornament have been proposed, built and rejected three times. The product's identity is restraint. Take that seriously before proposing the fourth.
 
 ---
 
-## 9 · Open decisions
+## 11 · Open decisions
 
-Each of these was raised and deliberately left open.
+Raised and deliberately left open.
 
-1. **White glyph on the yellow toggle** sits at roughly 2:1 contrast, and since yellow is now the *resting* state this is the persistent view. Switching the glyph to ink when unchecked fixes it. Not done — it's a change to the supplied asset.
-2. **The 3pm / 10am push requirement is unrepresented.** Removing the phone chrome made the prototype honest about being an app, and simultaneously removed the only place the original notification requirement lived.
-3. **Now vs +3hr can disagree**, because Now reads the 15-minutely `current` block and the rest read `hourly`. Fresher versus internally consistent.
-4. **Glyphs identify terrain, not place.** Twelve distinct marks is a separate piece of work.
-5. **`rel` climatology is invented.** Twelve hardcoded numbers, unverified. Highest-value fix in the file.
-6. **One place vs the ranked list.** The list is more honest and a worse product. Never formally settled.
-7. **Wrong-once risk.** The whole thing is verifiable by looking out a window, and it names a place you then travel to. One bad 3pm call on a Friday is an uninstall. Nothing in the current design manages confidence or hedges a marginal call.
-8. **Google Fonts round trip.** Bricolage Grotesque is a network dependency on cellular; self-hosting or falling back to the system stack is untested.
+1. **Two taglines.** Header and footer say different things. Both are Anto's.
+2. **`rel` climatology is invented.** Eleven hardcoded, unverified numbers, still breaking ties. Highest-value data fix in the file.
+3. **The 3pm / 10am push requirement is unrepresented.**
+4. **Glyphs identify terrain, not place.** Three parks share `tree`; Dogpatch's dog is the only place-specific mark.
+5. **Empty group headings are dropped**, which trades back a small page jump at the moment a group empties. Chosen deliberately over ghost headings.
+6. **Google Fonts round trip.** Bricolage is a network dependency on cellular. Self-hosting untested.
+7. **Wrong-once risk.** Nothing hedges a marginal call. The quiet rule could widen to cover model disagreement or a ceiling within a few hundred feet of a hilltop.
+8. **Scrubber fill stays amber** in the quiet state, the only accent left on a page that says there is no sun. Decided: leave it.
+
+---
+
+## 12 · Working notes for the next session
+
+**How Anto works.** Direction arrives as terse bullets. Execute exactly what is listed and nothing adjacent. Flag tradeoffs in a line; don't fix them unasked, because several flagged items are open on purpose. Present options at multiple altitudes and let him choose rather than collapsing to one recommendation. Be data-forward over opinion-forward. When something is supplied — an asset, a number, a name — it is the spec, not a starting point. On larger changes he will ask you to review and propose before building; do that rather than guessing.
+
+**Verify, don't recall.** Measurements in this file came from the font binary, the Phosphor package and live documentation, not from memory. Do the same. Font metrics via `fontTools` on `@fontsource-variable/bricolage-grotesque`; icons via `@phosphor-icons/core`; pricing and API behaviour via search, since it changes.
+
+### Known hazards in this file
+
+Three bugs recurred during the build. All are avoidable.
+
+- **`str.replace('', x)` in Python inserts `x` between every character.** Slicing with `s.index(start)` and `s.index(end)` where the end marker also appears *before* the start yields an empty slice, and the replace then explodes the file. It corrupted `index.html` to 56 MB twice. Always find the end marker *after* the start, assert the slice is non-empty, and assert an exact match count before replacing.
+- **Elements referenced by `id` that only carry a `class`.** `$("stage")` returned null, `relayout()` threw, and because it ran before `paint()` the whole page rendered blank. Audit every `$()` call against the markup after structural edits.
+- **Constants declared inside a block that later gets removed.** `reduce` went missing twice this way and threw on load. Sweep for undeclared identifiers after any large deletion.
+
+Test headlessly before delivering. A small DOM stub is enough to boot the script, render a verdict, sweep 24 hours and confirm the group headings, label placement and fog line behave.
