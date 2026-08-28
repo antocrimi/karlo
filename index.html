@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- NoKarl build 2026.08.28 -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/">
@@ -71,7 +72,7 @@ h1 img{display:block; width:clamp(165px, 44vw, 440px); height:auto; object-fit:c
 
 svg.g{fill:currentColor}
 
-.sub{max-width:46ch; color:var(--fog); font-size:16px; margin:2px 0 0}
+.sub{max-width:46ch; color:var(--fog-dim); font-size:16px; margin:2px 0 0}
 
 /* ══ section headings — label, then a rule to the edge ════════ */
 .sec{display:flex; align-items:center; gap:15px; margin:40px 0 18px;
@@ -295,6 +296,10 @@ svg.g{fill:currentColor}
   font-family:var(--mono); font-size:12px; color:var(--fog-dim)}
 .f-place{display:flex; align-items:center; gap:8px; min-width:0}
 .f-place svg{width:15px; height:15px; fill:currentColor; color:var(--fog-faint); flex:0 0 auto}
+/* build tag — dimmest thing on the page, so a deploy can be verified at a
+   glance without competing with anything */
+.f-ver{color:var(--fog-faint); font-weight:400}
+.f-ver::before{content:"·"; margin:0 7px; color:var(--fog-faint)}
 .f-made{display:flex; align-items:center; gap:7px; flex:0 0 auto}
 .f-heart svg{width:14px; height:14px; fill:currentColor; color:var(--clear); display:block}
 @media(max-width:359px){ .f-end{font-size:11px; gap:8px 12px} }
@@ -402,7 +407,7 @@ svg.g{fill:currentColor}
     <div class="f-top">
       <div class="f-brand">
         <img src="logo.png" alt="NoKarl" width="638" height="196">
-        <p>Find the sun. Not the fog.</p>
+        <p>Your SF sun chasing guide.</p>
       </div>
       <div class="f-live">
         <span class="f-live-a"><i class="dotlive" id="liveDot"></i><b id="liveLabel">Live forecast</b></span>
@@ -522,6 +527,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
+const BUILD="2026.08.28";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
@@ -586,12 +592,17 @@ function simulate(){
        that actually decide whether a given spot is inside it */
     const top   = 90 + 300*diurnal + 160*deep;
     const reach = cl(.25 + .75*diurnal + .6*deep, 0, 1);
+    /* a few hours of high overcast with clear air underneath — the state
+       that used to read as a sunny day */
+    const deck  = (hr>=7&&hr<=11) ? 90 : 0;
     out.push({t:now+k*3600, spots:SPOTS.map(s=>{
       const inReach = (s.x/VBW) <= reach;
-      const lv = LEVELS.map(L => inReach ? cl(94-(L.h-top)*.34, 3, 96) : 4+Math.random()*5);
-      const p  = profile(s.e, lv, lv[0]);
+      const lv = LEVELS.map(L => Math.max(
+        inReach ? cl(94-(L.h-top)*.34, 3, 96) : 4+Math.random()*5,
+        (deck && L.h>=480) ? deck : 0));
+      const p  = profile(s.e, lv, 0, lv[0]);
       const buried = p.inLayer;
-      return {...s, elev:s.e, lowCloud:p.overhead, top:p.top, aboveFog:p.aboveFog,
+      return {...s, elev:s.e, lowCloud:p.overhead, here:p.here, aboveFog:p.aboveFog,
               rawLow:p.overhead,
               vis: buried ? 220+Math.random()*600 : (inReach ? 9000 : 22000),
               temp: 70 - (buried?9:0) - diurnal*4,
@@ -607,7 +618,7 @@ async function fetchLive(){
   const u="https://api.open-meteo.com/v1/forecast"
    +"?latitude="+SPOTS.map(s=>s.lat).join(",")+"&longitude="+SPOTS.map(s=>s.lon).join(",")
    +"&hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
-   +","+LEVELS.map(L=>L.k).join(",")     /* 8 variables — under the 10 that bill as 2 */
+   +",cloud_cover_mid"+","+LEVELS.map(L=>L.k).join(",")   /* 9 — under the 10 that bill as 2 */
    +"&forecast_days=3&timeformat=unixtime&temperature_unit=fahrenheit"
    +"&wind_speed_unit=mph&timezone="+TZ;
   const c=new AbortController(), to=setTimeout(()=>c.abort(),8000);
@@ -622,8 +633,9 @@ async function fetchLive(){
     out.push({t:T[i], spots:SPOTS.map((s,n)=>{
       const h=A[n].hourly;
       const elev = Number.isFinite(A[n].elevation) ? A[n].elevation : s.e;
-      const p = profile(elev, LEVELS.map(L=>h[L.k]?.[i]??0), h.cloud_cover_low[i]);
-      return {...s, elev, lowCloud:p.overhead, top:p.top, aboveFog:p.aboveFog,
+      const p = profile(elev, LEVELS.map(L=>h[L.k]?.[i]??0),
+                        h.cloud_cover_mid?.[i], h.cloud_cover_low?.[i]);
+      return {...s, elev, lowCloud:p.overhead, here:p.here, aboveFog:p.aboveFog,
               rawLow:h.cloud_cover_low[i]??0, temp:h.temperature_2m[i],
               wind:h.wind_speed_10m[i], vis:h.visibility[i]??20000};
     })});
@@ -709,31 +721,43 @@ function note(d){
   return "";
 }
 
-/* The four levels sit 110, 320, 540 and 760 m up, so snapping a spot to the
-   nearest one cannot tell Bernal (132 m) from Twin Peaks (281 m) — the very
-   distinction the product exists for. Instead the height where cover crosses
-   the threshold is interpolated, giving an estimated top for the layer, and
-   each spot is compared against that. */
-function layerTop(P){
-  if(P[0].c<CLEAR) return 0;                       /* nothing at the surface */
-  for(let i=0;i<P.length-1;i++){
-    if(P[i].c>=CLEAR && P[i+1].c<CLEAR){
-      const f=cl((P[i].c-CLEAR)/Math.max(1,P[i].c-P[i+1].c),0,1);
-      return P[i].h+(P[i+1].h-P[i].h)*f;
+/* Cloud is sampled at four heights, so cover at an arbitrary elevation is
+   interpolated between them. Three questions get asked of that curve, and
+   they are not the same question:
+     here     — is cloud at my own altitude, i.e. am I inside it
+     overhead — is there cloud anywhere above me, i.e. is the sun blocked
+     beneath  — is there cloud below me, i.e. am I standing above the fog
+   An earlier version read only the first level above a spot, which made an
+   elevated stratus deck invisible: clear at 110 m, solid at 540 m, and the
+   app called it a sunny day. Overhead is now the maximum across everything
+   above, plus mid-level cloud for decks higher than the top sample. */
+function coverCurve(P){
+  return h=>{
+    if(h<=P[0].h) return P[0].c;
+    for(let i=0;i<P.length-1;i++){
+      if(h<=P[i+1].h){
+        const f=(h-P[i].h)/(P[i+1].h-P[i].h);
+        return P[i].c+(P[i+1].c-P[i].c)*f;
+      }
     }
-  }
-  return P[P.length-1].h;                          /* cloudy all the way up */
+    return P[P.length-1].c;
+  };
 }
 
-function profile(elev, lv, fallback){
-  const P=LEVELS.map((L,i)=>({h:L.h,c:cl(lv[i]??0,0,100)}));
-  const top=layerTop(P);
-  const inLayer = top>0 && elev < top-15;
-  const above   = P.filter(l=>l.h>elev+15);
-  const overhead = inLayer
-    ? Math.max(...P.filter(l=>l.h<=top+15).map(l=>l.c))
-    : (above.length ? above[0].c : (fallback??0));
-  return {overhead, top, inLayer, aboveFog: top>=80 && elev>=top};
+function profile(elev, lv, mid, lowAgg){
+  const P=LEVELS.map((L,i)=>({k:L.k,h:L.h,c:cl(lv[i]??0,0,100)}));
+  const at=coverCurve(P);
+  const here    = at(elev);
+  const beneath = Math.max(0, ...P.filter(l=>l.h <  elev-15).map(l=>l.c));
+  let overhead  = Math.max(here,
+                           cl(mid??0,0,100),
+                           ...P.filter(l=>l.h > elev+15).map(l=>l.c));
+  /* if every pressure level came back empty, fall back to the aggregate
+     rather than silently reporting a clear sky */
+  if(P.every(l=>l.c===0)) overhead=Math.max(overhead, cl(lowAgg??0,0,100));
+  return {overhead, here, beneath,
+          inLayer:  here>=CLEAR,
+          aboveFog: beneath>=60 && here<CLEAR && overhead<CLEAR};
 }
 
 /* Clarity decides the side of the line. Wind decides the order within it,
@@ -859,7 +883,8 @@ function buildFooter(){
       +`<span class="lb">${label}</span><span class="cv">${ico("caret_down")}</span>`;
   });
   $("refresh").innerHTML=ico("arrow_clockwise");
-  $("fPlace").innerHTML=ico("map_pin")+"<span>San Francisco, CA</span>";
+  $("fPlace").innerHTML=ico("map_pin")
+    +`<span>San Francisco, CA</span><b class="f-ver">v${BUILD}</b>`;
   $("fHeart").innerHTML=ico("heart");
 
   /* one panel open at a time; all closed to begin with */
