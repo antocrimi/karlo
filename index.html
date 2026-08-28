@@ -27,6 +27,10 @@
 <style>
 :root{
   --ink:#0E161C; --ink-2:#16222A;
+  /* the cross-section fill. A dot under Karl is painted in it and separated
+     by a hairline of --ink, so it reads as cut out of the ridge rather than
+     sitting on it. The two must stay identical, hence one variable. */
+  --ridge:#1E2B33;
   --line:rgba(169,183,190,.18); --line-hi:rgba(169,183,190,.34);
   --fog:#A9B7BE; --fog-dim:#63757C; --fog-faint:#3B4A52;
   --clear:#F0A03C; --clear-dim:#9A6520;
@@ -101,8 +105,16 @@ svg.g{fill:currentColor}
 .v-name{font-family:var(--disp); font-weight:700; font-size:27px;
   line-height:1.05; letter-spacing:-.028em; color:var(--clear);
   min-width:0; flex:0 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+/* Digits have no descenders, so centring the line box leaves the number
+   sitting low between the rule under "Best spot" and the one above the
+   scrubber. The box is given a little more height than its .92 line box and
+   the text rides at the top of it, which lifts the glyphs onto the optical
+   centre. Both values are em, so the nudge holds at either type size.
+   min-width, not width, reserves the column without clipping a three-digit
+   reading. */
 .v-temp{flex:0 0 auto; font-family:var(--disp); font-weight:700;
-  font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear)}
+  font-size:42px; line-height:.92; letter-spacing:-.042em; color:var(--clear);
+  min-width:1.9375em; height:1.0833em; text-align:right}
 .v-cond{display:block; margin-top:9px; font-family:var(--mono); font-size:13px;
   letter-spacing:.02em; color:var(--fog-dim)}
 .v-cond b{color:var(--fog); font-weight:400}
@@ -162,11 +174,17 @@ svg.g{fill:currentColor}
 .ridge-head b{color:var(--fog); font-weight:400; text-align:center}
 .stage{position:relative; width:100%; aspect-ratio:900/380}
 .stage svg{position:absolute; inset:0; width:100%; height:100%; display:block}
-.dot{position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%;
-  background:var(--fog-faint); border:1px solid var(--fog-dim);
-  transition:background .32s ease, border-color .32s ease,
+/* CSS wins over the fill attribute, which stays as a fallback */
+#terrain{fill:var(--ridge)}
+/* The ring is a hairline of background, not an outline. A spot under Karl is
+   painted in the ridge's own colour, so the ring is the only thing separating
+   it from the terrain and the dot reads as cut out of the section. 13px box
+   less the 1px border leaves the disc at the 11px it has always been. */
+.dot{position:absolute; width:13px; height:13px; margin:-6.5px 0 0 -6.5px; border-radius:50%;
+  background:var(--ridge); border:1px solid var(--ink);
+  transition:background .32s ease,
              transform .42s cubic-bezier(.22,.68,.3,1)}
-.dot.on{background:var(--clear); border-color:var(--clear)}
+.dot.on{background:var(--clear)}
 /* the pick keeps its amber disc and grows rays — it never swaps to an icon,
    so there is no dark frame in between */
 .dot .rays{position:absolute; left:50%; top:50%; width:27px; height:27px;
@@ -389,7 +407,9 @@ svg.g{fill:currentColor}
           </linearGradient>
         </defs>
         <path id="fogBody" d="" fill="url(#fg)"/>
-        <path id="terrain" d="" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <!-- no outline: the silhouette carries itself, and the stroke only
+             lightened the ridge where it met the fog -->
+        <path id="terrain" d="" fill="#1E2B33" stroke-width="0" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
       <div class="peaks" id="peaks"></div>
