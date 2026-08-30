@@ -29,11 +29,15 @@ Nine variables is deliberate: requests covering more than ten variables bill as 
 
 A spot is **clear** when cloud overhead is under 45% *and* visibility is over 5 km. Both, because cloud alone can't tell a sunny smoke day from a sunny one, and can't see fog at street level.
 
-The chart's vertical axis is an elevation axis, and the cloud band is drawn on it as a real layer — between the height where cover begins and the height where it ends. A summit appears above the band only when it genuinely stands above the cloud. The same number decides the verdict, so the picture and the list cannot disagree.
+The chart's vertical axis is an elevation axis, and the cloud is drawn on it as a real surface running through all eleven places, with a leading edge where the layer runs out. Each spot has its own **sunlight line**: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. That is the same curve the surface is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree at any point along the section.
+
+The soft top edge is nine contours of one field rather than a painted gradient. Where they spread apart the model is unsure where the layer ends, and the edge is wide because the reading is. It also holds the picture still: two points of cloud cover move a single contour by up to a fifth of the chart and the stack by under a twelfth, because the eye reads the stack.
 
 "Cloud overhead" is not the model's low-cloud figure. Cloud is sampled at four altitudes — roughly 110, 320, 540 and 760 metres — plus a mid-level field, and cover at any height in between is interpolated. Each spot then asks three separate questions of that curve using its own elevation: is there cloud at my altitude, is there cloud anywhere above me, and is there cloud below me. The second is what decides whether the sun is blocked, and it is the maximum across everything overhead — otherwise a high overcast deck with clear air beneath reads as a sunny day.
 
 Inside each group the calmest spot sits on top, so exposed places sink. A score combining clarity, visibility, wind and temperature breaks ties on equal wind; it isn't displayed.
+
+The forecast is hourly and the scrubber moves in quarter hours, reading between two hours. That is where you see the layer come in off the Pacific and pull back, which is the thing the numbers are describing.
 
 ## What is and isn't measured
 
@@ -49,4 +53,4 @@ Inferred from the browser's locale, with a manual override in the footer. Scorin
 
 It's a 3 km model resolving a fog edge sharper than 3 km. It can be wrong, and it's verifiable by looking out of a window — twice now that's exactly how a bug was found. See `BRIEFING.md` §9 for the accuracy work and what's planned next.
 
-The build tag in the footer (`v2026.08.28`) shows which version is actually being served, which is useful when a deploy looks like it hasn't landed.
+The build tag in the footer (`v2026.08.30`) shows which version is actually being served, which is useful when a deploy looks like it hasn't landed.
