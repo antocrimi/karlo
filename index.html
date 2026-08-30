@@ -401,16 +401,22 @@ svg.g{fill:currentColor}
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to Dogpatch showing where cloud sits against the Twin Peaks ridge">
         <defs>
-          <!-- the top edge fades, because the layer height is an estimate with
-               roughly ±50 m of slack and a crisp line would claim a precision
-               the data does not have -->
-          <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stop-color="#A9B7BE" stop-opacity="0"/>
-            <stop offset="30%" stop-color="#A9B7BE" stop-opacity=".24"/>
-            <stop offset="100%" stop-color="#A9B7BE" stop-opacity=".50"/>
-          </linearGradient>
+          <!-- Fog cannot sit below ground. The terrain is painted over the band
+               anyway, but the axis intercept is y=213 while the drawn shoreline
+               is at 218, so a contour at zero metres would leak a sliver of fog
+               over an empty beach at the western edge. Masking to the sky kills
+               it exactly, and leaves yM as the one mapping on this axis. -->
+          <mask id="sky" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
+            <rect x="0" y="0" width="900" height="250" fill="#fff"/>
+            <path id="terrainMask" d="" fill="#000"/>
+          </mask>
         </defs>
-        <path id="fogBody" d="" fill="url(#fg)"/>
+        <!-- Nine contours of the same field, not a gradient. Each path is the
+             surface where cloud overhead crosses one threshold, so the softness
+             of the top edge is the spacing of the thresholds: wide where the
+             model is vague, tight where it is sure. The old fixed 0/.24/.50
+             gradient performed that uncertainty without measuring any. -->
+        <g id="fogBody" fill="#A9B7BE" mask="url(#sky)"></g>
         <!-- no outline: the silhouette carries itself, and the stroke only
              lightened the ridge where it met the fog -->
         <path id="terrain" d="" fill="#1E2B33" stroke-width="0" vector-effect="non-scaling-stroke"/>
@@ -422,7 +428,7 @@ svg.g{fill:currentColor}
 
     <div class="timebar">
       <div class="tb-head"><span class="tb-at" id="tbAt">Now</span><span class="tb-rel" id="tbRel">Live</span></div>
-      <input type="range" id="time" min="0" max="23" step="1" value="0"
+      <input type="range" id="time" min="0" max="23" step="0.25" value="0"
              aria-label="Time, hours from now" aria-valuetext="Now">
       <div class="tb-scale"><span>Now</span><span>+12h</span><span>+24h</span></div>
     </div>
@@ -460,6 +466,10 @@ svg.g{fill:currentColor}
           <div><h3>The forecast</h3><p>Eleven places, from Ocean Beach in the west to
             Dogpatch in the east, twenty-four hours ahead, so you can see which side of
             the fog line each one is on.</p></div>
+          <div><h3>The picture</h3><p>The cross section is drawn from the same reading the
+            list is ranked on, place by place. Drag the hours and you are watching the
+            layer come in off the Pacific and pull back, which is the thing the numbers
+            are describing.</p></div>
         </div>
       </div>
       <button class="acc-t" aria-expanded="false" id="t-met"></button>
@@ -469,6 +479,9 @@ svg.g{fill:currentColor}
           <div><dt>Order</dt><dd>Calmest first inside each group, so exposed spots sink to the bottom.</dd></div>
           <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
           <div><dt>Height</dt><dd>Cloud is read at four altitudes and compared against each spot's own elevation, so a hilltop standing above the layer is not counted as fogged in.</dd></div>
+          <div><dt>The line</dt><dd>Each spot has its own sunlight line: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. It is the same curve the band is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree.</dd></div>
+          <div><dt>Soft edge</dt><dd>The band is nine contours of one field rather than a painted gradient. Where they spread apart the model is unsure of the layer's top, and the edge is soft because the reading is.</dd></div>
+          <div><dt>Between hours</dt><dd>The forecast is hourly. The scrubber moves in quarters and reads between two hours, which is where the layer is seen rolling in and out.</dd></div>
       <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
         </dl>
       </div>
@@ -554,7 +567,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.08.28";
+const BUILD="2026.08.30";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -565,6 +578,36 @@ const HOURS=24, VBW=900, VBH=250, GROUND=246;
    could appear to stand above a layer it was actually inside. */
 const Y0=213, Y_PER_M=0.392;
 const yM = m => cl(Y0 - Y_PER_M*m, 2, GROUND);
+
+/* The axis resolves nothing above about 540 m, where yM clamps. That is left
+   alone deliberately. Twin Peaks is 281 m, so above the highest summit the
+   layer's depth changes no verdict, and the hours it saturates are the hours
+   the city is genuinely socked in — a frame filled edge to edge is the true
+   picture of that state, and the quiet rule is already saying so in words.
+   Giving the sky more headroom would shrink the ridge, which is the one
+   element the briefing puts above everything else. */
+
+/* Nine thresholds bracketing CLEAR at six points apart. Each one is a real
+   contour of the overhead curve; stacked at low opacity they read as a single
+   soft-edged mass whose fuzziness is the model's own vagueness, wide where the
+   thresholds are far apart and tight where they crowd. Perturbing one pressure
+   level by two points moves the single CLEAR contour up to 42 px of chart and
+   the stack under 20, because the eye integrates the ensemble and the other
+   contours hold it in place. Five tiers carried the same information and could
+   be counted as stripes at the nose; nine at lower alpha cannot. The alpha is
+   set so the fully saturated stack lands on .50, which is where the old fixed
+   gradient bottomed out. */
+const TIERS=[69,63,57,51,CLEAR,39,33,27,21], TIER_A=.074;
+
+/* Height to y for the fog, which is yM with a shoreline correction. Y0 is a
+   regression intercept: the fit puts sea level at y=213 while the drawn
+   shoreline is at 218 and the frame edges at 222 and 224, so a contour at zero
+   metres floats a sliver of fog over an empty beach that the terrain mask
+   cannot cover, because the sliver is genuinely above the ground line. The
+   correction buries zero and decays to nothing by 150 m, well under the lowest
+   pressure sample at 110 m, so it never touches a height that decides a
+   verdict. yM itself stays exactly as it is: it is the law for the terrain. */
+const yFog = h => cl(yM(h) + 13*Math.exp(-h/50), 2, GROUND);
 
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
 function smooth(pts){
@@ -578,6 +621,21 @@ function smooth(pts){
   return d;
 }
 const RIDGE=[{x:0,y:224},...SPOTS.map(s=>({x:s.x,y:s.y})),{x:VBW,y:222}];
+
+/* Same Catmull-Rom, flat-ended: a contour runs out to both edges of the frame
+   at the height of its outermost column rather than curling. */
+function wave(pts){
+  const p=[{x:pts[0].x-70,y:pts[0].y},...pts,
+           {x:pts[pts.length-1].x+70,y:pts[pts.length-1].y}];
+  let d="";
+  for(let i=1;i<p.length-2;i++){
+    const a=p[i-1],b=p[i],c=p[i+1],e=p[i+2],k=7;
+    d+=` C${(b.x+(c.x-a.x)/k).toFixed(1)},${(b.y+(c.y-a.y)/k).toFixed(1)}`
+      +` ${(c.x-(e.x-b.x)/k).toFixed(1)},${(c.y-(e.y-b.y)/k).toFixed(1)}`
+      +` ${c.x.toFixed(1)},${c.y.toFixed(1)}`;
+  }
+  return d;
+}
 
 const $=i=>document.getElementById(i), cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const TZ="America/Los_Angeles";
@@ -600,10 +658,19 @@ const t2 = f => S.unit==="C" ? Math.round((f-32)*5/9) : Math.round(f);
 const w2 = m => S.unit==="C" ? Math.round(m*1.609) : Math.round(m);
 const wu = () => S.unit==="C" ? "km/h" : "mph";
 
-const fmtH=e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric"}).format(new Date(e*1000));
+/* the scrubber lands between hours now, so the clock shows minutes when there
+   are any and stays on the hour when there are not */
+const fmtH=e=>{const d=new Date(e*1000);
+  const m=+new Intl.DateTimeFormat("en-US",{timeZone:TZ,minute:"numeric"}).format(d);
+  return new Intl.DateTimeFormat("en-US",
+    Object.assign({timeZone:TZ,hour:"numeric"}, m?{minute:"2-digit"}:{})).format(d);};
 const fmtD=e=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,weekday:"short"}).format(new Date(e*1000));
 const stamp=(t,k)=> k===0 ? "Now" : `${fmtD(t)} ${fmtH(t)}`;
-const relLabel=k=> k===0 ? "Live" : `+${k}h`;
+const relLabel=k=>{
+  if(k===0) return "Live";
+  const mm=Math.round(k*60), h=Math.floor(mm/60), m=mm%60;
+  return "+" + (h?h+"h":"") + (m?(h?" ":"")+m+"m":"");
+};
 
 /* score always computed in °F and mph — display units never touch it */
 function score(d){return Math.round(
@@ -642,7 +709,7 @@ function simulate(){
       const p  = profile(s.e, lv, 0, lv[0]);
       const buried = p.inLayer;
       return {...s, elev:s.e, lowCloud:p.overhead, here:p.here, aboveFog:p.aboveFog,
-              base:p.base, top:p.top, mid:p.mid,
+              sun:p.sun, O:p.O, beneath:p.beneath, mid:p.mid,
               rawLow:p.overhead,
               vis: buried ? 220+Math.random()*600 : (inReach ? 9000 : 22000),
               temp: 70 - (buried?9:0) - diurnal*4,
@@ -676,7 +743,7 @@ async function fetchLive(){
       const p = profile(elev, LEVELS.map(L=>h[L.k]?.[i]??0),
                         h.cloud_cover_mid?.[i], h.cloud_cover_low?.[i]);
       return {...s, elev, lowCloud:p.overhead, here:p.here, aboveFog:p.aboveFog,
-              base:p.base, top:p.top, mid:p.mid,
+              sun:p.sun, O:p.O, beneath:p.beneath, mid:p.mid,
               rawLow:h.cloud_cover_low[i]??0, temp:h.temperature_2m[i],
               wind:h.wind_speed_10m[i], vis:h.visibility[i]??20000};
     })});
@@ -792,69 +859,118 @@ function coverCurve(P){
   };
 }
 
-/* Base and top of the lowest thick layer, in metres. Walks the interpolated
-   curve rather than snapping to samples, so a deck between two levels is
-   found where it actually sits. Returns null when there is no layer. */
-function layerOf(P){
+/* ── the overhead curve ──────────────────────────────────────────
+   O(h) is the most cloud anywhere at or above h, mid-level deck included.
+   Because it is a running maximum taken downward from the ceiling it is
+   monotonically non-increasing, and that single property is what the whole
+   drawing rests on: a monotone curve crosses any threshold exactly once, so
+   "the height you would have to climb to reach sunlight" is well defined and
+   moves continuously with the data.
+
+   What it replaces walked the raw cover curve looking for the first band
+   thicker than 45 per cent, then took its top. That curve is not monotone,
+   so two points of cover at one pressure level could hand back a different
+   band entirely: [80 46 44 10] gave a top of 440 m and [80 44 44 10] gave
+   320 m, a fifth of the chart for a rounding difference. It also returned a
+   sentinel 820 when it ran out of samples, which is "we stopped looking"
+   drawn as a layer filling the frame. */
+const SCAN=10, SCAN_N=91;               /* 0 to 900 m in 10 m steps */
+function overheadCurve(lv, mid, lowAgg){
+  const P=LEVELS.map((L,i)=>({k:L.k,h:L.h,c:cl(lv[i]??0,0,100)}));
   const at=coverCurve(P);
-  let base=null;
-  for(let h=0; h<=800; h+=10){
-    const c=at(h);
-    if(base===null){ if(c>=CLEAR) base=h; }
-    else if(c<CLEAR) return {base, top:h};
+  /* if every pressure level came back empty, fall back to the aggregate
+     rather than silently reporting a clear sky */
+  const floor = P.every(l=>l.c===0) ? cl(lowAgg??0,0,100) : 0;
+  const O=new Array(SCAN_N); let m=cl(mid??0,0,100);
+  for(let i=SCAN_N-1;i>=0;i--){ m=Math.max(m, at(i*SCAN)); O[i]=Math.max(m,floor); }
+  O.P=P;
+  return O;
+}
+const overheadAt=(O,h)=>{
+  const x=cl(h/SCAN,0,SCAN_N-1), i=Math.floor(x);
+  return i>=SCAN_N-1 ? O[SCAN_N-1] : O[i]+(O[i+1]-O[i])*(x-i);
+};
+/* The height where overhead falls through T: the sunlight line for that
+   threshold. Monotone, so the crossing is unique and no scan can find a
+   different one. Zero means the sun is not blocked even at sea level. */
+function sunLine(O,T){
+  if(O[0]<T) return 0;
+  for(let i=1;i<SCAN_N;i++){
+    if(O[i]<T){ const f=(O[i-1]-T)/(O[i-1]-O[i]); return (i-1+f)*SCAN; }
   }
-  return base===null ? null : {base, top:820};
+  return (SCAN_N-1)*SCAN;
 }
 
 function profile(elev, lv, mid, lowAgg){
-  const P=LEVELS.map((L,i)=>({k:L.k,h:L.h,c:cl(lv[i]??0,0,100)}));
+  const O=overheadCurve(lv, mid, lowAgg), P=O.P;
   const at=coverCurve(P);
   const here    = at(elev);
   const beneath = Math.max(0, ...P.filter(l=>l.h <  elev-15).map(l=>l.c));
-  let overhead  = Math.max(here,
-                           cl(mid??0,0,100),
-                           ...P.filter(l=>l.h > elev+15).map(l=>l.c));
-  /* if every pressure level came back empty, fall back to the aggregate
-     rather than silently reporting a clear sky */
-  if(P.every(l=>l.c===0)) overhead=Math.max(overhead, cl(lowAgg??0,0,100));
-  const L=layerOf(P);
-  return {overhead, here, beneath, mid: cl(mid??0,0,100),
-          base: L?L.base:null, top: L?L.top:null,
+  const overhead= overheadAt(O, elev);
+  /* sun is the one number the picture and the list both read. A spot is in
+     daylight exactly when it stands at or above it, and because O is monotone
+     that is the same statement as overhead < CLEAR. Not two rules that have to
+     be kept in step: one rule, asked twice. */
+  return {overhead, here, beneath, mid: cl(mid??0,0,100), O,
+          sun: sunLine(O, CLEAR),
           inLayer:  here>=CLEAR,
           aboveFog: beneath>=60 && here<CLEAR && overhead<CLEAR};
 }
 
 /* Clarity decides the side of the line. Wind decides the order within it,
    so the calmest spot sits on top and the exposed ones sink. */
-/* One layer for the whole city. The model cannot resolve horizontal
-   structure at this sample density — eleven points across seven miles of a
-   3 km grid means adjacent spots share cells, and a hard 45% threshold turns
-   a few points of scatter into a different map from one hour to the next.
-   Median of the per-spot readings, and a majority is required before a layer
-   is declared at all. The band and the verdict both read this, so they are
-   literally the same number. */
-function cityLayer(fr){
-  if(fr._L!==undefined) return fr._L;
-  const t=fr.spots.filter(s=>s.top!=null).map(s=>s.top).sort((a,b)=>a-b);
-  const b=fr.spots.filter(s=>s.base!=null).map(s=>s.base).sort((a,b)=>a-b);
-  fr._L = t.length < fr.spots.length/2 ? null
-        : {top:t[t.length>>1], base:b.length?b[b.length>>1]:0};
-  return fr._L;
-}
-
-function split(k){
-  /* One geometry, one verdict. A spot is out of the layer when it stands at
-     or above the layer's top — the same number the band is drawn from, so the
-     picture can never contradict the list. Mid-level cloud and visibility are
-     separate gates: a summit above the marine layer can still sit under a high
-     deck, and clear sky over 3 km of smoke is not a clear day. */
-  const L=cityLayer(S.frames[k]);
-  const all=S.frames[k].spots.map(d=>({...d, score:score(d),
-    clear: (L==null || d.elev>=L.top) && (d.mid??0)<CLEAR && d.vis>VIS_CLEAR}));
+function split(fr){
+  /* One geometry, one verdict, and now a local one. A spot is in daylight when
+     it stands at or above its own sunlight line, which is the same curve the
+     band is drawn from at that spot's own x. The previous rule read a single
+     city-wide median top, so Ocean Beach at 5 m and Twin Peaks at 281 m were
+     judged by the same number and the whole city flipped together the hour the
+     median crossed a majority gate. Visibility stays a separate gate: clear sky
+     over 3 km of smoke is not a clear day. Mid-level cloud needs no gate of its
+     own any more, because the overhead curve already carries it. */
+  const all=fr.spots.map(d=>({...d, score:score(d),
+    clear: d.elev>=d.sun && d.vis>VIS_CLEAR}));
   /* compare the wind the user can see, so equal readings tie and
      fall through to score rather than to a hidden decimal */
   const by=(a,b)=>Math.round(a.wind)-Math.round(b.wind)||b.score-a.score;
   return {sun:all.filter(d=>d.clear).sort(by), fog:all.filter(d=>!d.clear).sort(by)};
+}
+
+/* ── continuous time ─────────────────────────────────────────────
+   The scrubber was step="1" while the briefing called it continuous, so a
+   drag stepped the marine layer between hourly stills. Rolling in and out is
+   a temporal read before it is a spatial one, and it needs the frames between
+   the frames.
+
+   What gets interpolated is the overhead curve itself, elementwise, not the
+   pressure-level covers it was built from. A convex combination of two
+   monotone non-increasing arrays is monotone non-increasing, so the one
+   property the geometry depends on survives the blend exactly, and overhead
+   and the sunlight line are re-derived from the blended curve rather than
+   blended on their own. The picture and the list stay the same object at
+   3:15 pm as they are on the hour. */
+function frameAt(t){
+  t=cl(t,0,HOURS-1);
+  const i=Math.floor(t), f=t-i;
+  if(f<1e-6 || i>=HOURS-1) return S.frames[Math.min(i,HOURS-1)];
+  /* keyed on the frame array too, or a refresh serves the previous forecast's
+     geometry at every position the scrubber had already visited */
+  const key=t.toFixed(3);
+  if(S._fa && S._fa.k===key && S._fa.f===S.frames) return S._fa.v;
+  const A=S.frames[i], B=S.frames[i+1], mix=(a,b)=>a+(b-a)*f;
+  const fr={t:mix(A.t,B.t), spots:A.spots.map((a,n)=>{
+    const b=B.spots[n];
+    const O=a.O.map((v,j)=>mix(v,b.O[j]));
+    const overhead=overheadAt(O,a.elev);
+    const here=mix(a.here,b.here), beneath=mix(a.beneath,b.beneath);
+    return {...a, O, overhead, lowCloud:overhead, sun:sunLine(O,CLEAR),
+            here, beneath, mid:mix(a.mid,b.mid),
+            inLayer:here>=CLEAR,
+            aboveFog: beneath>=60 && here<CLEAR && overhead<CLEAR,
+            temp:mix(a.temp,b.temp), wind:mix(a.wind,b.wind), vis:mix(a.vis,b.vis)};
+  })};
+  S._fa={k:key, f:S.frames, v:fr};
+  return fr;
 }
 
 /* ── copyfit ────────────────────────────────────────────────────
@@ -898,7 +1014,7 @@ function paintVerdict(sun,k){
 }
 
 function paint(){
-  const k=S.h, fr=S.frames[k], {sun,fog}=split(k);
+  const k=S.h, fr=frameAt(k), {sun,fog}=split(fr);
   paintVerdict(sun,k);
   $("tbAt").textContent=stamp(fr.t,k);
   $("time").style.setProperty("--p",(k/(HOURS-1)*100).toFixed(1)+"%");
@@ -932,26 +1048,39 @@ function paint(){
   });
 
   /* ── the marine layer ────────────────────────────────────────────
-     Full width, one level, no horizontal structure. Not for want of trying:
-     a leading edge was built twice and the data will not carry it. Smoothing
-     the extent to a contiguous run then drew the band over spots the list
-     called clear — the picture contradicting the verdict again, spatially
-     this time instead of vertically. The height is what the model supports;
-     horizontal position is not. The dots carry per-spot truth, the band
-     carries the level, and because the band spans everything "clear" and
-     "above the band" are the same statement. */
-  const L=cityLayer(fr);
-  if(!L){ $("fogBody").setAttribute("d",""); }
-  else{
-    const f=n=>(+n).toFixed(1);
-    const yTop=yM(L.top), yBot=L.base<=10 ? GROUND : yM(L.base);
-    $("fogBody").setAttribute("d",
-      `M0,${f(yTop)} L${VBW},${f(yTop)} L${VBW},${f(yBot)} L0,${f(yBot)} Z`);
-  }
+     A surface through all eleven columns again, and a leading edge, because
+     the objection recorded here for two revisions does not hold. The claim was
+     that per-spot tops are grid noise that shredded the surface and that the
+     extent had to be smoothed into a contiguous run that then covered spots
+     the list called clear. Measured against the simulator: the run is already
+     contiguous in all 24 frames with no holes, and the tops fall monotonically
+     west to east (hour 20 reads 480 460 450 450 440 430 430 420 420 410 400),
+     which is marine air deepest at the coast and mixing out inland. That is
+     the mechanism the product exists to show. What was actually shredding the
+     surface was layerOf's threshold crossing, and that is gone.
+
+     The edge needs no nose to be drawn for it. A column where the sun is not
+     blocked at sea level has a sunlight line of zero, yF folds it into the
+     ground, and the smoothing carries the surface down to meet it. The shape
+     of the nose is the data, not a bezier chosen to look like weather.
+
+     Nothing here can contradict the list, at any x: a dot is amber exactly
+     when its elevation is at or above the CLEAR contour at its own column,
+     and the CLEAR contour is one of the five paths being drawn. */
+  $("fogBody").innerHTML = TIERS.map(T=>{
+    const hs=fr.spots.map(s=>sunLine(s.O,T));
+    /* a threshold nothing in the city reaches draws nothing at all */
+    if(hs.every(h=>h<=0)) return "";
+    const pts=fr.spots.map((s,i)=>({x:s.x, y:yFog(hs[i])}));
+    const ends=[{x:0,y:pts[0].y},...pts,{x:VBW,y:pts[pts.length-1].y}];
+    return `<path data-t="${T}" fill-opacity="${TIER_A}" d="M0,${ends[0].y.toFixed(1)}`
+         + wave(ends) + ` L${VBW},${GROUND} L0,${GROUND} Z"/>`;
+  }).join("");
 
 }
 
-$("terrain").setAttribute("d", `M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`);
+(()=>{ const d=`M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`;
+  $("terrain").setAttribute("d",d); $("terrainMask").setAttribute("d",d); })();
 
 /* ── controls ──────────────────────────────────────────────────── */
 /* coalesce to one repaint per frame — a drag fires input far faster than

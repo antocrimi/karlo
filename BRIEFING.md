@@ -3,7 +3,7 @@
 **Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
 **Status:** shipped prototype, live at `antocrimi.github.io`. One HTML file, no build step, no dependencies, plus two image assets.
-**Last worked:** August 2026 — visibility gate, pressure-level height profile, spot elevations, structured footer.
+**Last worked:** 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time.
 
 **Companion file:** `CLAUDE.md` carries Anto's voice rules, attribution tiers and working preferences. It governs every word written for or as him. This file governs the product.
 
@@ -152,6 +152,8 @@ Four pressure levels are read instead:
 | `cloud_cover_925hPa` | 760 m |
 | `cloud_cover_mid` | 2–7 km |
 
+`overheadCurve()` builds `O(h)`, the most cloud anywhere at or above `h`, as a running maximum taken downward from the ceiling. That makes it **monotonically non-increasing**, which is the single property the whole drawing rests on: a monotone curve crosses any threshold exactly once, so the sunlight line is unique and moves continuously with the data. `sunLine(O, T)` is that crossing.
+
 `coverCurve()` interpolates cover at any height between the samples, because snapping a spot to its nearest level cannot tell Bernal (132 m) from Twin Peaks (281 m) — the exact distinction the product exists for. Three separate questions are then asked of that curve, and conflating them is what has broken this twice:
 
 | | Means | Used for |
@@ -159,7 +161,7 @@ Four pressure levels are read instead:
 | `here` | cloud at your own altitude | are you inside it |
 | `overhead` | **max** cover anywhere above you, plus mid-level | the percentage shown in the UI |
 | `beneath` | cover below you | are you standing above the fog |
-| `base` / `top` | the layer's extent in metres | **the verdict, and how the band is drawn** |
+| `sun` | the height you must reach to be out of the cloud | **the verdict, and how the band is drawn** |
 
 **The 28 August failure:** `overhead` read only the *first* level above a spot. With clear air at 110 m and a solid deck at 540 m, the app reported 15% cloud on a completely grey morning. Overhead is now the maximum across everything above, and `cloud_cover_mid` catches decks higher than the top sample.
 
@@ -241,15 +243,24 @@ On 22 August a photo from Noe Valley showed fog blanketing the hills toward Bern
 
 All three were failures of the *vertical* model. Keep looking out of the window.
 
-**The layer is one level, full width, with no horizontal structure.** A leading edge was built twice and the data will not carry it. Eleven points across seven miles of a 3 km grid means adjacent spots share cells, and a hard 45% threshold turns a few points of scatter into a different map of the city from one hour to the next — the 4am-versus-5am anomaly. Smoothing the extent into a contiguous run then drew the band over spots the list called clear, which is the picture contradicting the verdict again, spatially instead of vertically.
+**The leading edge is back, and the reason it was cut does not survive measurement.** 30 August. The claim recorded here for two revisions was that per-spot tops are grid noise that shredded the surface, and that the extent had to be smoothed into a contiguous run which then covered spots the list called clear. Both were checked against the simulator:
 
-`cityLayer()` takes the median of the per-spot readings and requires a majority before declaring a layer at all. **The band and the verdict both read that one number**, so "clear" and "drawn above the band" are the same statement. The dots carry per-spot truth; the band carries the level. `test.js` asserts both directions.
+- The run is **already contiguous** in all 24 frames, no holes, and it only ever grows or shrinks from the west.
+- The tops fall **monotonically west to east** — hour 20 reads `480 460 450 450 440 430 430 420 420 410 400`, an 80 m spread over the full 900 px chart. That is marine air deepest at the coast and mixing out inland, which is the mechanism the product exists to show.
+
+What was actually shredding the surface was `layerOf()`, which walked the raw cover curve for the first band over 45% and took its top. That curve is not monotone, so two points of cover at one pressure level handed back a different band: `[80 46 44 10]` gave 440 m and `[80 44 44 10]` gave 320 m, a fifth of the chart for a rounding difference. It also returned a sentinel `820` when it ran out of samples, which is "we stopped looking" drawn as a layer filling the frame.
+
+**The median gate was worse than the picture it produced.** `cityLayer()` judged Ocean Beach at 5 m and Twin Peaks at 281 m by one city-wide number, and required six of eleven spots before drawing anything. In the simulated sweep the band showed nothing for six hours while the layer was visibly arriving (2, 2, 3, 3, 4, 5 spots under it), and the clear count went from six to zero in a single hour as the median crossed the gate. That is the product's main output stepping off a cliff, not a rendering artefact. Both are gone.
 
 **Lighting the terrain above the layer was tried and reverted.** Painting the ground twice — cold, then a warm fill clipped to everything above the fog surface — sounded right and looked awful: mottled brown patches across a silhouette that works precisely because it is a single clean dark shape. Fourth ornament proposed, built and rejected. See §10.
 
-**The geometry is now single-sourced.** `layerOf()` walks the interpolated cover curve and returns the layer's base and top in metres. The band is drawn between them via `yM()`, and a spot is out of the layer when `elev >= top` — the same number. The picture cannot contradict the list because there is only one number. Mid-level cloud and visibility remain separate gates, since a summit above the marine layer can still sit under a high deck, and clear sky over 3 km of smoke is not a clear day. Verified: zero disagreements between dot position and verdict across a full 24-hour sweep.
+**The geometry is single-sourced, and now it is single-sourced locally.** Each spot has its own `sun`, the height at which `O` falls through 45%. A spot is in daylight when `elev >= sun`, and because `O` is monotone that is the *same statement* as `overhead < CLEAR` — one rule asked twice, not two rules kept in step. `test.js` asserts the equivalence directly. The band is nine contours of the same `O`, so the CLEAR contour at a spot's own x is the line its dot is judged against. The picture cannot contradict the list at any x, which is what the previous two attempts could not guarantee. Visibility remains a separate gate. Mid-level cloud no longer needs one: `O` carries it.
 
-The band's top edge fades rather than ending in a line, because the height is an estimate with roughly ±50 m of slack and a crisp edge would claim precision the data does not have.
+**The soft edge is measured now, not painted.** The band was a single path with a fixed `0 / .24 / .50` gradient, which performed uncertainty without measuring any. It is nine contours at six percentage points apart, each a real iso-line of `O`, stacked at `.074` so a saturated stack lands on the same `.50`. Where the contours spread the model is unsure of the top and the edge is wide; where they crowd it is tight. The ensemble is also what makes it hold still: perturbing one pressure level by two points moves the single CLEAR contour up to 42 px of chart and the stack under 20, because the eye integrates the stack. `test.js` asserts the stack is at least twice as steady as any one contour.
+
+**The axis is deliberately left short.** `yM` clamps around 540 m, so a deep layer saturates the frame. Twin Peaks is 281 m: above the highest summit, depth changes no verdict, and the hours it saturates are the hours the city is genuinely socked in, where a filled frame is the true picture and the quiet rule is already saying so in words. Giving the sky headroom would shrink the ridge. Do not.
+
+**`yFog` is `yM` plus a shoreline correction**, `13·e^(−h/50)`, because `Y0 = 213` is a regression intercept while the drawn shoreline is at 218 and the frame edges at 222 and 224. Without it a zero-metre contour floats a sliver of fog over an empty beach that the terrain mask cannot cover, the sliver being genuinely above the ground line. It decays to under 2 px by 110 m, the lowest pressure sample, so it never touches a height that decides anything. **`yM` itself is untouched: it remains the law for the terrain.**
 
 **Phase two, not built.** METAR ceiling from KSFO, KOAK, KHAF. Free, no key, User-Agent header required. Two unknowns to test first: browsers cannot set a User-Agent header, and CORS from a static page is unverified. `aviationweather.gov` is the documented fallback.
 
@@ -268,8 +279,8 @@ Each of these was built and reverted. A fresh session will be tempted by all of 
 3. **Full-page drifting fog layer** for the quiet state, with `feTurbulence` displacement and two banks at different drift rates. Built to spec. Called awful, reverted.
 4. **Webcams as a data layer.** Researched and declined: no unified API, per-operator terms, CV classification is a real problem, and Outside Now already occupies the niche. Useful for *validation*, not as a source.
 5. **Lit terrain above the fog line.** Ground standing above the layer painted in a warm fill, clipped to the fog surface. The intent was the Bernal photograph — sunlit ridge over grey city. In practice it mottled the terrain silhouette and read as murky brown. Reverted the same session.
-6. **A leading edge on the fog band.** Built twice — once through all eleven per-spot tops, once as a single level with a sloping nose. The model's per-spot layer presence is not spatially coherent at this sample density, so the edge rendered grid noise as weather and could place a clear dot inside the drawn fog. The height is supportable; the horizontal extent is not.
-7. **A fog surface drawn through all eleven per-spot tops.** More data on screen, less signal: the 3 km grid produces sample-to-sample scatter that looks like noise. Collapsed to a median level plus the leading edge.
+6. ~~**A leading edge on the fog band.**~~ **Reopened and shipped, 30 August.** Rejected twice on the grounds that the extent was not spatially coherent. Measurement says the run is contiguous in all 24 frames and the tops fall monotonically west to east; the incoherence was `layerOf()`'s threshold crossing, not the sampling. See §9. **A rejected direction is only as good as the measurement behind it — this one had none.**
+7. ~~**A fog surface drawn through all eleven per-spot tops.**~~ **Reopened and shipped, 30 August.** Same misdiagnosis as 6.
 8. **Panel card in the footer.** Added, then removed — dividers do the nav-versus-content job without a box.
 
 The pattern: motion and ornament have been proposed, built and rejected six times. Twice the mistake was adding representation to the cross-section, which works because it is abstract and quiet. The product's identity is restraint. Take that seriously before proposing the fourth.
@@ -280,8 +291,9 @@ The pattern: motion and ornament have been proposed, built and rejected six time
 
 Raised and deliberately left open.
 
-1. **Uncertainty band, not built.** When the layer top sits within ~50 m of a spot's elevation the answer is genuinely ambiguous, and Twin Peaks at 281 m will land there constantly. The band's soft top edge hints at it; the list still gives a hard yes or no. Showing the ambiguity would close the wrong-once risk that has been open since the first RFC.
-2. **The level-plane assumption.** Treating the layer as one height across the city is good for stratus and wrong for advection through the Twin Peaks gap and for uneven burn-off. The band slopes west to east from two averaged sides, which softens it but does not fix it.
+1. **Uncertainty band, half built.** The picture now shows the ambiguity: the contour spread *is* the slack in the layer top, and it widens on its own when the model is vague. The list still gives a hard yes or no, and Twin Peaks at 281 m will keep landing inside the spread. Carrying the spread into the list is the remaining half.
+2. ~~**The level-plane assumption.**~~ **Closed, 30 August.** The layer is drawn as a surface through all eleven columns, so advection through the gap and uneven burn-off have somewhere to show. What is left is the grid: eleven points across ~3.6 cells of a 3 km model, so the surface has roughly four independent control points and no more.
+3. **Verify the column count against live data.** Everything in §9 was measured on `simulate()`, which is smooth by construction. Fetch one hour for all eleven coordinates and count distinct cover vectors. Three or four distinct columns gives the wave enough control points for a smooth nose and not enough to shred. Eleven distinct and non-monotonic means the contour stack is carrying the whole load and the tier count should go up.
 3. **`cloud_cover_mid` covers 2–7 km, and nothing samples 760 m to 2 km.** A deck sitting in that gap is still invisible. Adding `cloud_cover` (total) would close it at the cost of over-triggering on high cirrus.
 4. **`rel` climatology is invented.** Eleven hardcoded, unverified numbers, still breaking ties. Highest-value data fix in the file.
 5. **The 3pm / 10am push requirement is unrepresented.**
