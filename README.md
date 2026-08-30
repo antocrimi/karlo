@@ -2,7 +2,9 @@
 
 Where the fog isn't, in San Francisco. Eleven spots, twenty-four hours, one place at a time.
 
-NoKarl reads live forecast data across the city and splits eleven places at the fog line — clear on one side, under Karl on the other. When nothing is clear it says so and names no place.
+NoKarl reads live forecast data across the city and splits eleven places at the fog line: clear on one side, under Karl on the other. When nothing is clear it says so and names no place.
+
+The eleven are chosen for somewhere worth sitting outside, and then constrained by the chart. A cross section only means something if the places sit near the line it cuts, so a place more than 2.5 km off that line does not go on it however good it is. Fort Mason and McLaren failed that rule: both sat alone in a grid square to the side of the transect rather than further along it, and Fort Mason takes its fog through the Golden Gate rather than over the Twin Peaks ridge, so the section drew it as a spike in the middle of the city.
 
 Live at [antocrimi.github.io/karlo](https://antocrimi.github.io/karlo/).
 
@@ -36,6 +38,8 @@ The chart's vertical axis is an elevation axis, and the cloud is drawn on it as 
 The soft top edge is nine contours of one field rather than a painted gradient. Where they spread apart the model is unsure where the layer ends, and the edge is wide because the reading is. It also holds the picture still: two points of cloud cover move a single contour by up to a fifth of the chart and the stack by under a twelfth, because the eye reads the stack.
 
 "Cloud overhead" is not the model's low-cloud figure. Cloud is sampled at four altitudes — roughly 110, 320, 540 and 760 metres — plus a mid-level field, and cover at any height in between is interpolated. Each spot then asks three separate questions of that curve using its own elevation: is there cloud at my altitude, is there cloud anywhere above me, and is there cloud below me. The second is what decides whether the sun is blocked, and it is the maximum across everything overhead — otherwise a high overcast deck with clear air beneath reads as a sunny day.
+
+The Data panel reports how many of the eleven are reading genuinely different air. The model runs on a 3 km grid and the city is about 11 km across, so places share grid squares, and that count is what the cross section actually has to draw with.
 
 Inside each group the calmest spot sits on top, so exposed places sink. A score combining clarity, visibility, wind and temperature breaks ties on equal wind; it isn't displayed.
 

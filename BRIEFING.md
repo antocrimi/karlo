@@ -3,7 +3,7 @@
 **Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
 **Status:** shipped prototype, live at `antocrimi.github.io/karlo/`. A **project** site, so it is served from the `/karlo/` sub-path and every absolute URL in the head has to carry it. One HTML file, no build step, no dependencies, plus two image assets.
-**Last worked:** 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time.
+**Last worked:** 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time, then the roster constrained to the transect and the ridge given a hairline.
 
 **Companion file:** `CLAUDE.md` carries Anto's voice rules, attribution tiers and working preferences. It governs every word written for or as him. This file governs the product.
 
@@ -109,23 +109,29 @@ Weather copy defaults to cheerful and useless. NoKarl personifies the fog as an 
 
 ## 5 · The eleven spots
 
-| Spot | Glyph | Elev (m) | Hill | rel | x | y |
-|---|---|---|---|---|---|---|
-| Ocean Beach | wave | 5 | | 26 | 40 | 218 |
-| GG Park | tree | 60 | | 48 | 248 | 200 |
-| Twin Peaks | peak | 281 | ✓ | 55 | 330 | 104 |
-| Glen Canyon | tree | 110 | | 68 | 387 | 158 |
-| Corona Heights | peak | 156 | ✓ | 62 | 444 | 142 |
-| Fort Mason | sail | 25 | | 52 | 505 | 190 |
-| Dolores Park | palm | 45 | | 78 | 563 | 196 |
-| McLaren | tree | 150 | | 79 | 628 | 172 |
-| Bernal Heights | peak | 132 | ✓ | 82 | 690 | 156 |
-| Potrero Hill | slope | 85 | ✓ | 84 | 780 | 182 |
-| Dogpatch | dog | 5 | | 85 | 860 | 212 |
+| Spot | Glyph | Elev (m) | Hill | rel | x | y | Off the line |
+|---|---|---|---|---|---|---|---|
+| Ocean Beach | wave | 5 | | 26 | 40 | 211 | 0.18 km |
+| West Portal | tree | 66 | | 45 | 176 | 187 | 1.88 km |
+| GG Park | tree | 60 | | 48 | 268 | 189 | 1.62 km |
+| Twin Peaks | peak | 281 | ✓ | 55 | 352 | 103 | 0.33 km |
+| Glen Canyon | tree | 110 | | 68 | 420 | 170 | 1.94 km |
+| Corona Heights | peak | 156 | ✓ | 62 | 486 | 152 | 0.85 km |
+| Alamo Square | palm | 68 | | 66 | 560 | 186 | 2.11 km |
+| Dolores Park | palm | 45 | | 78 | 636 | 195 | 0.24 km |
+| Bernal Heights | peak | 132 | ✓ | 82 | 700 | 161 | 1.59 km |
+| Potrero Hill | slope | 85 | ✓ | 84 | 784 | 180 | 0.29 km |
+| Dogpatch | dog | 5 | | 85 | 860 | 212 | 0.46 km |
+
+**The roster is chosen for somewhere worth sitting, then constrained by the section.** `OFF_AXIS_KM = 2.5` is the rule: a place may sit a couple of kilometres north or south of the west-to-east line the chart cuts, and no further. Beyond that it is reading a different air mass and the section renders it as a spike in the middle of the city.
+
+**Fort Mason and McLaren failed that rule and were removed, 30 August.** Fort Mason sat 5.34 km north and McLaren 4.46 km south, each alone in its own 3 km grid cell to the *side* of the transect rather than further along it. Fort Mason takes its fog through the Golden Gate, not over the Twin Peaks ridge, so it is a different mechanism from the one the section exists to show. West Portal and Alamo Square replaced them. A place worth sitting in that fails the rule does not go on the chart, and losing it is the right trade.
+
+They were also the two worst fits to the elevation axis, at −13 and +18 px. Not a coincidence: their drawn heights had been fudged to accommodate being off-axis. Every spot now sits within 12 px of `y = 213 − 0.392 e`, asserted in `test.js`.
 
 **One name per spot.** Earlier builds carried three fields — full name, neighbourhood, short map label — doing four inconsistent jobs. Collapsed to one string chosen for whichever name a San Franciscan recognises fastest. India Basin was folded into Dogpatch.
 
-`x` is **not** true longitude. It is blended halfway between true longitude and even spacing, because true longitude clusters seven spots into the middle third and their labels collide. `y` sits on the smoothed ridge and is a drawing coordinate only — `e` is the real elevation.
+`x` is **not** true longitude, and this asymmetry should be understood rather than rediscovered. The vertical axis is a measured metre scale with a law in §4; the horizontal axis is a hand-set ordering, because true longitude clusters most of the roster into the middle third and their labels collide. It diverged from longitude by up to 126 px in the old roster. Two properties are enforced instead of a mapping, both in `test.js`: drawn order matches true west-to-east order, and no place sits further than `OFF_AXIS_KM` off the line. Making `x` a real distance axis was considered on 30 August and deliberately deferred: it moves every label and the packing is tuned around the current positions. `y` sits on the smoothed ridge and is a drawing coordinate only — `e` is the real elevation.
 
 `h:1` marks the four true hilltops, which label themselves on the map rather than in the rail. Explicit rather than inferred from `y`, because Glen Canyon sits high on the chart and is a canyon.
 
@@ -293,9 +299,9 @@ Raised and deliberately left open.
 
 1. **Uncertainty band, half built.** The picture now shows the ambiguity: the contour spread *is* the slack in the layer top, and it widens on its own when the model is vague. The list still gives a hard yes or no, and Twin Peaks at 281 m will keep landing inside the spread. Carrying the spread into the list is the remaining half.
 2. ~~**The level-plane assumption.**~~ **Closed, 30 August.** The layer is drawn as a surface through all eleven columns, so advection through the gap and uneven burn-off have somewhere to show. What is left is the grid: eleven points across ~3.6 cells of a 3 km model, so the surface has roughly four independent control points and no more.
-3. **Verify the column count against live data.** Everything in §9 was measured on `simulate()`, which is smooth by construction. Fetch one hour for all eleven coordinates and count distinct cover vectors. Three or four distinct columns gives the wave enough control points for a smooth nose and not enough to shred. Eleven distinct and non-monotonic means the contour stack is carrying the whole load and the tier count should go up.
-3. **`cloud_cover_mid` covers 2–7 km, and nothing samples 760 m to 2 km.** A deck sitting in that gap is still invisible. Adding `cloud_cover` (total) would close it at the cost of over-triggering on high cirrus.
-4. **`rel` climatology is invented.** Eleven hardcoded, unverified numbers, still breaking ties. Highest-value data fix in the file.
+3. ~~**Verify the column count against live data.**~~ **Resolved, 30 August, by measuring it in the page rather than in a script.** The question was how many of the eleven places read genuinely different air on a 3 km grid, and it could only be answered against live data. A one-off fetch would have answered it once, for one hour, and gone stale. `columns()` counts distinct overhead curves in the frame the scrubber is on, and the Data panel reports it every hour: *"the eleven places resolve to N distinct columns, which is what the cross section has to draw with."* The number is now a displayed measurement rather than an open question, it tracks the roster and the scrubber, and it tells the reader how much independent information the picture carries. If it routinely sits at three or lower, the surface is being drawn from too few control points and the roster or the tier count is the lever.
+4. **`cloud_cover_mid` covers 2–7 km, and nothing samples 760 m to 2 km.** A deck sitting in that gap is still invisible. Adding `cloud_cover` (total) would close it at the cost of over-triggering on high cirrus.
+5. **`rel` climatology is invented.** Eleven hardcoded, unverified numbers, still breaking ties. Highest-value data fix in the file.
 5. **The 3pm / 10am push requirement is unrepresented.**
 6. **Glyphs identify terrain, not place.** Three parks share `tree`; Dogpatch's dog is the only place-specific mark.
 7. **Empty group headings are dropped**, which trades back a small page jump at the moment a group empties. Chosen deliberately over ghost headings.

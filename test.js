@@ -40,8 +40,17 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
       },
       get clientWidth() { return width },
       get clientHeight() { return this.id === 'stage' ? stageH : 54 },
-      /* ~6.35 px per character at 11.5px system UI — close enough to pack labels */
-      get offsetWidth() { return Math.round((this.textContent || '').length * 6.35) },
+      /* Measured in Chromium at 320px against the shipped faces, because a
+         single optimistic constant made the collision check weaker than it
+         looked: rail labels run up to 8.13 px per character (Dogpatch is 65 px
+         real against 51 predicted at 6.35) while hilltop labels, set smaller,
+         top out near 5.8. Rail is rounded up so a pass here implies a pass in
+         the browser; hilltop keeps 6.35, which is already over the real figure. */
+      get offsetWidth() {
+        const t = (this.textContent || '');
+        const rail = this.dataset.x !== undefined && !this._cls.has('pk');
+        return Math.round(t.length * (rail ? 8.2 : 6.35));
+      },
       get offsetHeight() { return 15 },
       get scrollWidth() { return this.offsetWidth }
     };
@@ -88,7 +97,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js = js.slice(0, js.lastIndexOf('})();'));
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
-        'overheadCurve,overheadAt,sunLine,TIERS};';
+        'overheadCurve,overheadAt,sunLine,TIERS,OFF_AXIS_KM,columns};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -106,7 +115,7 @@ const head = t => console.log(`\n${t}`);
 const { api, store } = harness();
 const { S, paint, simulate, split, profile, note, frameAt,
         SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
-        overheadCurve, overheadAt, sunLine, TIERS } = api;
+        overheadCurve, overheadAt, sunLine, TIERS, OFF_AXIS_KM, columns } = api;
 S.frames = simulate();
 const clean = x => (x || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const P = n => SPOTS.find(s => s.n === n);
@@ -117,7 +126,15 @@ S.h = 0; paint();
 ok('verdict renders', clean(store.verdict._html).length > 4, clean(store.verdict._html));
 ok('board renders', (store.board._html || '').includes('class="tr'));
 ok('map dots built', (store.dots._html || '').match(/class="dot/g)?.length === SPOTS.length);
-ok('build tag present', typeof BUILD === 'string' && /^\d{4}\.\d{2}\.\d{2}$/.test(BUILD), BUILD);
+ok('build tag is date plus number', typeof BUILD === 'string' &&
+   /^\d{4}\.\d{2}\.\d{2}\.\d+$/.test(BUILD), BUILD);
+/* a build stamped in the future is how 2026.08.31 shipped on the 30th */
+ok('build date is not in the future', (() => {
+  const m = BUILD.match(/^(\d{4})\.(\d{2})\.(\d{2})/);
+  if (!m) return false;
+  const b = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  return b <= Date.now() + 36 * 3600e3;      /* a day of slack for time zones */
+})(), BUILD);
 
 head('VERTICAL MODEL  — the three bugs found by looking out of a window');
 const cases = [
@@ -323,6 +340,59 @@ head('CONTINUOUS TIME');
   const step = (fs.readFileSync(FILE, 'utf8')
     .match(/id="time"[^>]*step="([\d.]+)"/) || [])[1];
   ok('scrubber steps below the hour', step && +step < 1, 'step=' + step);
+}
+
+head('THE SECTION  — every place sits near the line it cuts');
+{
+  const R = 111.32, C = Math.cos(37.76 * Math.PI / 180);
+  const E = s => (s.lon + 122.4477) * R * C, N = s => (s.lat - 37.7544) * R;
+  const mean = SPOTS.reduce((a, s) => a + N(s), 0) / SPOTS.length;
+  const off = SPOTS.map(s => ({ n: s.n, d: Math.abs(N(s) - mean) }));
+  const over = off.filter(o => o.d > OFF_AXIS_KM);
+  ok('no place sits further than OFF_AXIS_KM off the transect', over.length === 0,
+     over.map(o => o.n + ' ' + o.d.toFixed(2) + ' km').join(', '));
+  const worst = off.reduce((a, b) => a.d > b.d ? a : b);
+  console.log(`        worst is ${worst.n} at ${worst.d.toFixed(2)} km of ${OFF_AXIS_KM}`);
+
+  /* drawn x has to preserve true west-to-east order, or the section lies about
+     which side of the ridge a place is on */
+  const byX = [...SPOTS].sort((a, b) => a.x - b.x);
+  let bad = 0;
+  for (let i = 1; i < byX.length; i++) if (E(byX[i]) < E(byX[i - 1])) bad++;
+  ok('drawn order matches true longitude order', bad === 0, bad + ' inversions');
+
+  /* and drawn y has to stay on the elevation axis the briefing protects */
+  const resid = SPOTS.map(s => Math.abs(s.y - (213 - 0.392 * s.e)));
+  ok('every spot sits within 12 px of the elevation axis',
+     Math.max(...resid) <= 12, 'worst ' + Math.max(...resid).toFixed(1) + ' px');
+}
+
+head('LABELS DO NOT COLLIDE  — at the smallest viewport');
+{
+  const boxesOf = (container, W) => [...container.children].map(n => {
+    const lp = parseFloat(n.style.left), w = n.offsetWidth;
+    return { k: n.dataset.k, l: lp / 100 * W - w / 2, r: lp / 100 * W + w / 2,
+             t: parseFloat(n.style.top) || 0, b: (parseFloat(n.style.top) || 0) + n.offsetHeight };
+  });
+  const hits = bs => {
+    const out = [];
+    for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) {
+      const a = bs[i], b = bs[j];
+      if (a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t) out.push(a.k + ' / ' + b.k);
+    }
+    return out;
+  };
+  /* 320 is the narrowest phone still in use; 361 is the base the CSS is written for */
+  for (const W of [320, 361, 390]) {
+    const h = harness({ width: W, stageH: Math.round(W * 380 / 900) });
+    h.api.S.frames = h.api.simulate();
+    h.api.S.h = 0; h.api.paint();
+    h.handlers.rail; // layout already ran during boot
+    const pk = hits(boxesOf(h.store.peaks, W));
+    const rl = hits(boxesOf(h.store.rail, W).filter(b => b.r > b.l));
+    ok(`${W}px: hilltop labels do not overlap`, pk.length === 0, pk.join(' | '));
+    ok(`${W}px: rail labels do not overlap`, rl.length === 0, rl.join(' | '));
+  }
 }
 
 head('MAP LABELS  — measured packing, topography respected');
