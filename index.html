@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.08.28 -->
+<!-- NoKarl build 2026.08.31 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
-<link rel="canonical" href="https://antocrimi.github.io/">
+<link rel="canonical" href="https://antocrimi.github.io/karlo/">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +15,8 @@
 <meta property="og:title" content="NoKarl">
 <meta property="og:description" content="Where the fog isn't, in San Francisco.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://antocrimi.github.io/og-image.png">
+<meta property="og:url" content="https://antocrimi.github.io/karlo/">
+<meta property="og:image" content="https://antocrimi.github.io/karlo/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -373,7 +374,7 @@ svg.g{fill:currentColor}
 </style>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"NoKarl",
-"url":"https://antocrimi.github.io/","applicationCategory":"Weather",
+"url":"https://antocrimi.github.io/karlo/","applicationCategory":"Weather",
 "operatingSystem":"Any","browserRequirements":"Requires JavaScript",
 "description":"A San Francisco microclimate app. It ranks eleven places across the city on low cloud, wind and temperature, splitting them by the fog line so you know where the sky is clear enough to go outside.",
 "about":{"@type":"Thing","name":"San Francisco marine layer","alternateName":"Karl the Fog"},
@@ -567,7 +568,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.08.30";
+const BUILD="2026.08.31";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
