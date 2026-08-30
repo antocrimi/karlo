@@ -2,7 +2,7 @@
 
 **Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
-**Status:** shipped prototype, live at `antocrimi.github.io`. One HTML file, no build step, no dependencies, plus two image assets.
+**Status:** shipped prototype, live at `antocrimi.github.io/karlo/`. A **project** site, so it is served from the `/karlo/` sub-path and every absolute URL in the head has to carry it. One HTML file, no build step, no dependencies, plus two image assets.
 **Last worked:** 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time.
 
 **Companion file:** `CLAUDE.md` carries Anto's voice rules, attribution tiers and working preferences. It governs every word written for or as him. This file governs the product.

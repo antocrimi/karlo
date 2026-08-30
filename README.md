@@ -4,7 +4,9 @@ Where the fog isn't, in San Francisco. Eleven spots, twenty-four hours, one plac
 
 NoKarl reads live forecast data across the city and splits eleven places at the fog line — clear on one side, under Karl on the other. When nothing is clear it says so and names no place.
 
-Live at [antocrimi.github.io](https://antocrimi.github.io/).
+Live at [antocrimi.github.io/karlo](https://antocrimi.github.io/karlo/).
+
+It is a project site, not a user site, so it is served from the `/karlo/` sub-path. The `canonical`, `og:url` and `og:image` tags in `index.html` are absolute and have to carry that sub-path: `og-image.png` at the bare domain is a 404, which is a link preview with no image and nothing on the page to show it. `test.js` checks them against this README so the two cannot drift.
 
 ## Deploy
 
@@ -53,4 +55,4 @@ Inferred from the browser's locale, with a manual override in the footer. Scorin
 
 It's a 3 km model resolving a fog edge sharper than 3 km. It can be wrong, and it's verifiable by looking out of a window — twice now that's exactly how a bug was found. See `BRIEFING.md` §9 for the accuracy work and what's planned next.
 
-The build tag in the footer (`v2026.08.30`) shows which version is actually being served, which is useful when a deploy looks like it hasn't landed.
+The build tag in the footer (`v2026.08.31`) shows which version is actually being served, which is useful when a deploy looks like it hasn't landed.
