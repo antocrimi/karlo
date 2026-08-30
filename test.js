@@ -86,8 +86,9 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js = js.slice(js.lastIndexOf('<script>') + 8, js.lastIndexOf('</script>')).trim();
   js = js.replace('(function(){', '');
   js = js.slice(0, js.lastIndexOf('})();'));
-  js += '\nmodule.exports={S,paint,simulate,split,profile,layerOf,coverCurve,note,' +
-        'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,cityLayer};';
+  js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
+        'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
+        'overheadCurve,overheadAt,sunLine,TIERS};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -103,8 +104,9 @@ const head = t => console.log(`\n${t}`);
 
 /* ── checks ──────────────────────────────────────────────────────────── */
 const { api, store } = harness();
-const { S, paint, simulate, split, profile, layerOf, note,
-        SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, HOURS, BUILD, cityLayer } = api;
+const { S, paint, simulate, split, profile, note, frameAt,
+        SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
+        overheadCurve, overheadAt, sunLine, TIERS } = api;
 S.frames = simulate();
 const clean = x => (x || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const P = n => SPOTS.find(s => s.n === n);
@@ -127,9 +129,9 @@ const cases = [
 for (const [label, lv, expect] of cases) {
   for (const [name, shouldBeUnder] of Object.entries(expect)) {
     const sp = P(name), p = profile(sp.e, lv, 0, lv[0]);
-    const under = !(p.top == null || sp.e >= p.top) || p.mid >= CLEAR;   /* single spot: its own profile is the city */
+    const under = sp.e < p.sun;
     ok(`${label}: ${name} ${shouldBeUnder ? 'under' : 'clear'}`, under === shouldBeUnder,
-       `overhead ${Math.round(p.overhead)}%  top ${p.top == null ? 'none' : Math.round(p.top) + 'm'}`);
+       `overhead ${Math.round(p.overhead)}%  sun line ${Math.round(p.sun)}m`);
   }
 }
 ok('below-ground levels discarded',
@@ -146,39 +148,182 @@ head('FOG LINE  — picture and verdict cannot disagree');
 let bad = 0, quiet = 0, heads = new Set(), rows = new Set();
 for (let k = 0; k < HOURS; k++) {
   S.h = k; paint();
-  const { sun, fog } = split(k);
+  const { sun, fog } = split(frameAt(k));
   if (!sun.length) quiet++;
   heads.add((store.board._html.match(/class="sec"/g) || []).length);
   rows.add((store.board._html.match(/class="tr /g) || []).length);
-  const L = cityLayer(S.frames[k]);
+  const listed = new Set(sun.map(s => s.n));
   S.frames[k].spots.forEach(s => {
-    const drawnClear = L == null || s.elev >= L.top;
-    const saysClear = drawnClear && (s.mid ?? 0) < CLEAR;
-    if (drawnClear !== saysClear && (s.mid ?? 0) < CLEAR) bad++;
+    /* the dot's own rule and the list's own rule, asked separately */
+    const drawnClear = s.elev >= s.sun;
+    const saysClear = listed.has(s.n);
+    if (drawnClear !== saysClear && s.vis > VIS_CLEAR) bad++;
   });
 }
 ok('no dot/verdict disagreements across 24 h', bad === 0, bad + ' found');
 
-/* the band spans the full width, so a clear dot must sit ABOVE it, never
-   merely outside it. This is the check that caught the leading edge. */
-let insideBand = 0;
+/* The band has a leading edge again, so a single bandTop scalar no longer
+   describes it. The CLEAR contour is evaluated at each spot's own x by walking
+   the drawn bezier, which checks the picture rather than re-checking the model. */
+const bez = (P0, P1, P2, P3, t) => {
+  const u = 1 - t;
+  return u*u*u*P0 + 3*u*u*t*P1 + 3*u*t*t*P2 + t*t*t*P3;
+};
+/* y of a path "M x,y C .. C .." at a given x, by bisection on each segment */
+function yAtX(d, x) {
+  const nums = s => s.trim().split(/[\s,]+/).map(Number);
+  const m = d.match(/^M\s*(-?[\d.]+),(-?[\d.]+)/);
+  let cx = +m[1], cy = +m[2];
+  for (const seg of d.matchAll(/C\s*([-\d.,\s]+?)(?=[CLZ])/g)) {
+    const v = nums(seg[1]);
+    const [x1, y1, x2, y2, x3, y3] = v;
+    if (x >= Math.min(cx, x3) - 1e-6 && x <= Math.max(cx, x3) + 1e-6) {
+      let lo = 0, hi = 1;
+      for (let i = 0; i < 40; i++) {
+        const t = (lo + hi) / 2;
+        (bez(cx, x1, x2, x3, t) < x) ? lo = t : hi = t;
+      }
+      return bez(cy, y1, y2, y3, (lo + hi) / 2);
+    }
+    cx = x3; cy = y3;
+  }
+  return null;
+}
+const clearPath = html => {
+  const m = html.match(/data-t="45"[^>]*\sd="([^"]+)"/);
+  return m ? m[1] : null;
+};
+let insideBand = 0, checked = 0;
 for (let k = 0; k < HOURS; k++) {
   S.h = k; paint();
-  const d = store.fogBody._a.d || '';
+  const d = clearPath(store.fogBody._html || '');
   if (!d) continue;
-  const ys = (d.match(/-?[\d.]+/g) || []).map(Number).filter((_, i) => i % 2 === 1);
-  const bandTop = Math.min(...ys);
-  const L = cityLayer(S.frames[k]);
   S.frames[k].spots.forEach(s => {
-    const clear = (L == null || s.elev >= L.top) && (s.mid ?? 0) < CLEAR;
-    const dotY = yM(s.elev);
-    if (clear && dotY > bandTop + 1) insideBand++;   /* amber dot inside the fog */
+    const clear = s.elev >= s.sun && s.vis > VIS_CLEAR;
+    const surf = yAtX(d, s.x);
+    if (surf == null) return;
+    checked++;
+    if (clear && yM(s.elev) > surf + 1) insideBand++;   /* amber dot inside the fog */
   });
 }
+ok('the CLEAR contour was sampled at every spot', checked > HOURS, checked + ' samples');
 ok('no clear dot drawn inside the band', insideBand === 0, insideBand + ' found');
 ok('every hour renders all spots', rows.size === 1 && [...rows][0] === SPOTS.length, [...rows].join(','));
 ok('empty groups drop their heading', heads.size > 1 || quiet === 0, 'headings seen: ' + [...heads].join(','));
 ok('quiet rule reachable in the simulator', quiet > 0, quiet + ' quiet hours');
+
+head('THE FIELD  — the properties the drawing rests on');
+{
+  const vecs = [[92,20,5,4],[15,20,88,92],[96,92,60,5],[8,6,4,3],
+                [80,46,44,10],[80,44,44,10],[70,50,48,46],[40,44,46,20]];
+  let notMono = 0, crossed = 0;
+  for (const lv of vecs) {
+    const O = overheadCurve(lv, 0, lv[0]);
+    for (let i = 1; i < O.length; i++) if (O[i] > O[i - 1] + 1e-9) notMono++;
+    /* a lower threshold must always sit at or above a higher one */
+    const hs = TIERS.map(T => sunLine(O, T));
+    for (let i = 1; i < hs.length; i++) if (hs[i] < hs[i - 1] - 1e-9) crossed++;
+  }
+  ok('overhead curve is monotone non-increasing', notMono === 0, notMono + ' rises');
+  ok('contours never cross', crossed === 0, crossed + ' crossings');
+
+  /* the sun line and the verdict are the same statement, not two rules kept in step */
+  let split2 = 0;
+  for (const lv of vecs) for (const sp of SPOTS) {
+    const p = profile(sp.e, lv, 0, lv[0]);
+    if ((sp.e >= p.sun) !== (p.overhead < CLEAR)) split2++;
+  }
+  ok('above the sun line === overhead below CLEAR', split2 === 0, split2 + ' disagreements');
+
+  /* What killed the old geometry: two points of cover moved the surface a fifth
+     of the chart. The ensemble is what the eye reads, so that is what has to
+     hold still. The worst remaining case is a shoulder of cover sitting flat on
+     the threshold across 220 m, where a large move is the honest answer and the
+     other four contours are what keep the mass in place. */
+  const ink = lv => TIERS.reduce((a, T) =>
+    a + (GROUND - yFog(sunLine(overheadCurve(lv, 0, lv[0]), T))), 0) / TIERS.length;
+  const one = lv => GROUND - yFog(sunLine(overheadCurve(lv, 0, lv[0]), CLEAR));
+  let worst = 0, worstOne = 0;
+  for (const lv of vecs) for (let j = 0; j < 4; j++) {
+    const up = lv.slice(); up[j] = Math.min(100, up[j] + 2);
+    worst = Math.max(worst, Math.abs(ink(up) - ink(lv)));
+    worstOne = Math.max(worstOne, Math.abs(one(up) - one(lv)));
+  }
+  ok('2 points of cover moves the band under 20 px', worst < 20, worst.toFixed(1) + ' px');
+  ok('the stack is twice as steady as any one contour', worst * 2 <= worstOne,
+     'stack ' + worst.toFixed(1) + ' px vs single contour ' + worstOne.toFixed(1) + ' px');
+
+  /* no sentinel: a clear column must produce no layer at all */
+  ok('a clear sky has no sun line', profile(5, [8,6,4,3], 0, 8).sun === 0);
+  /* a contour at zero metres must sit at or below every drawn ground point,
+     including the frame edges, or it shows as fog over an empty beach */
+  const lowest = Math.max(224, 222, ...SPOTS.map(sp => sp.y));
+  ok('a zero contour is buried under the shoreline', yFog(0) >= lowest,
+     'yFog(0)=' + yFog(0).toFixed(1) + ' vs lowest ground ' + lowest);
+  /* and the correction must be gone before it can move a verdict */
+  ok('the shoreline correction decays above the lowest sample',
+     Math.abs(yFog(110) - yM(110)) < 2, (yFog(110) - yM(110)).toFixed(2) + ' px at 110 m');
+  ok('a deep layer does not report a fake ceiling',
+     profile(5, [96,94,92,90], 0, 96).sun >= 760, 'ran off the top of the samples');
+}
+
+head('THE EDGE  — the roll-in is drawn, not gated away');
+{
+  let gated = 0, hoursDrawn = 0, widths = [];
+  for (let k = 0; k < HOURS; k++) {
+    S.h = k; paint();
+    const html = store.fogBody._html || '';
+    const under = S.frames[k].spots.filter(s => s.elev < s.sun).length;
+    if (under > 0 && !/data-t/.test(html)) gated++;
+    if (/data-t/.test(html)) hoursDrawn++;
+    widths.push(under);
+  }
+  ok('any spot under the layer draws a band', gated === 0, gated + ' hours suppressed');
+  ok('the band is drawn for most of the sweep', hoursDrawn > HOURS / 2, hoursDrawn + '/' + HOURS);
+  /* the wave has to arrive and leave, not switch on fully formed */
+  const partial = widths.filter(w => w > 0 && w < SPOTS.length).length;
+  ok('partial coverage is reachable and drawn', partial >= 4, partial + ' partial hours');
+}
+
+head('CONTINUOUS TIME');
+{
+  /* an interpolated frame sits between its neighbours, spot for spot */
+  let outside = 0, n = 0;
+  for (let k = 0; k < HOURS - 1; k++) {
+    const A = frameAt(k), B = frameAt(k + 1), M = frameAt(k + 0.5);
+    M.spots.forEach((m, i) => {
+      const lo = Math.min(A.spots[i].sun, B.spots[i].sun) - 1e-6;
+      const hi = Math.max(A.spots[i].sun, B.spots[i].sun) + 1e-6;
+      n++; if (m.sun < lo || m.sun > hi) outside++;
+    });
+  }
+  ok('a half-hour sun line lies between its two hours', outside === 0, outside + '/' + n);
+
+  /* the blended curve keeps the one property the geometry needs */
+  let notMono = 0;
+  for (let k = 0; k < HOURS - 1; k += 3) frameAt(k + 0.25).spots.forEach(s => {
+    for (let i = 1; i < s.O.length; i++) if (s.O[i] > s.O[i - 1] + 1e-9) notMono++;
+  });
+  ok('blended curves stay monotone', notMono === 0, notMono + ' rises');
+
+  /* whole hours must be untouched by the interpolator */
+  ok('frameAt on the hour is the hour', frameAt(7) === S.frames[7]);
+
+  /* a refresh replaces the forecast; the cache must not serve the old one */
+  const before = frameAt(3.5).spots[0].sun;
+  const kept = S.frames;
+  /* sun is re-derived from the blended curve, so the curve is what has to move */
+  S.frames = kept.map(f => ({ ...f, spots: f.spots.map(sp => ({ ...sp, O: sp.O.map(() => 90) })) }));
+  const after = frameAt(3.5).spots[0].sun;
+  S.frames = kept;
+  ok('the interpolation cache is invalidated by a refresh', after !== before,
+     'sun ' + before.toFixed(0) + ' then ' + after.toFixed(0));
+
+  /* and the scrubber can actually reach the in-between positions */
+  const step = (fs.readFileSync(FILE, 'utf8')
+    .match(/id="time"[^>]*step="([\d.]+)"/) || [])[1];
+  ok('scrubber steps below the hour', step && +step < 1, 'step=' + step);
+}
 
 head('MAP LABELS  — measured packing, topography respected');
 const relayoutOK = (() => {
@@ -229,28 +374,30 @@ ok('every $() id exists in the markup', (() => {
 
 /* ── optional: render the geometry so it can be judged without deploying ── */
 if (process.argv.includes('--svg')) {
-  const { smooth, RIDGE, GROUND, VBW, VBH } = api;
+  const { smooth, RIDGE } = api;
   const terr = `M0,${GROUND} ` + smooth(RIDGE) + ` L${VBW},${GROUND} Z`;
-  const hrs = [4, 8, 12, 16];
+  /* quarter-hours through the roll-in, so the sweep shows the edge moving */
+  const hrs = [0, 2, 4, 5.5, 7, 9, 12, 16, 20, 23];
   const g = hrs.map((k, i) => {
     S.h = k; paint();
-    const dots = S.frames[k].spots.map(s => ({ x: s.x, y: s.y, on: s.top == null || s.elev >= s.top }));
+    const fr = frameAt(k);
+    const dots = fr.spots.map(s => ({ x: s.x, y: s.y, on: s.elev >= s.sun && s.vis > VIS_CLEAR }));
     return `<g transform="translate(0,${i * 262})">
-<text x="8" y="18" fill="#63757C" font-family="monospace" font-size="12">+${k}h</text>
-<defs><linearGradient id="f${i}" x1="0" y1="0" x2="0" y2="1">
-<stop offset="0%" stop-color="#A9B7BE" stop-opacity="0"/>
-<stop offset="30%" stop-color="#A9B7BE" stop-opacity=".24"/>
-<stop offset="100%" stop-color="#A9B7BE" stop-opacity=".50"/></linearGradient></defs>
-<rect width="${VBW}" height="${VBH}" fill="#0E161C"/>
-<path d="${store.fogBody._a.d}" fill="url(#f${i})"/>
-<path d="${terr}" fill="#1E2B33" stroke="rgba(169,183,190,.34)" stroke-width="1"/>
-${dots.map(d => `<circle cx="${d.x}" cy="${d.y}" r="6" fill="${d.on ? '#F0A03C' : '#3B4A52'}" stroke="${d.on ? '#F0A03C' : '#63757C'}"/>`).join('')}
+<rect width="${VBW}" height="${api.VBH}" fill="#0E161C"/>
+<mask id="m${i}" maskUnits="userSpaceOnUse" x="0" y="0" width="${VBW}" height="${api.VBH}">
+<rect width="${VBW}" height="${api.VBH}" fill="#fff"/><path d="${terr}" fill="#000"/></mask>
+<g fill="#A9B7BE" mask="url(#m${i})">${store.fogBody._html}</g>
+<path d="${terr}" fill="#1E2B33"/>
+${dots.map(d => `<circle cx="${d.x}" cy="${d.y}" r="5" fill="${d.on ? '#F0A03C' : '#3B4A52'}"/>`).join('')}
+<text x="8" y="18" fill="#63757C" font-family="monospace" font-size="12">+${k}h · ${
+  fr.spots.filter(s => s.elev < s.sun).length}/11 under</text>
 </g>`;
   }).join('');
   fs.writeFileSync(path.join(__dirname, 'map-preview.svg'),
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VBW} ${262 * hrs.length}" width="${VBW}">${g}</svg>`);
   console.log('\n  wrote map-preview.svg');
 }
+
 
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
