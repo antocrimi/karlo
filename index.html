@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.08.31 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.08.30.3 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -418,9 +418,21 @@ svg.g{fill:currentColor}
              model is vague, tight where it is sure. The old fixed 0/.24/.50
              gradient performed that uncertainty without measuring any. -->
         <g id="fogBody" fill="#A9B7BE" mask="url(#sky)"></g>
-        <!-- no outline: the silhouette carries itself, and the stroke only
-             lightened the ridge where it met the fog -->
-        <path id="terrain" d="" fill="#1E2B33" stroke-width="0" vector-effect="non-scaling-stroke"/>
+        <!-- A hairline in the page ground, not an outline. No dark fill can
+             separate from the fog at every depth: the sky ramps continuously
+             from #0E161C to #5B666D as the contours stack, and any fixed
+             terrain colour is crossed somewhere along it. #1E2B33 is crossed at
+             two tiers, scoring 1.03 against the sky, which is why the soft edge
+             disappeared into the hills. Holding 1.26 across the whole ramp needs
+             a terrain lighter than the fog ever gets, so the fill cannot do this
+             job and an edge has to.
+             It is self-gating: where fog sits behind the ridge the sky is
+             lighter and the line reads as a dark groove; where there is no fog
+             the sky is already #0E161C and the line vanishes into it. That is
+             what separates it from the light stroke cut earlier, which
+             lightened the ridge wherever the fog met it. -->
+        <path id="terrain" d="" fill="#1E2B33" stroke="#0E161C" stroke-width="1.25"
+              stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
       </svg>
       <div id="dots"></div>
       <div class="peaks" id="peaks"></div>
@@ -496,6 +508,9 @@ svg.g{fill:currentColor}
             local estimate rather than a measurement.</p></div>
           <div><h3>Privacy</h3><p>No accounts, no tracking, nothing stored. The page talks
             to one weather API and to nobody else.</p></div>
+          <div><h3>Resolution</h3><p id="dResolve">The model runs on a 3 km grid and the city is
+            about 11 km across, so several places share a grid square and read the same air.
+            That number is what the cross section actually has to draw with.</p></div>
         </div>
       </div>
       <button class="acc-t" aria-expanded="false" id="t-abo"></button>
@@ -542,19 +557,33 @@ const G={
 };
 const ico=(k,cls)=>`<svg class="g ${cls||''}" viewBox="0 0 256 256" aria-hidden="true">${G[k]}</svg>`;
 
+/* Eleven places to sit outside, ordered west to east. The roster is chosen for
+   somewhere worth going, and then constrained by the section: a cross section
+   only means anything if the places are near the line it cuts. rel is a shelter
+   score used by the simulator for wind, not a position. See OFF_AXIS_KM. */
 const SPOTS=[
- {n:"Ocean Beach",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40, y:218,e:5},
- {n:"GG Park",        g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:248,y:200,e:60},
- {n:"Twin Peaks",     g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:330,y:104,h:1,e:281},
- {n:"Glen Canyon",    g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:387,y:158,e:110},
- {n:"Corona Heights", g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:444,y:142,h:1,e:156},
- {n:"Fort Mason",     g:"sail", lat:37.8060,lon:-122.4320,rel:52,x:505,y:190,e:25},
- {n:"Dolores Park",   g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:563,y:196,e:45},
- {n:"McLaren",        g:"tree", lat:37.7180,lon:-122.4180,rel:79,x:628,y:172,e:150},
- {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:690,y:156,h:1,e:132},
- {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:780,y:182,h:1,e:85},
+ {n:"Ocean Beach",    g:"wave", lat:37.7590,lon:-122.5100,rel:26,x:40, y:211,e:5},
+ {n:"West Portal",    g:"tree", lat:37.7405,lon:-122.4663,rel:45,x:176,y:187,e:66},
+ {n:"GG Park",        g:"tree", lat:37.7720,lon:-122.4600,rel:48,x:268,y:189,e:60},
+ {n:"Twin Peaks",     g:"peak", lat:37.7544,lon:-122.4477,rel:55,x:352,y:103,h:1,e:281},
+ {n:"Glen Canyon",    g:"tree", lat:37.7400,lon:-122.4430,rel:68,x:420,y:170,e:110},
+ {n:"Corona Heights", g:"peak", lat:37.7650,lon:-122.4380,rel:62,x:486,y:152,h:1,e:156},
+ {n:"Alamo Square",   g:"palm", lat:37.7764,lon:-122.4346,rel:66,x:560,y:186,e:68},
+ {n:"Dolores Park",   g:"palm", lat:37.7596,lon:-122.4269,rel:78,x:636,y:195,e:45},
+ {n:"Bernal Heights", g:"peak", lat:37.7431,lon:-122.4160,rel:82,x:700,y:161,h:1,e:132},
+ {n:"Potrero Hill",   g:"slope",lat:37.7600,lon:-122.3990,rel:84,x:784,y:180,h:1,e:85},
  {n:"Dogpatch",       g:"dog"  ,lat:37.7615,lon:-122.3872,rel:85,x:860,y:212,e:5}
 ];
+
+/* How far a place may sit off the west-to-east line the section cuts, before it
+   stops belonging on the section at all. Fort Mason was 5.34 km north and
+   McLaren 4.46 km south, each alone in its own 3 km grid cell to the side of
+   the transect rather than further along it. They read a different air mass —
+   Fort Mason takes its fog through the Golden Gate, not over the Twin Peaks
+   ridge — and the section rendered that as a spike in the middle of the city.
+   2.5 km keeps every place inside one grid cell of the line. A place worth
+   sitting in that fails this test does not go on the chart. */
+const OFF_AXIS_KM=2.5;
 /* one profile. clarity-forward, since fog is the whole point;
    ideal sits at 66°F, the midpoint of the old Move/Chill pair. */
 const W={c:.42, v:.13, w:.22, t:.23, ideal:66};
@@ -568,7 +597,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.08.31";
+const BUILD="2026.08.30.3";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -937,6 +966,17 @@ function split(fr){
   return {sun:all.filter(d=>d.clear).sort(by), fog:all.filter(d=>!d.clear).sort(by)};
 }
 
+/* How many of the eleven places are reading genuinely different air. The model
+   is a 3 km grid and the section is about 11 km, so places share squares and
+   the surface has fewer independent control points than it has dots. This was
+   an open question in the briefing that could only be answered against live
+   data; measuring it in the page answers it every hour instead of once. */
+function columns(fr){
+  const seen=new Set();
+  fr.spots.forEach(s=>seen.add(s.O.map(v=>Math.round(v)).join(",")));
+  return seen.size;
+}
+
 /* ── continuous time ─────────────────────────────────────────────
    The scrubber was step="1" while the briefing called it continuous, so a
    drag stepped the marine layer between hourly stills. Rolling in and out is
@@ -1017,6 +1057,11 @@ function paintVerdict(sun,k){
 function paint(){
   const k=S.h, fr=frameAt(k), {sun,fog}=split(fr);
   paintVerdict(sun,k);
+  const nc=columns(fr);
+  $("dResolve").textContent = `The model runs on a 3 km grid and the city is about 11 km `
+    + `across, so several places share a grid square and read the same air. This hour the `
+    + `eleven places resolve to ${nc} distinct ${nc===1?"column":"columns"}, which is what `
+    + `the cross section has to draw with.`;
   $("tbAt").textContent=stamp(fr.t,k);
   $("time").style.setProperty("--p",(k/(HOURS-1)*100).toFixed(1)+"%");
   $("tbRel").textContent=relLabel(k);
