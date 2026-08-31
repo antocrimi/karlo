@@ -97,7 +97,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js = js.slice(0, js.lastIndexOf('})();'));
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
-        'overheadCurve,overheadAt,sunLine,TIERS,OFF_AXIS_KM,columns};';
+        'overheadCurve,overheadAt,sunLine,TIERS,TIER_A,OFF_AXIS_KM,columns,yFog};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -115,7 +115,7 @@ const head = t => console.log(`\n${t}`);
 const { api, store } = harness();
 const { S, paint, simulate, split, profile, note, frameAt,
         SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
-        overheadCurve, overheadAt, sunLine, TIERS, OFF_AXIS_KM, columns } = api;
+        overheadCurve, overheadAt, sunLine, TIERS, TIER_A, OFF_AXIS_KM, columns } = api;
 S.frames = simulate();
 const clean = x => (x || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const P = n => SPOTS.find(s => s.n === n);
@@ -228,6 +228,16 @@ ok('no clear dot drawn inside the band', insideBand === 0, insideBand + ' found'
 ok('every hour renders all spots', rows.size === 1 && [...rows][0] === SPOTS.length, [...rows].join(','));
 ok('empty groups drop their heading', heads.size > 1 || quiet === 0, 'headings seen: ' + [...heads].join(','));
 ok('quiet rule reachable in the simulator', quiet > 0, quiet + ' quiet hours');
+/* naming no place is the point; withholding the reading was an oversight */
+{
+  let qh = -1;
+  for (let k = 0; k < HOURS; k++) if (!split(frameAt(k)).sun.length) { qh = k; break; }
+  S.h = qh; paint();
+  const html = store.verdict._html || '';
+  ok('the quiet state still reports the city', /class="v-cond"/.test(html) &&
+     /\d+% cloud citywide/.test(clean(html)) && /\d+ (mph|km\/h) wind/.test(clean(html)),
+     clean(html).slice(0, 90));
+}
 
 head('THE FIELD  — the properties the drawing rests on');
 {
@@ -282,6 +292,29 @@ head('THE FIELD  — the properties the drawing rests on');
      Math.abs(yFog(110) - yM(110)) < 2, (yFog(110) - yM(110)).toFixed(2) + ' px at 110 m');
   ok('a deep layer does not report a fake ceiling',
      profile(5, [96,94,92,90], 0, 96).sun >= 760, 'ran off the top of the samples');
+}
+
+head('THE PICTURE READS AS WEATHER');
+{
+  /* the alpha ramp has to cover the ladder, and fall off at the outer edge or
+     the mass ends in a step instead of dissolving */
+  ok('an alpha per tier', TIER_A.length === TIERS.length, TIERS.length + ' vs ' + TIER_A.length);
+  let falls = true;
+  for (let i = 1; i < TIER_A.length; i++) if (TIER_A[i] >= TIER_A[i - 1]) falls = false;
+  ok('alpha falls off toward the outer contour', falls, TIER_A.join(' '));
+  const stacked = 1 - TIER_A.reduce((a, v) => a * (1 - v), 1);
+  ok('the saturated stack lands near .50', Math.abs(stacked - 0.5) < 0.06, stacked.toFixed(3));
+  /* CLEAR must be one of the drawn bands: it is the line every dot is judged
+     against, so it cannot be dropped from the ladder to buy stability */
+  ok('CLEAR is a drawn contour', TIERS.includes(CLEAR), TIERS.join(' '));
+
+  /* a deep layer must run off the top of the frame rather than stacking every
+     contour on y=2, which is what gave a socked-in hour a flat grey lid */
+  ok('a deep layer runs past the top of the frame', yFog(900) < 0, 'yFog(900)=' + yFog(900).toFixed(1));
+  ok('the ground end is still pinned', yFog(0) >= 224, 'yFog(0)=' + yFog(0).toFixed(1));
+  const src2 = fs.readFileSync(FILE, 'utf8');
+  ok('the field is faded at the top rather than cut', /mask id="sky"[\s\S]{0,400}url\(#fade\)/.test(src2));
+  ok('dots carry the ridge hairline', /\.dot\{[^}]*box-shadow:0 0 0 [\d.]+px var\(--ink\)/.test(src2));
 }
 
 head('THE EDGE  — the roll-in is drawn, not gated away');
