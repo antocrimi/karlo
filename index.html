@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.08.30.3 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.08.30.4 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -176,7 +176,7 @@ svg.g{fill:currentColor}
 #terrain{fill:var(--ridge)}
 /* A solid disc, small enough to mark the spot without becoming the subject.
    The ridge is the drawing; the dots annotate it. */
-.dot{position:absolute; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%;
+.dot{position:absolute; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; box-shadow:0 0 0 1.5px var(--ink);
   background:var(--fog-dim);
   transition:background .32s ease,
              transform .42s cubic-bezier(.22,.68,.3,1)}
@@ -407,17 +407,37 @@ svg.g{fill:currentColor}
                is at 218, so a contour at zero metres would leak a sliver of fog
                over an empty beach at the western edge. Masking to the sky kills
                it exactly, and leaves yM as the one mapping on this axis. -->
+          <!-- The field dissolves into the page at the top rather than being cut
+               by the frame. Without it a deep layer fills the box to a hard
+               horizontal edge, and the whole picture reads as a grey rectangle
+               with hills in it. -->
+          <linearGradient id="fade" gradientUnits="userSpaceOnUse"
+                          x1="0" y1="0" x2="0" y2="86">
+            <stop offset="0%"   stop-color="#000"/>
+            <stop offset="55%"  stop-color="#6E6E6E"/>
+            <stop offset="100%" stop-color="#fff"/>
+          </linearGradient>
+          <!-- The contours are a sampling of a continuous field, not strata in
+               it. Five bands left visible steps wherever the thresholds sat far
+               apart, which is exactly where the model is least sure and the
+               picture should be softest. A small blur returns the sampling to
+               the field it came from. It changes no path data, so the geometry
+               the verdict is checked against is untouched. -->
+          <filter id="soften" x="-6%" y="-40%" width="112%" height="180%">
+            <feGaussianBlur stdDeviation="5"/>
+          </filter>
           <mask id="sky" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
             <rect x="0" y="0" width="900" height="250" fill="#fff"/>
+            <rect x="0" y="0" width="900" height="86" fill="url(#fade)"/>
             <path id="terrainMask" d="" fill="#000"/>
           </mask>
         </defs>
-        <!-- Nine contours of the same field, not a gradient. Each path is the
+        <!-- Five contours of the same field, not a gradient. Each path is the
              surface where cloud overhead crosses one threshold, so the softness
              of the top edge is the spacing of the thresholds: wide where the
              model is vague, tight where it is sure. The old fixed 0/.24/.50
              gradient performed that uncertainty without measuring any. -->
-        <g id="fogBody" fill="#A9B7BE" mask="url(#sky)"></g>
+        <g id="fogBody" fill="#A9B7BE" filter="url(#soften)" mask="url(#sky)"></g>
         <!-- A hairline in the page ground, not an outline. No dark fill can
              separate from the fog at every depth: the sky ramps continuously
              from #0E161C to #5B666D as the contours stack, and any fixed
@@ -493,7 +513,7 @@ svg.g{fill:currentColor}
           <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
           <div><dt>Height</dt><dd>Cloud is read at four altitudes and compared against each spot's own elevation, so a hilltop standing above the layer is not counted as fogged in.</dd></div>
           <div><dt>The line</dt><dd>Each spot has its own sunlight line: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. It is the same curve the band is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree.</dd></div>
-          <div><dt>Soft edge</dt><dd>The band is nine contours of one field rather than a painted gradient. Where they spread apart the model is unsure of the layer's top, and the edge is soft because the reading is.</dd></div>
+          <div><dt>Soft edge</dt><dd>The band is five contours of one field rather than a painted gradient. Where they spread apart the model is unsure of the layer's top, and the edge is soft because the reading is.</dd></div>
           <div><dt>Between hours</dt><dd>The forecast is hourly. The scrubber moves in quarters and reads between two hours, which is where the layer is seen rolling in and out.</dd></div>
       <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
         </dl>
@@ -597,7 +617,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.08.30.3";
+const BUILD="2026.08.30.4";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -617,17 +637,20 @@ const yM = m => cl(Y0 - Y_PER_M*m, 2, GROUND);
    Giving the sky more headroom would shrink the ridge, which is the one
    element the briefing puts above everything else. */
 
-/* Nine thresholds bracketing CLEAR at six points apart. Each one is a real
-   contour of the overhead curve; stacked at low opacity they read as a single
-   soft-edged mass whose fuzziness is the model's own vagueness, wide where the
-   thresholds are far apart and tight where they crowd. Perturbing one pressure
-   level by two points moves the single CLEAR contour up to 42 px of chart and
-   the stack under 20, because the eye integrates the ensemble and the other
-   contours hold it in place. Five tiers carried the same information and could
-   be counted as stripes at the nose; nine at lower alpha cannot. The alpha is
-   set so the fully saturated stack lands on .50, which is where the old fixed
-   gradient bottomed out. */
-const TIERS=[69,63,57,51,CLEAR,39,33,27,21], TIER_A=.074;
+/* Five thresholds bracketing CLEAR, each a real contour of the overhead curve.
+   Nine carried no more meaning than five: past a point the extra bands say
+   "foggy" a second time and start reading as a topographic map rather than as
+   weather. Five is the fewest that still holds the picture still — three drops
+   the ensemble to 29 px of movement for two points of cover and fails, four
+   only beats it by dropping CLEAR out of the ladder, and CLEAR has to be drawn
+   because it is the line every dot is judged against.
+
+   The alphas are graduated rather than uniform. Equal steps put an equal-sized
+   edge at the top of the stack, which is exactly where it must not be seen;
+   falling off to .03 at the outermost contour makes the last step invisible and
+   the mass dissolve instead of ending. They multiply out to .47, near the .50
+   the old fixed gradient bottomed out at. */
+const TIERS=[69,57,CLEAR,33,21], TIER_A=[.20,.16,.12,.07,.03];
 
 /* Height to y for the fog, which is yM with a shoreline correction. Y0 is a
    regression intercept: the fit puts sea level at y=213 while the drawn
@@ -637,7 +660,12 @@ const TIERS=[69,63,57,51,CLEAR,39,33,27,21], TIER_A=.074;
    correction buries zero and decays to nothing by 150 m, well under the lowest
    pressure sample at 110 m, so it never touches a height that decides a
    verdict. yM itself stays exactly as it is: it is the law for the terrain. */
-const yFog = h => cl(yM(h) + 13*Math.exp(-h/50), 2, GROUND);
+/* The lower bound is above the frame on purpose. Clamping to y=2 stacked every
+   contour on the same line and gave the fog a flat lid, which is what made a
+   socked-in hour read as a grey box rather than as weather. Letting the surface
+   run past the top edge lets the viewBox clip it, so the field continues out of
+   the picture the way it continues over the city. */
+const yFog = h => cl(Y0 - Y_PER_M*h + 13*Math.exp(-h/50), -80, GROUND);
 
 /* Catmull-Rom → cubic bezier, so the section reads as rolling ground */
 function smooth(pts){
@@ -1034,12 +1062,21 @@ function copyfit(el){
 }
 
 /* ── the answer, sitting on top of the map ─────────────────────── */
-function paintVerdict(sun,k){
+function paintVerdict(sun,k,fr){
   if(!sun.length){                      /* quiet rule: nothing above the line */
+    /* The quiet state named no place and then said nothing else, so the one
+       hour the page has the least to offer was also the one hour it reported
+       no numbers. Naming no place is the point and stays; withholding the
+       reading was an oversight. The city average sits in the same slot and the
+       same style the winning spot's conditions do. */
+    const n=fr.spots.length;
+    const cloud=fr.spots.reduce((a,d)=>a+d.lowCloud,0)/n;
+    const wind =fr.spots.reduce((a,d)=>a+d.wind,0)/n;
     $("verdict").innerHTML=`<div class="v-row quiet">
       <span class="v-main">
         <span class="v-head"><span class="v-ico">${ico("fogx")}</span>
           <span class="v-name">Karl's winning${k===0?" right now":""}.</span></span>
+        <span class="v-cond"><b>${Math.round(cloud)}%</b> cloud citywide · <b>${w2(wind)}</b> ${wu()} wind</span>
       </span></div>`;
     copyfit($("verdict").querySelector(".v-name"));
     return;
@@ -1056,7 +1093,7 @@ function paintVerdict(sun,k){
 
 function paint(){
   const k=S.h, fr=frameAt(k), {sun,fog}=split(fr);
-  paintVerdict(sun,k);
+  paintVerdict(sun,k,fr);
   const nc=columns(fr);
   $("dResolve").textContent = `The model runs on a 3 km grid and the city is about 11 km `
     + `across, so several places share a grid square and read the same air. This hour the `
@@ -1113,13 +1150,13 @@ function paint(){
      Nothing here can contradict the list, at any x: a dot is amber exactly
      when its elevation is at or above the CLEAR contour at its own column,
      and the CLEAR contour is one of the five paths being drawn. */
-  $("fogBody").innerHTML = TIERS.map(T=>{
+  $("fogBody").innerHTML = TIERS.map((T,i)=>{
     const hs=fr.spots.map(s=>sunLine(s.O,T));
     /* a threshold nothing in the city reaches draws nothing at all */
     if(hs.every(h=>h<=0)) return "";
     const pts=fr.spots.map((s,i)=>({x:s.x, y:yFog(hs[i])}));
     const ends=[{x:0,y:pts[0].y},...pts,{x:VBW,y:pts[pts.length-1].y}];
-    return `<path data-t="${T}" fill-opacity="${TIER_A}" d="M0,${ends[0].y.toFixed(1)}`
+    return `<path data-t="${T}" fill-opacity="${TIER_A[i]}" d="M0,${ends[0].y.toFixed(1)}`
          + wave(ends) + ` L${VBW},${GROUND} L0,${GROUND} Z"/>`;
   }).join("");
 
