@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.09.01.2 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.09.01.3 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -402,29 +402,23 @@ svg.g{fill:currentColor}
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to Dogpatch showing where cloud sits against the Twin Peaks ridge">
         <defs>
-          <!-- The body dissolves at its ends instead of stopping at one. A
-               vertical cut read as a sharp line passing behind the terrain; fog
-               thins out, it does not get sliced. The two gradients are
-               positioned every paint from the front's own x. -->
-          <linearGradient id="gW" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="0">
-            <stop offset="0%" stop-color="#000"/><stop offset="100%" stop-color="#fff"/>
-          </linearGradient>
-          <linearGradient id="gE" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="0">
-            <stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/>
-          </linearGradient>
+          <!-- fog cannot sit below ground -->
+          <!-- The body's density follows how much fog there is, the way its
+               height follows how deep. At the front both fall to nothing
+               together, so the mass dissolves as it descends instead of ending
+               in an edge. One stop per column, rebuilt every frame from the
+               same eased heights the outline uses. -->
+          <linearGradient id="fogFill" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="0"></linearGradient>
           <mask id="fogMask" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
             <rect x="0" y="0" width="900" height="250" fill="#fff"/>
-            <rect id="fadeW" x="0" y="0" width="0" height="250" fill="url(#gW)"/>
-            <rect id="fadeE" x="0" y="0" width="0" height="250" fill="url(#gE)"/>
-            <!-- fog cannot sit below ground -->
             <path id="terrainMask" d="" fill="#000"/>
           </mask>
         </defs>
-        <!-- One body. A filled mass and its own top edge, drawn close enough in
-             value to read as the edge of that mass rather than as a second
-             element sitting on top of it. -->
-        <g id="fogBody" fill="#A9B7BE" mask="url(#fogMask)"></g>
-        <g id="fogLine" fill="none" stroke="#A9B7BE" stroke-opacity=".34"
+        <!-- One body, full bleed. It spans the frame at every hour and carries
+             everything in its height, so it grows out of the ground and sinks
+             back into it rather than ending somewhere on screen. -->
+        <g id="fogBody" fill="url(#fogFill)" mask="url(#fogMask)"></g>
+        <g id="fogLine" fill="none" stroke="url(#fogFill)" stroke-opacity=".9"
            stroke-width="1" stroke-linecap="round" mask="url(#fogMask)"></g>
         <path id="terrain" d="" fill="#1E2B33" stroke="#0E161C" stroke-width="1.25"
               stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
@@ -490,7 +484,8 @@ svg.g{fill:currentColor}
           <div><dt>The line</dt><dd>Each spot has its own sunlight line: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. It is the same curve the band is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree.</dd></div>
           <div><dt>The fog line</dt><dd>The body's top edge, drawn where cloud overhead crosses 45 per cent. Its softness is the model's own uncertainty about where the layer ends, so a vague edge means a vague reading.</dd></div>
           <div><dt>Height</dt><dd>Drawn to true scale up to 300 m, which is above every place on the chart, and compressed above that. The marine layer often sits at 700 m, and drawing that literally would push the cloud off the top of the picture and leave a third of it empty, since nowhere in the city is that high.</dd></div>
-          <div><dt>The front</dt><dd>Where the layer runs out the slab stops. How deep the fog is and how far inland it has come are two different questions, so the picture keeps them on two different axes.</dd></div>
+          <div><dt>The front</dt><dd>The model runs on a 3 km grid across a city 11 km wide, so it cannot place the fog's edge more precisely than about a quarter of the chart. The readings are smoothed at that scale before anything is drawn or decided, which is why the front arrives as a slope rather than a wall.</dd></div>
+          <div><dt>Moving</dt><dd>Drag the hours and the layer grows and recedes rather than jumping. What you are watching is the same reading at a different hour, eased between the two.</dd></div>
           <div><dt>Between hours</dt><dd>The forecast is hourly. The scrubber moves in quarters and reads between two hours, which is where the layer is seen rolling in and out.</dd></div>
       <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
         </dl>
@@ -594,7 +589,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.09.01.2";
+const BUILD="2026.09.01.3";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -975,6 +970,42 @@ function columns(fr){
   return seen.size;
 }
 
+/* ── horizontal resolution ───────────────────────────────────────
+   The model runs on a 3 km grid and the section is 10.8 km wide, so one grid
+   cell is 250 chart units and spans two to three of the eleven places. Treating
+   the columns as independent draws a fog boundary about seven times sharper
+   than the model can resolve, which is what kept producing a front that ended
+   point blank. Smoothing across the columns at sigma of one spacing, roughly
+   190 units and comfortably inside a single cell, is the honest read.
+
+   It is done to the overhead curve itself, once, before anything is drawn or
+   decided. Everything downstream — the percentage in the list, the sunlight
+   line, the drawn body — is then derived from the same smoothed field, so they
+   cannot disagree. Smoothing only the drawing would have made the picture
+   contradict the number beside it. A convex combination of monotone curves is
+   monotone, so the one property the geometry needs survives. */
+const KERNEL=[.0545,.2442,.4026,.2442,.0545];   /* gaussian, sigma one spacing */
+function smoothAcross(frames){
+  for(const fr of frames){
+    const n=fr.spots.length, src=fr.spots.map(s=>({O:s.O, here:s.here, beneath:s.beneath}));
+    fr.spots.forEach((s,i)=>{
+      const O=new Array(SCAN_N).fill(0); let here=0, beneath=0;
+      KERNEL.forEach((w,k)=>{
+        /* reflect at the ends rather than letting the edges pull toward zero */
+        let j=i+k-2; if(j<0) j=-j; if(j>n-1) j=2*(n-1)-j;
+        const t=src[cl(j,0,n-1)];
+        for(let q=0;q<SCAN_N;q++) O[q]+=t.O[q]*w;
+        here+=t.here*w; beneath+=t.beneath*w;
+      });
+      const overhead=overheadAt(O,s.elev);
+      Object.assign(s,{O, here, beneath, overhead, lowCloud:overhead,
+        sun:sunLine(O,CLEAR), inLayer:here>=CLEAR,
+        aboveFog: beneath>=60 && here<CLEAR && overhead<CLEAR});
+    });
+  }
+  return frames;
+}
+
 /* ── continuous time ─────────────────────────────────────────────
    The scrubber was step="1" while the briefing called it continuous, so a
    drag stepped the marine layer between hourly stills. Rolling in and out is
@@ -1101,63 +1132,71 @@ function paint(){
   });
 
   /* ── the marine layer ────────────────────────────────────────────
-     One body of cloud, not a gradient with a line on top of it.
+     One body, full bleed, all of it in the height. The curve runs the whole
+     width at every hour: where there is no layer its height is zero, so the
+     body sinks into the ground and the terrain covers it. Nothing ever ends
+     on screen, and the front points down instead of stopping.
 
-     Three things make it cohesive. The top is drawn only where there is a
-     layer, so extent stays a horizontal fact rather than being ramped down
-     through the elevation axis. Holes inside the run are bridged rather than
-     drawn, because one grid cell reading clear in the middle of a covered city
-     is noise, and letting it pull the body to the ground split the mass in two.
-     And the ends dissolve rather than stop, because fog thins out and a
-     vertical cut read as a sharp line passing behind the hills.
+     It can be drawn this way because the field is smoothed at the model's own
+     horizontal resolution first. A raw front fell from the top of the layer to
+     the ground across one spot gap, about 70 units, against a grid cell of 250.
+     Smoothed, it descends across two or three columns, which is both gentler
+     and closer to what the model actually knows.
 
      Nothing here can contradict the list, at any x: a dot is amber exactly when
-     its elevation is at or above the CLEAR contour at its own column, and that
-     contour is the body's own top edge. */
-  const FADE=78;                        /* how far the ends dissolve over */
-  const slab=T=>{
-    const hs=fr.spots.map(s=>sunLine(s.O,T));
-    if(!hs.some(h=>h>0)) return null;
-    const i0=hs.findIndex(h=>h>0);
-    let i1=hs.length-1; while(hs[i1]<=0) i1--;
-    /* bridge interior holes: a single cell reading clear under a covered city
-       is grid noise, and drawing it as ground punches the body in half */
-    for(let i=i0+1;i<i1;i++){
-      if(hs[i]>0) continue;
-      let j=i+1; while(j<i1 && hs[j]<=0) j++;
-      const a=hs[i-1], b=hs[j], n=j-(i-1);
-      for(let k=i;k<j;k++) hs[k]=a+(b-a)*((k-(i-1))/n);
-    }
-    const xs=fr.spots.map(s=>s.x), f=n=>(+n).toFixed(1);
-    const openW=i0===0, openE=i1===xs.length-1;
-    const xW=openW?0:(xs[i0-1]+xs[i0])/2, xE=openE?VBW:(xs[i1]+xs[i1+1])/2;
-    const pts=[];
-    for(let i=i0;i<=i1;i++) pts.push({x:xs[i], y:yFog(Math.max(hs[i],1))});
-    const top=[{x:xW,y:pts[0].y}, ...pts, {x:xE,y:pts[pts.length-1].y}];
-    const crest=`M${f(xW)},${f(top[0].y)}`+wave(top);
-    return {crest, xW, xE, openW, openE,
-            area:crest+` L${f(xE)},${f(GROUND)} L${f(xW)},${f(GROUND)} Z`};
-  };
+     its elevation is at or above the curve at its own column, and both read the
+     same smoothed field. */
+  fogTo(fr.spots.map(s=>s.sun), fr.spots.map(s=>s.x));
 
-  const body=slab(CLEAR), halo=slab(T_EDGE);
-  if(!body){ $("fogBody").innerHTML=""; $("fogLine").innerHTML=""; $("fadeW").setAttribute("width",0); $("fadeE").setAttribute("width",0); }
-  else{
-    /* the halo is the same body at the outer threshold, a few points of alpha
-       apart, so the model's spread reads as the softness of one edge */
-    $("fogBody").innerHTML =
-        (halo?`<path fill-opacity=".07" d="${halo.area}"/>`:"")
-      + `<path fill-opacity=".20" d="${body.area}"/>`;
-    $("fogLine").innerHTML = `<path data-t="${CLEAR}" vector-effect="non-scaling-stroke" d="${body.crest}"/>`;
-    const g=(id,rect,on,x1,x2,rx,rw)=>{
-      $(id).setAttribute("x1",x1.toFixed(1)); $(id).setAttribute("x2",x2.toFixed(1));
-      $(rect).setAttribute("x",rx.toFixed(1));
-      $(rect).setAttribute("width",(on?rw:0).toFixed(1));
-    };
-    const e=halo||body;
-    g("gW","fadeW",!e.openW, e.xW, e.xW+FADE, 0, e.xW+FADE);
-    g("gE","fadeE",!e.openE, e.xE-FADE, e.xE, e.xE-FADE, VBW-(e.xE-FADE));
+}
+
+/* ── motion ──────────────────────────────────────────────────────
+   The scrubber is the main interaction of the app, so the layer moves rather
+   than cutting. Heights ease toward whatever the current hour asks for, which
+   makes a drag read as the fog rolling in and a jump read as it moving there,
+   and it matches the .32s the dots already use to change colour so the two
+   read as one gesture.
+
+   Easing the heights rather than cross-fading two paths is what keeps it a
+   body: the mass deforms, it does not dissolve and reappear. */
+const EASE=.18, SETTLED=.35;          /* per frame, and the metres to stop at */
+let fogNow=null, fogAim=null, fogXs=null, fogRAF=null;
+function fogTo(aim,xs){
+  fogAim=aim; fogXs=xs;
+  if(!fogNow || fogNow.length!==aim.length){ fogNow=aim.slice(); drawFog(); return; }
+  if(!fogRAF) fogRAF=requestAnimationFrame(stepFog);
+}
+function stepFog(){
+  let moving=false;
+  for(let i=0;i<fogNow.length;i++){
+    const d=fogAim[i]-fogNow[i];
+    if(Math.abs(d)<SETTLED){ fogNow[i]=fogAim[i]; continue; }
+    fogNow[i]+=d*EASE; moving=true;
   }
+  drawFog();
+  fogRAF = moving ? requestAnimationFrame(stepFog) : null;
+}
+/* how solid the body is at a column: nothing where there is no layer, full
+   once the layer is deep enough to be unambiguous, smooth in between */
+const DENSE=150;                      /* metres of layer for full density */
+const density=h=>{ const t=cl(h/DENSE,0,1); return t*t*(3-2*t); };
 
+function drawFog(){
+  const f=n=>(+n).toFixed(1);
+  const pts=fogNow.map((h,i)=>({x:fogXs[i], y:yFog(Math.max(h,0))}));
+  const top=[{x:0,y:pts[0].y}, ...pts, {x:VBW,y:pts[pts.length-1].y}];
+  const crest=`M0,${f(top[0].y)}`+wave(top);
+  /* one stop per column, plus the two frame edges holding their neighbour's
+     value so the body reaches the sides without a seam */
+  const st=(x,h)=>`<stop offset="${(x/VBW*100).toFixed(2)}%" stop-color="#A9B7BE"`
+                 +` stop-opacity="${(density(h)*.22).toFixed(3)}"/>`;
+  $("fogFill").innerHTML = st(0,fogNow[0])
+    + fogNow.map((h,i)=>st(fogXs[i],h)).join("")
+    + st(VBW,fogNow[fogNow.length-1]);
+  /* a body with no height anywhere is buried under the terrain, so it costs
+     nothing to keep drawing it, and the geometry never has to appear or vanish */
+  $("fogBody").innerHTML=`<path d="${crest} L${VBW},${GROUND} L0,${GROUND} Z"/>`;
+  $("fogLine").innerHTML=`<path data-t="${CLEAR}" vector-effect="non-scaling-stroke" d="${crest}"/>`;
 }
 
 (()=>{ const d=`M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`;
@@ -1226,8 +1265,8 @@ async function load(user){
   $("refresh").classList.add("spin");
   if(user) $("updated").textContent="Updating…";
   let live=true;
-  try{ S.frames=await fetchLive(); }
-  catch(err){ live=false; S.frames=simulate(); }
+  try{ S.frames=smoothAcross(await fetchLive()); }
+  catch(err){ live=false; S.frames=smoothAcross(simulate()); }
   if(user) S.h=0;                       /* a manual refresh returns you to now */
   $("time").value=S.h;
   paint(); safeLayout(); stampNow(live);
