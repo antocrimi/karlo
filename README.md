@@ -35,9 +35,9 @@ A spot is **clear** when cloud overhead is under 45% *and* visibility is over 5 
 
 The chart's vertical axis is an elevation axis, and the cloud is drawn on it as a real surface running through all eleven places, with a leading edge where the layer runs out. Each spot has its own **sunlight line**: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. That is the same curve the surface is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree at any point along the section.
 
-The fog is drawn as one body of cloud. Its top is level where there is a layer, its ends dissolve where the layer runs out, and a hole in the middle of a covered city is bridged rather than drawn, because a single grid cell reading clear under an overcast is noise.
+The fog is drawn as one body of cloud, full bleed. It spans the frame at every hour and carries everything in its height and its density, so it grows out of the ground and sinks back into it rather than ending somewhere on screen. Drag the hours and it moves: the heights ease toward the new reading instead of snapping to it.
 
-Height and reach are two different quantities, so they get two different axes. Encoding "no fog here" as "height zero" used to ramp the leading edge down through the elevation scale, which built a second range of hills competing with the real one.
+The model runs on a 3 km grid across a city 10.8 km wide, so one grid cell is a quarter of the chart and covers two or three of the eleven places. Treating them as independent draws a fog edge about seven times sharper than the model can resolve. The readings are smoothed at that scale first, once, before anything is drawn or decided, so the percentage in the list and the height of the body come from the same numbers.
 
 The vertical scale is true up to 300 m and compressed above it. The layer often sits at 700 m while the tallest place on the chart is Twin Peaks at 281 m, so drawing it literally pushed the cloud off the top of the frame and left a third of the picture empty. Nothing is lost: a place is clear when it stands above the fog line, so the two heights only ever need to be comparable below the tallest place, and everything below that is still at true scale.
 
