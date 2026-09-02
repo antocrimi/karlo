@@ -3,7 +3,7 @@
 **Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
 **Status:** shipped prototype, live at `antocrimi.github.io/karlo/`. A **project** site, so it is served from the `/karlo/` sub-path and every absolute URL in the head has to carry it. One HTML file, no build step, no dependencies, plus two image assets.
-**Last worked:** 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time, then the roster constrained to the transect and the ridge given a hairline.
+**Last worked:** 1 September 2026 — the fog redrawn as one body on a part-compressed axis, after seeing live data on a phone. Before that, 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time, then the roster constrained to the transect and the ridge given a hairline.
 
 **Companion file:** `CLAUDE.md` carries Anto's voice rules, attribution tiers and working preferences. It governs every word written for or as him. This file governs the product.
 
@@ -270,9 +270,16 @@ Three complaints turned out to be one bug. The picture was unbalanced because th
 
 **So the layer is a slab.** The top is drawn only where there is a layer, and where the layer stops the slab stops, falling to the ground across `FRONT` (34 px) — steep enough to read as the face of a bank, brief enough to leave the top level. The ridge is then the only jagged thing in the frame, which is correct, because the ridge is the only jagged thing. `test.js` asserts the drawn top's relief stays under 55% of the ridge's.
 
-**Two marks, not five.**
-- **The wash** says where the fog is. One path, filled with a vertical gradient that fades in across the gap between `T_EDGE` (21) and the fog line, so the softness of the top is still the model's own spread. A vertical gradient was the wrong tool while the surface was a landmass; it became the right one the moment the top went level, which is why the blur and the stacked contours both left in the same change.
-- **The line** says where the top is. It is the CLEAR contour, stroked. This is the number the whole product is named after and until now it was never actually drawn, only implied by the edge of a fill.
+**One body, seen on live data, 1 September.** A wash with a bright line on top read as two elements rather than as a mass of cloud. It is now a single filled body plus its own top edge at `.34` against a `.20` fill, close enough in value to belong to it. Three things make it cohesive:
+- The top is drawn only where there is a layer, so extent stays horizontal.
+- **Interior holes are bridged, not drawn.** Live data has cells that read clear in the middle of a covered city. Drawing one as ground pulled the body to the floor mid-city and split the mass in two, which the simulator never produced.
+- **The ends dissolve** over 78 px via a mask gradient positioned from the front each paint, rather than stopping at a vertical cut that read as a sharp line passing behind the terrain.
+
+**The fog's vertical axis is true to 300 m and compressed above it, and this is a deliberate departure from the §4 law.** Live data put the layer top at 500 to 900 m while the tallest place on the chart is Twin Peaks at 281 m, so a true-scale top spent most of its life pinned to the frame edge with a third of the picture empty beneath it. That band decides nothing: no dot can ever be in it.
+
+The verdict is untouched and provably so. A dot is clear when `elev >= sun`, so the two heights only ever need to be comparable below the tallest spot. `H_TRUE = 300` sits above it, so every height that can decide anything is still at true scale. `test.js` asserts both halves: that `H_TRUE` clears the roster, and that `yFog` matches the plain elevation axis exactly below it. **Do not "fix" this back to `yM` without breaking those two tests first and reading why they exist.**
+
+Compression also retired the top fade. The body can no longer reach the frame edge, so it can no longer read as a box.
 
 **Legibility stopped depending on the fill.** A 1.5px stroke at `#6E7A80` scores **4.14** against the page and **3.29** against the terrain. No tonal fill could beat **1.03** at its worst point, because the sky ramps continuously through whatever value the fill sits at. That was proved on 30 August and answered with a hairline on the ridge; the same reasoning applies to the fog's own top edge, and the answer is the same. Marks that must read against a variable ground are strokes, not fills.
 
