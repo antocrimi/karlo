@@ -270,6 +270,16 @@ Three complaints turned out to be one bug. The picture was unbalanced because th
 
 **So the layer is a slab.** The top is drawn only where there is a layer, and where the layer stops the slab stops, falling to the ground across `FRONT` (34 px) — steep enough to read as the face of a bank, brief enough to leave the top level. The ridge is then the only jagged thing in the frame, which is correct, because the ridge is the only jagged thing. `test.js` asserts the drawn top's relief stays under 55% of the ridge's.
 
+**Full bleed, and the front is a slope because the model cannot support a wall.** The section is 10.8 km across 900 units, so the model's 3 km grid is **250 units, a quarter of the chart**, spanning two to three places. Treating the eleven columns as independent drew a fog edge roughly seven times sharper than the model resolves, which is why every attempt at an ending — a vertical cut, a 34 px taper, a 78 px mask fade — read as an edge rather than as weather.
+
+`smoothAcross()` blends the overhead curves at sigma of one spacing, about 190 units and inside a single cell. It runs **once, on the field, before anything is drawn or decided**, so the percentage in the list, the sunlight line and the drawn body all come from the same numbers. Smoothing only the drawing would have made the picture contradict the figure beside it. A convex combination of monotone curves is monotone, so the property the geometry rests on survives. It also closes interior holes without a special case: the centre tap is 0.40, so neighbours always carry a dropped cell back up.
+
+The body now spans the frame at every hour and carries everything in **height and density together**. Where there is no layer the height is zero and the density is zero, so the mass sinks into the ground and dissolves at the same time, and nothing is ever seen to end on screen. Height alone could not do it: at the front the layer really is present or absent, so a height encoding will always step somewhere. Density is what makes the step invisible.
+
+**The scrubber is the main interaction, so the layer moves.** Heights ease toward the target at `EASE` per frame, settling in about the `.32s` the dots already use to change colour, so the two read as one gesture. Easing the heights rather than cross-fading two paths is what keeps it a body: the mass deforms, it does not dissolve and reappear.
+
+**A harness bug this exposed:** `test.js` built its frames with a bare `simulate()` while `load()` passes them through `smoothAcross()`. The suite was measuring a different app from the one that ships. Any new stage in the frame pipeline has to be added in both places.
+
 **One body, seen on live data, 1 September.** A wash with a bright line on top read as two elements rather than as a mass of cloud. It is now a single filled body plus its own top edge at `.34` against a `.20` fill, close enough in value to belong to it. Three things make it cohesive:
 - The top is drawn only where there is a layer, so extent stays horizontal.
 - **Interior holes are bridged, not drawn.** Live data has cells that read clear in the middle of a covered city. Drawing one as ground pulled the body to the floor mid-city and split the mass in two, which the simulator never produced.

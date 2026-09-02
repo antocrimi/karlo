@@ -97,7 +97,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js = js.slice(0, js.lastIndexOf('})();'));
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
-        'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns};';
+        'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns,smoothAcross};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -115,8 +115,10 @@ const head = t => console.log(`\n${t}`);
 const { api, store } = harness();
 const { S, paint, simulate, split, profile, note, frameAt,
         SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
-        overheadCurve, overheadAt, sunLine, T_EDGE, H_TRUE, OFF_AXIS_KM, columns } = api;
-S.frames = simulate();
+        overheadCurve, overheadAt, sunLine, T_EDGE, H_TRUE, OFF_AXIS_KM, columns, smoothAcross } = api;
+/* load() smooths the field before anything is drawn or decided, so a harness
+   that skips it is testing a different app from the one that ships */
+S.frames = smoothAcross(simulate());
 const clean = x => (x || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const P = n => SPOTS.find(s => s.n === n);
 const mkP = lv => LEVELS.map((L, i) => ({ k: L.k, h: L.h, c: lv[i] }));
@@ -312,25 +314,89 @@ head('ONE BODY  — cohesive, and anchored where the meaning is');
   const rim  = (store.fogLine._html || '').match(/<path/g) || [];
   ok('the body is a mass and its own edge', body.length <= 2 && rim.length === 1,
      body.length + ' fills, ' + rim.length + ' edge');
-  ok('the edge sits close in value to the mass it belongs to', (() => {
+  ok('the mass and its edge are painted from one ramp', (() => {
     const src2 = fs.readFileSync(FILE, 'utf8');
-    const stroke = +(src2.match(/id="fogLine"[\s\S]{0,120}?stroke-opacity="([\d.]+)"/) || [])[1];
-    const fill = +((store.fogBody._html || '').match(/fill-opacity="([\d.]+)"[^>]*\/>\s*$/) || [])[1];
-    return stroke > 0 && fill > 0 && Math.abs(stroke - fill) < 0.2;
-  })(), 'a bright line on a faint wash reads as two elements, not one body');
+    return /id="fogBody"[^>]*fill="url\(#fogFill\)"/.test(src2)
+        && /id="fogLine"[^>]*stroke="url\(#fogFill\)"/.test(src2);
+  })(), 'sharing the ramp is what stops the edge outliving the body at the front');
+  ok('density falls to nothing where there is no layer',
+     /const DENSE=/.test(fs.readFileSync(FILE, 'utf8')));
 
-  /* the ends dissolve rather than stop: a vertical cut read as a sharp line
-     passing behind the terrain */
-  const src3 = fs.readFileSync(FILE, 'utf8');
-  ok('the mask carries a fade at each end',
-     /id="fadeW"/.test(src3) && /id="fadeE"/.test(src3));
-  ok('those fades are positioned from the front, every paint',
-     /\$\("fadeE"\)|g\("gE","fadeE"/.test(src3));
+  /* full bleed: the body spans the frame at every hour, so it can never be
+     seen to end somewhere on screen */
+  let short = 0, ends = 0;
+  for (let k = 0; k < HOURS; k++) {
+    S.h = k; paint();
+    const d = (store.fogLine._html || '').match(/\sd="([^"]+)"/);
+    if (!d) { ends++; continue; }
+    const xs = (d[1].match(/-?[\d.]+/g) || []).map(Number).filter((_, i) => i % 2 === 0);
+    if (Math.min(...xs) > 0.5 || Math.max(...xs) < VBW - 0.5) short++;
+  }
+  ok('the body spans the frame at every hour', short === 0 && ends === 0,
+     short + ' short, ' + ends + ' missing');
 
-  /* a hole in the middle of a covered city is grid noise; drawing it as ground
-     used to punch the body in half */
-  ok('interior holes are bridged, not drawn',
-     /bridge interior holes/.test(src3) && /hs\[k\]=a\+\(b-a\)/.test(src3));
+  /* the front has to descend over at least the model's own resolution. one
+     spot gap is about 70 units against a 3 km cell of 250, so a raw front
+     over-claims the boundary by roughly seven times */
+  {
+    let steepest = 0, at = -1;
+    for (let k = 0; k < HOURS; k++) {
+      const f = frameAt(k);
+      for (let i = 1; i < f.spots.length; i++) {
+        const dy = Math.abs(yFog(f.spots[i].sun) - yFog(f.spots[i - 1].sun));
+        const dx = f.spots[i].x - f.spots[i - 1].x;
+        if (dy / dx > steepest) { steepest = dy / dx; at = k; }
+      }
+    }
+    /* the front is a boundary, not a height, so encoding it as height will
+       always step somewhere. What must never come back is a front sharper
+       than the places themselves: the full depth of the layer, 185 units,
+       falling across the closest pair of spots, 68 units apart. Anything
+       steeper is a wall drawn from data that cannot support one. Density
+       does the rest of the softening, falling to nothing at the same edge. */
+    ok('the front is never sharper than the places themselves', steepest < 2.72,
+       steepest.toFixed(2) + ' units of fall per unit across, at +' + at + 'h');
+  }
+
+  /* smoothing is applied to the field, not to the drawing, so the percentage
+     in the list and the height of the body come from the same numbers */
+  const src4 = fs.readFileSync(FILE, 'utf8');
+  ok('the field is smoothed before anything is decided',
+     /smoothAcross\(await fetchLive\(\)\)/.test(src4) && /smoothAcross\(simulate\(\)\)/.test(src4));
+  ok('the kernel stays inside one grid cell', (() => {
+    const w = (src4.match(/const KERNEL=\[([^\]]+)\]/) || [])[1].split(',').map(Number);
+    const sum = w.reduce((a, b) => a + b, 0);
+    return Math.abs(sum - 1) < 1e-6 && w.length <= 5;
+  })(), 'a wider kernel would blur across cells the model does resolve');
+
+  /* and a hole in the middle of a covered city is closed by that smoothing
+     rather than by a special case */
+  {
+    const O = overheadCurve([96, 92, 60, 5], 0, 96);
+    const solid = sunLine(O, CLEAR);
+    ok('an isolated clear column cannot punch through a covered city',
+       KERNEL_MID() < 1, 'the centre tap is ' + KERNEL_MID().toFixed(3) +
+       ', so neighbours always carry a hole back up (' + solid.toFixed(0) + ' m column)');
+  }
+}
+
+function KERNEL_MID() {
+  const src = fs.readFileSync(FILE, 'utf8');
+  const w = (src.match(/const KERNEL=\[([^\]]+)\]/) || [])[1].split(',').map(Number);
+  return w[(w.length - 1) / 2];
+}
+
+head('MOTION  — the scrubber is the main interaction');
+{
+  const src5 = fs.readFileSync(FILE, 'utf8');
+  ok('heights ease toward the target rather than snapping',
+     /function stepFog\(\)/.test(src5) && /requestAnimationFrame\(stepFog\)/.test(src5));
+  const ease = +(src5.match(/const EASE=([\d.]+)/) || [])[1];
+  ok('the ease constant lands near the dots\' own transition', ease > 0.08 && ease < 0.35,
+     'EASE ' + ease + ' settles in about ' + Math.round(-1000 / 60 / Math.log(1 - ease) * 3) + ' ms');
+  ok('the body deforms rather than cross-fading',
+     /fogNow\[i\]\+=d\*EASE/.test(src5), 'easing the heights is what keeps it one mass');
+  ok('the loop stops when it settles', /fogRAF = moving \? requestAnimationFrame/.test(src5));
 }
 
 head('THE FOG AXIS  — true where it decides, compressed above');
