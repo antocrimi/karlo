@@ -35,9 +35,11 @@ A spot is **clear** when cloud overhead is under 45% *and* visibility is over 5 
 
 The chart's vertical axis is an elevation axis, and the cloud is drawn on it as a real surface running through all eleven places, with a leading edge where the layer runs out. Each spot has its own **sunlight line**: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. That is the same curve the surface is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree at any point along the section.
 
-The fog is drawn as a slab: a level top where there is a layer, and a steep face where the layer stops. Its height and its reach are two different quantities, so they get two different axes. Encoding "no fog here" as "height zero" used to ramp the leading edge down through the elevation scale, which built a second range of hills competing with the real one.
+The fog is drawn as one body of cloud. Its top is level where there is a layer, its ends dissolve where the layer runs out, and a hole in the middle of a covered city is bridged rather than drawn, because a single grid cell reading clear under an overcast is noise.
 
-Two marks carry it. A wash says where the fog is. A line says where its top is, and being a stroke it reads at 4.1 against the page where a tonal fill could not beat 1.03 at its worst point. That line is the fog line the app is named after, and it took until now to actually draw it.
+Height and reach are two different quantities, so they get two different axes. Encoding "no fog here" as "height zero" used to ramp the leading edge down through the elevation scale, which built a second range of hills competing with the real one.
+
+The vertical scale is true up to 300 m and compressed above it. The layer often sits at 700 m while the tallest place on the chart is Twin Peaks at 281 m, so drawing it literally pushed the cloud off the top of the frame and left a third of the picture empty. Nothing is lost: a place is clear when it stands above the fog line, so the two heights only ever need to be comparable below the tallest place, and everything below that is still at true scale.
 
 "Cloud overhead" is not the model's low-cloud figure. Cloud is sampled at four altitudes — roughly 110, 320, 540 and 760 metres — plus a mid-level field, and cover at any height in between is interpolated. Each spot then asks three separate questions of that curve using its own elevation: is there cloud at my altitude, is there cloud anywhere above me, and is there cloud below me. The second is what decides whether the sun is blocked, and it is the maximum across everything overhead — otherwise a high overcast deck with clear air beneath reads as a sunny day.
 
