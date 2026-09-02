@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.08.30.4 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.09.01.1 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -402,42 +402,45 @@ svg.g{fill:currentColor}
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to Dogpatch showing where cloud sits against the Twin Peaks ridge">
         <defs>
-          <!-- Fog cannot sit below ground. The terrain is painted over the band
-               anyway, but the axis intercept is y=213 while the drawn shoreline
-               is at 218, so a contour at zero metres would leak a sliver of fog
-               over an empty beach at the western edge. Masking to the sky kills
-               it exactly, and leaves yM as the one mapping on this axis. -->
-          <!-- The field dissolves into the page at the top rather than being cut
-               by the frame. Without it a deep layer fills the box to a hard
-               horizontal edge, and the whole picture reads as a grey rectangle
-               with hills in it. -->
+          <!-- Two masks. Both cut the fog at the terrain, because fog cannot sit
+               below ground: the axis intercept is y=213 while the drawn
+               shoreline is at 218, so an unmasked contour would leak a sliver of
+               fog over an empty beach. Only the wash also takes the top fade,
+               which stops a deep layer filling the frame to a hard horizontal
+               edge. The fog line is a 1.5px stroke and cannot read as a box, so
+               dimming it would cost legibility and buy nothing. -->
           <linearGradient id="fade" gradientUnits="userSpaceOnUse"
                           x1="0" y1="0" x2="0" y2="86">
             <stop offset="0%"   stop-color="#000"/>
             <stop offset="55%"  stop-color="#6E6E6E"/>
             <stop offset="100%" stop-color="#fff"/>
           </linearGradient>
-          <!-- The contours are a sampling of a continuous field, not strata in
-               it. Five bands left visible steps wherever the thresholds sat far
-               apart, which is exactly where the model is least sure and the
-               picture should be softest. A small blur returns the sampling to
-               the field it came from. It changes no path data, so the geometry
-               the verdict is checked against is untouched. -->
-          <filter id="soften" x="-6%" y="-40%" width="112%" height="180%">
-            <feGaussianBlur stdDeviation="5"/>
-          </filter>
           <mask id="sky" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
             <rect x="0" y="0" width="900" height="250" fill="#fff"/>
-            <rect x="0" y="0" width="900" height="86" fill="url(#fade)"/>
             <path id="terrainMask" d="" fill="#000"/>
           </mask>
+          <mask id="skyFade" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
+            <rect x="0" y="0" width="900" height="250" fill="#fff"/>
+            <rect x="0" y="0" width="900" height="86" fill="url(#fade)"/>
+            <path id="terrainMask2" d="" fill="#000"/>
+          </mask>
+          <!-- The wash dissolves upward through the depth of the layer itself.
+               A vertical gradient was the wrong tool while the surface was a
+               landmass carrying 200 px of relief; now that the slab's top is
+               level to within 36 px it matches the shape it fills, which is why
+               the blur and the stacked contours are both gone. y1 and y2 are set
+               every paint from the outer contour and the fog line. -->
+          <linearGradient id="fogGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="60">
+            <stop offset="0%"   stop-color="#A9B7BE" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#A9B7BE" stop-opacity=".30"/>
+          </linearGradient>
         </defs>
-        <!-- Five contours of the same field, not a gradient. Each path is the
-             surface where cloud overhead crosses one threshold, so the softness
-             of the top edge is the spacing of the thresholds: wide where the
-             model is vague, tight where it is sure. The old fixed 0/.24/.50
-             gradient performed that uncertainty without measuring any. -->
-        <g id="fogBody" fill="#A9B7BE" filter="url(#soften)" mask="url(#sky)"></g>
+        <!-- Two marks, not five. The wash says where the fog is; the line says
+             where its top is, and being a stroke it reads at 4.1 against the
+             page where a tonal fill bottomed out at 1.03. -->
+        <g id="fogBody" mask="url(#skyFade)"></g>
+        <g id="fogLine" fill="none" stroke="#A9B7BE" stroke-opacity=".62"
+           stroke-width="1.5" stroke-linecap="round" mask="url(#sky)"></g>
         <!-- A hairline in the page ground, not an outline. No dark fill can
              separate from the fog at every depth: the sky ramps continuously
              from #0E161C to #5B666D as the contours stack, and any fixed
@@ -513,7 +516,8 @@ svg.g{fill:currentColor}
           <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
           <div><dt>Height</dt><dd>Cloud is read at four altitudes and compared against each spot's own elevation, so a hilltop standing above the layer is not counted as fogged in.</dd></div>
           <div><dt>The line</dt><dd>Each spot has its own sunlight line: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. It is the same curve the band is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree.</dd></div>
-          <div><dt>Soft edge</dt><dd>The band is five contours of one field rather than a painted gradient. Where they spread apart the model is unsure of the layer's top, and the edge is soft because the reading is.</dd></div>
+          <div><dt>The fog line</dt><dd>Drawn where cloud overhead crosses 45 per cent. The wash below it fades in across the model's own uncertainty about the top, so a soft edge means an unsure reading rather than a decorative one.</dd></div>
+          <div><dt>The front</dt><dd>Where the layer runs out the slab stops. How deep the fog is and how far inland it has come are two different questions, so the picture keeps them on two different axes.</dd></div>
           <div><dt>Between hours</dt><dd>The forecast is hourly. The scrubber moves in quarters and reads between two hours, which is where the layer is seen rolling in and out.</dd></div>
       <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
         </dl>
@@ -617,7 +621,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.08.30.4";
+const BUILD="2026.09.01.1";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -637,20 +641,15 @@ const yM = m => cl(Y0 - Y_PER_M*m, 2, GROUND);
    Giving the sky more headroom would shrink the ridge, which is the one
    element the briefing puts above everything else. */
 
-/* Five thresholds bracketing CLEAR, each a real contour of the overhead curve.
-   Nine carried no more meaning than five: past a point the extra bands say
-   "foggy" a second time and start reading as a topographic map rather than as
-   weather. Five is the fewest that still holds the picture still — three drops
-   the ensemble to 29 px of movement for two points of cover and fails, four
-   only beats it by dropping CLEAR out of the ladder, and CLEAR has to be drawn
-   because it is the line every dot is judged against.
+/* Two contours of the overhead curve, and only two. CLEAR is the fog line,
+   the height every dot is judged against. T_EDGE is the generous outer one,
+   where the wash begins, and the gap between them is the model's own spread:
+   wide when it is unsure of the top, tight when it is not.
 
-   The alphas are graduated rather than uniform. Equal steps put an equal-sized
-   edge at the top of the stack, which is exactly where it must not be seen;
-   falling off to .03 at the outermost contour makes the last step invisible and
-   the mass dissolve instead of ending. They multiply out to .47, near the .50
-   the old fixed gradient bottomed out at. */
-const TIERS=[69,57,CLEAR,33,21], TIER_A=[.20,.16,.12,.07,.03];
+   This started at nine stacked fills, went to five, and is now two, because
+   the extra bands only ever said "foggy" a second time. What made the picture
+   legible was never the number of layers. It was drawing the top as a line. */
+const T_EDGE=21;
 
 /* Height to y for the fog, which is yM with a shoreline correction. Y0 is a
    regression intercept: the fit puts sea level at y=213 while the drawn
@@ -1131,39 +1130,85 @@ function paint(){
   });
 
   /* ── the marine layer ────────────────────────────────────────────
-     A surface through all eleven columns again, and a leading edge, because
-     the objection recorded here for two revisions does not hold. The claim was
-     that per-spot tops are grid noise that shredded the surface and that the
-     extent had to be smoothed into a contiguous run that then covered spots
-     the list called clear. Measured against the simulator: the run is already
-     contiguous in all 24 frames with no holes, and the tops fall monotonically
-     west to east (hour 20 reads 480 460 450 450 440 430 430 420 420 410 400),
-     which is marine air deepest at the coast and mixing out inland. That is
-     the mechanism the product exists to show. What was actually shredding the
-     surface was layerOf's threshold crossing, and that is gone.
+     A slab, not a landmass. Measured across the eleven columns: the layer's
+     own height varies 3 to 36 px, while the surface as drawn carried 119 px of
+     relief and up to 203. All of that excess was the leading edge being ramped
+     down to the ground through the vertical axis, because "no layer here" was
+     encoded as "height zero". Extent is a horizontal fact, and putting it on
+     the elevation scale is the same error as drawing cloud-cover per cent as a
+     height, which is the bug this chart was rebuilt around once already.
 
-     The edge needs no nose to be drawn for it. A column where the sun is not
-     blocked at sea level has a sunlight line of zero, yF folds it into the
-     ground, and the smoothing carries the surface down to meet it. The shape
-     of the nose is the data, not a bezier chosen to look like weather.
+     So the top is drawn only where there is a layer, and where the layer stops
+     the slab stops, in a front. The ridge is then the only jagged thing in the
+     frame, which is correct, because the ridge is the only jagged thing.
 
-     Nothing here can contradict the list, at any x: a dot is amber exactly
-     when its elevation is at or above the CLEAR contour at its own column,
-     and the CLEAR contour is one of the five paths being drawn. */
-  $("fogBody").innerHTML = TIERS.map((T,i)=>{
+     Two marks carry it. The wash says where the fog is and dissolves upward
+     through a gradient that is finally the right tool, now that the surface it
+     fills is level. The line says where the top is: a stroke reads at 4.1
+     against the page and 3.3 against the terrain, where a tonal fill could not
+     beat 1.03 at its worst point, so legibility stops depending on the fill.
+
+     Nothing here can contradict the list, at any x: a dot is amber exactly when
+     its elevation is at or above the CLEAR contour at its own column, and the
+     CLEAR contour is the line being drawn. East of the front there is no slab
+     and no dot can be under one, because a column with no layer has a sunlight
+     line of zero and every elevation clears it. */
+  /* The front is a steep taper, not a wall and not a hill. A dead vertical face
+     read as the corner of a box; the old ramp to the previous spot spread the
+     edge over 100 px and more, which is what built the second landmass. 34 px
+     is narrow enough that the top stays level and wide enough that the fog
+     bank has a face. */
+  const FRONT=34;
+  const slab=T=>{
     const hs=fr.spots.map(s=>sunLine(s.O,T));
-    /* a threshold nothing in the city reaches draws nothing at all */
-    if(hs.every(h=>h<=0)) return "";
-    const pts=fr.spots.map((s,i)=>({x:s.x, y:yFog(hs[i])}));
-    const ends=[{x:0,y:pts[0].y},...pts,{x:VBW,y:pts[pts.length-1].y}];
-    return `<path data-t="${T}" fill-opacity="${TIER_A[i]}" d="M0,${ends[0].y.toFixed(1)}`
-         + wave(ends) + ` L${VBW},${GROUND} L0,${GROUND} Z"/>`;
-  }).join("");
+    const on=hs.map(h=>h>0);
+    if(!on.some(Boolean)) return null;
+    const i0=on.indexOf(true), i1=on.lastIndexOf(true);
+    const xs=fr.spots.map(s=>s.x), f=n=>(+n).toFixed(1);
+    const openW=i0===0, openE=i1===xs.length-1;
+    const xW=openW?0:(xs[i0-1]+xs[i0])/2, xE=openE?VBW:(xs[i1]+xs[i1+1])/2;
+    const pts=[];
+    for(let i=i0;i<=i1;i++) pts.push({x:xs[i], y:yFog(Math.max(hs[i],1))});
+    const y0=pts[0].y, y1=pts[pts.length-1].y;
+    /* an open end runs flat off the frame; a closed one falls to the ground
+       across FRONT, steeply enough to read as a face and briefly enough to
+       leave the top level */
+    /* a narrow slab cannot afford two full tapers; without this the two ends
+       cross and the crest runs backwards, which silently drops columns out of
+       the drawn path and breaks the picture/list coupling */
+    const fw=Math.min(FRONT,(xE-xW)/2.4);
+    const wIn=openW?xW:xW+fw, eIn=openE?xE:xE-fw;
+    const top=[{x:wIn,y:y0}, ...pts.filter(q=>q.x>wIn&&q.x<eIn), {x:eIn,y:y1}];
+    const head = openW ? `M${f(xW)},${f(y0)}`
+      : `M${f(xW)},${f(GROUND)} C${f(xW+fw*.42)},${f(GROUND)} `
+        + `${f(wIn-fw*.42)},${f(y0)} ${f(wIn)},${f(y0)}`;
+    const tail = openE ? ""
+      : ` C${f(eIn+fw*.42)},${f(y1)} ${f(xE-fw*.42)},${f(GROUND)} ${f(xE)},${f(GROUND)}`;
+    return {crest: head + wave(top) + tail,
+            area:  head + wave(top) + tail
+                 + ` L${f(xE)},${f(GROUND)} L${f(xW)},${f(GROUND)} Z`,
+            yTop: Math.min(...pts.map(p=>p.y)),
+            yBot: Math.max(...pts.map(p=>p.y))};
+  };
+
+  const outer=slab(T_EDGE), line=slab(CLEAR);
+  if(!outer){ $("fogBody").innerHTML=""; $("fogLine").innerHTML=""; }
+  else{
+    /* the wash fades in across the depth between the outer contour and the fog
+       line, so the softness of the top edge is still the model's own spread */
+    const yA=outer.yTop, yB=Math.max(line?line.yBot:yA+34, yA+18);
+    $("fogGrad").setAttribute("y1",yA.toFixed(1));
+    $("fogGrad").setAttribute("y2",yB.toFixed(1));
+    $("fogBody").innerHTML=`<path d="${outer.area}" fill="url(#fogGrad)"/>`;
+    $("fogLine").innerHTML= line
+      ? `<path data-t="${CLEAR}" vector-effect="non-scaling-stroke" d="${line.crest}"/>` : "";
+  }
 
 }
 
 (()=>{ const d=`M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`;
-  $("terrain").setAttribute("d",d); $("terrainMask").setAttribute("d",d); })();
+  $("terrain").setAttribute("d",d); $("terrainMask").setAttribute("d",d);
+  $("terrainMask2").setAttribute("d",d); })();
 
 /* ── controls ──────────────────────────────────────────────────── */
 /* coalesce to one repaint per frame — a drag fires input far faster than

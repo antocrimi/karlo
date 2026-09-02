@@ -97,7 +97,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js = js.slice(0, js.lastIndexOf('})();'));
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
-        'overheadCurve,overheadAt,sunLine,TIERS,TIER_A,OFF_AXIS_KM,columns,yFog};';
+        'overheadCurve,overheadAt,sunLine,T_EDGE,OFF_AXIS_KM,columns};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -115,7 +115,7 @@ const head = t => console.log(`\n${t}`);
 const { api, store } = harness();
 const { S, paint, simulate, split, profile, note, frameAt,
         SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
-        overheadCurve, overheadAt, sunLine, TIERS, TIER_A, OFF_AXIS_KM, columns } = api;
+        overheadCurve, overheadAt, sunLine, T_EDGE, OFF_AXIS_KM, columns } = api;
 S.frames = simulate();
 const clean = x => (x || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const P = n => SPOTS.find(s => s.n === n);
@@ -191,7 +191,10 @@ function yAtX(d, x) {
   const nums = s => s.trim().split(/[\s,]+/).map(Number);
   const m = d.match(/^M\s*(-?[\d.]+),(-?[\d.]+)/);
   let cx = +m[1], cy = +m[2];
-  for (const seg of d.matchAll(/C\s*([-\d.,\s]+?)(?=[CLZ])/g)) {
+  /* the lookahead has to accept end-of-string: the crest ends on a C with no
+     command after it, and without this that whole segment is dropped, which
+     silently stops checking any spot inside the leading edge */
+  for (const seg of d.matchAll(/C\s*([-\d.,\s]+?)(?=[CLZ]|$)/g)) {
     const v = nums(seg[1]);
     const [x1, y1, x2, y2, x3, y3] = v;
     if (x >= Math.min(cx, x3) - 1e-6 && x <= Math.max(cx, x3) + 1e-6) {
@@ -210,20 +213,25 @@ const clearPath = html => {
   const m = html.match(/data-t="45"[^>]*\sd="([^"]+)"/);
   return m ? m[1] : null;
 };
-let insideBand = 0, checked = 0;
+const drawn = () => clearPath(store.fogLine._html || '');
+let insideBand = 0, checked = 0, outsideButFogged = 0;
 for (let k = 0; k < HOURS; k++) {
   S.h = k; paint();
-  const d = clearPath(store.fogBody._html || '');
+  const d = drawn();
   if (!d) continue;
   S.frames[k].spots.forEach(s => {
     const clear = s.elev >= s.sun && s.vis > VIS_CLEAR;
     const surf = yAtX(d, s.x);
-    if (surf == null) return;
+    if (surf == null) { /* outside the slab: no layer, so nothing can be under one */
+      if (s.elev < s.sun) outsideButFogged++;
+      return;
+    }
     checked++;
     if (clear && yM(s.elev) > surf + 1) insideBand++;   /* amber dot inside the fog */
   });
 }
-ok('the CLEAR contour was sampled at every spot', checked > HOURS, checked + ' samples');
+ok('the CLEAR contour was sampled across the sweep', checked > HOURS, checked + ' samples');
+ok('no fogged spot sits outside the drawn slab', outsideButFogged === 0, outsideButFogged + ' found');
 ok('no clear dot drawn inside the band', insideBand === 0, insideBand + ' found');
 ok('every hour renders all spots', rows.size === 1 && [...rows][0] === SPOTS.length, [...rows].join(','));
 ok('empty groups drop their heading', heads.size > 1 || quiet === 0, 'headings seen: ' + [...heads].join(','));
@@ -248,7 +256,7 @@ head('THE FIELD  — the properties the drawing rests on');
     const O = overheadCurve(lv, 0, lv[0]);
     for (let i = 1; i < O.length; i++) if (O[i] > O[i - 1] + 1e-9) notMono++;
     /* a lower threshold must always sit at or above a higher one */
-    const hs = TIERS.map(T => sunLine(O, T));
+    const hs = [T_EDGE, CLEAR].map(T => sunLine(O, T)).reverse();
     for (let i = 1; i < hs.length; i++) if (hs[i] < hs[i - 1] - 1e-9) crossed++;
   }
   ok('overhead curve is monotone non-increasing', notMono === 0, notMono + ' rises');
@@ -262,23 +270,26 @@ head('THE FIELD  — the properties the drawing rests on');
   }
   ok('above the sun line === overhead below CLEAR', split2 === 0, split2 + ' disagreements');
 
-  /* What killed the old geometry: two points of cover moved the surface a fifth
-     of the chart. The ensemble is what the eye reads, so that is what has to
-     hold still. The worst remaining case is a shoulder of cover sitting flat on
-     the threshold across 220 m, where a large move is the honest answer and the
-     other four contours are what keep the mass in place. */
-  const ink = lv => TIERS.reduce((a, T) =>
-    a + (GROUND - yFog(sunLine(overheadCurve(lv, 0, lv[0]), T))), 0) / TIERS.length;
-  const one = lv => GROUND - yFog(sunLine(overheadCurve(lv, 0, lv[0]), CLEAR));
-  let worst = 0, worstOne = 0;
-  for (const lv of vecs) for (let j = 0; j < 4; j++) {
-    const up = lv.slice(); up[j] = Math.min(100, up[j] + 2);
-    worst = Math.max(worst, Math.abs(ink(up) - ink(lv)));
-    worstOne = Math.max(worstOne, Math.abs(one(up) - one(lv)));
+  /* The claim the redesign rests on: the layer's own top is level. What used to
+     put 119 px of relief and up to 203 into the surface was the leading edge
+     being ramped down to the ground through the vertical axis, which is extent
+     drawn as height. The top is now only drawn where there is a layer, so its
+     relief has to stay small or the second landmass is back. */
+  {
+    let worst = 0, worstHour = -1;
+    for (let k = 0; k < HOURS; k++) {
+      const f = frameAt(k);
+      const on = f.spots.map(sp => sunLine(sp.O, CLEAR)).filter(h => h > 0);
+      if (on.length < 2) continue;
+      const ys = on.map(h => yFog(h));
+      const r = Math.max(...ys) - Math.min(...ys);
+      if (r > worst) { worst = r; worstHour = k; }
+    }
+    const ridge = SPOTS.map(sp => sp.y);
+    const relief = Math.max(...ridge) - Math.min(...ridge);
+    ok('the layer top stays level against the ridge', worst < relief * 0.55,
+       worst.toFixed(0) + ' px at +' + worstHour + 'h, ridge is ' + relief + ' px');
   }
-  ok('2 points of cover moves the band under 20 px', worst < 20, worst.toFixed(1) + ' px');
-  ok('the stack is twice as steady as any one contour', worst * 2 <= worstOne,
-     'stack ' + worst.toFixed(1) + ' px vs single contour ' + worstOne.toFixed(1) + ' px');
 
   /* no sentinel: a clear column must produce no layer at all */
   ok('a clear sky has no sun line', profile(5, [8,6,4,3], 0, 8).sun === 0);
@@ -296,24 +307,29 @@ head('THE FIELD  — the properties the drawing rests on');
 
 head('THE PICTURE READS AS WEATHER');
 {
-  /* the alpha ramp has to cover the ladder, and fall off at the outer edge or
-     the mass ends in a step instead of dissolving */
-  ok('an alpha per tier', TIER_A.length === TIERS.length, TIERS.length + ' vs ' + TIER_A.length);
-  let falls = true;
-  for (let i = 1; i < TIER_A.length; i++) if (TIER_A[i] >= TIER_A[i - 1]) falls = false;
-  ok('alpha falls off toward the outer contour', falls, TIER_A.join(' '));
-  const stacked = 1 - TIER_A.reduce((a, v) => a * (1 - v), 1);
-  ok('the saturated stack lands near .50', Math.abs(stacked - 0.5) < 0.06, stacked.toFixed(3));
-  /* CLEAR must be one of the drawn bands: it is the line every dot is judged
-     against, so it cannot be dropped from the ladder to buy stability */
-  ok('CLEAR is a drawn contour', TIERS.includes(CLEAR), TIERS.join(' '));
+  /* Two marks. Nine stacked fills went to five and now to two, because the
+     extra bands only said "foggy" a second time. The wash and the line. */
+  {
+    S.h = 6; paint();
+    const wash = (store.fogBody._html || '').match(/<path/g) || [];
+    const line = (store.fogLine._html || '').match(/<path/g) || [];
+    ok('the wash is a single path', wash.length === 1, wash.length + ' paths');
+    ok('the line is a single path', line.length === 1, line.length + ' paths');
+    ok('the wash carries a gradient, not a flat fill',
+       /fill="url\(#fogGrad\)"/.test(store.fogBody._html || ''));
+    ok('the outer contour sits at or above the fog line', T_EDGE < CLEAR,
+       'T_EDGE ' + T_EDGE + ' vs CLEAR ' + CLEAR);
+  }
 
   /* a deep layer must run off the top of the frame rather than stacking every
      contour on y=2, which is what gave a socked-in hour a flat grey lid */
   ok('a deep layer runs past the top of the frame', yFog(900) < 0, 'yFog(900)=' + yFog(900).toFixed(1));
   ok('the ground end is still pinned', yFog(0) >= 224, 'yFog(0)=' + yFog(0).toFixed(1));
   const src2 = fs.readFileSync(FILE, 'utf8');
-  ok('the field is faded at the top rather than cut', /mask id="sky"[\s\S]{0,400}url\(#fade\)/.test(src2));
+  ok('the wash is faded at the top rather than cut',
+     /mask id="skyFade"[\s\S]{0,300}url\(#fade\)/.test(src2));
+  ok('the fog line is not dimmed by that fade',
+     /id="fogLine"[^>]*mask="url\(#sky\)"/.test(src2));
   ok('dots carry the ridge hairline', /\.dot\{[^}]*box-shadow:0 0 0 [\d.]+px var\(--ink\)/.test(src2));
 }
 
@@ -322,10 +338,10 @@ head('THE EDGE  — the roll-in is drawn, not gated away');
   let gated = 0, hoursDrawn = 0, widths = [];
   for (let k = 0; k < HOURS; k++) {
     S.h = k; paint();
-    const html = store.fogBody._html || '';
+    const html = (store.fogBody._html || '') + (store.fogLine._html || '');
     const under = S.frames[k].spots.filter(s => s.elev < s.sun).length;
-    if (under > 0 && !/data-t/.test(html)) gated++;
-    if (/data-t/.test(html)) hoursDrawn++;
+    if (under > 0 && !/<path/.test(html)) gated++;
+    if (/<path/.test(html)) hoursDrawn++;
     widths.push(under);
   }
   ok('any spot under the layer draws a band', gated === 0, gated + ' hours suppressed');
