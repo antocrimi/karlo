@@ -97,7 +97,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js = js.slice(0, js.lastIndexOf('})();'));
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
-        'overheadCurve,overheadAt,sunLine,T_EDGE,OFF_AXIS_KM,columns};';
+        'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -115,7 +115,7 @@ const head = t => console.log(`\n${t}`);
 const { api, store } = harness();
 const { S, paint, simulate, split, profile, note, frameAt,
         SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
-        overheadCurve, overheadAt, sunLine, T_EDGE, OFF_AXIS_KM, columns } = api;
+        overheadCurve, overheadAt, sunLine, T_EDGE, H_TRUE, OFF_AXIS_KM, columns } = api;
 S.frames = simulate();
 const clean = x => (x || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const P = n => SPOTS.find(s => s.n === n);
@@ -305,32 +305,58 @@ head('THE FIELD  — the properties the drawing rests on');
      profile(5, [96,94,92,90], 0, 96).sun >= 760, 'ran off the top of the samples');
 }
 
-head('THE PICTURE READS AS WEATHER');
+head('ONE BODY  — cohesive, and anchored where the meaning is');
 {
-  /* Two marks. Nine stacked fills went to five and now to two, because the
-     extra bands only said "foggy" a second time. The wash and the line. */
-  {
-    S.h = 6; paint();
-    const wash = (store.fogBody._html || '').match(/<path/g) || [];
-    const line = (store.fogLine._html || '').match(/<path/g) || [];
-    ok('the wash is a single path', wash.length === 1, wash.length + ' paths');
-    ok('the line is a single path', line.length === 1, line.length + ' paths');
-    ok('the wash carries a gradient, not a flat fill',
-       /fill="url\(#fogGrad\)"/.test(store.fogBody._html || ''));
-    ok('the outer contour sits at or above the fog line', T_EDGE < CLEAR,
-       'T_EDGE ' + T_EDGE + ' vs CLEAR ' + CLEAR);
-  }
+  S.h = 6; paint();
+  const body = (store.fogBody._html || '').match(/<path/g) || [];
+  const rim  = (store.fogLine._html || '').match(/<path/g) || [];
+  ok('the body is a mass and its own edge', body.length <= 2 && rim.length === 1,
+     body.length + ' fills, ' + rim.length + ' edge');
+  ok('the edge sits close in value to the mass it belongs to', (() => {
+    const src2 = fs.readFileSync(FILE, 'utf8');
+    const stroke = +(src2.match(/id="fogLine"[\s\S]{0,120}?stroke-opacity="([\d.]+)"/) || [])[1];
+    const fill = +((store.fogBody._html || '').match(/fill-opacity="([\d.]+)"[^>]*\/>\s*$/) || [])[1];
+    return stroke > 0 && fill > 0 && Math.abs(stroke - fill) < 0.2;
+  })(), 'a bright line on a faint wash reads as two elements, not one body');
 
-  /* a deep layer must run off the top of the frame rather than stacking every
-     contour on y=2, which is what gave a socked-in hour a flat grey lid */
-  ok('a deep layer runs past the top of the frame', yFog(900) < 0, 'yFog(900)=' + yFog(900).toFixed(1));
+  /* the ends dissolve rather than stop: a vertical cut read as a sharp line
+     passing behind the terrain */
+  const src3 = fs.readFileSync(FILE, 'utf8');
+  ok('the mask carries a fade at each end',
+     /id="fadeW"/.test(src3) && /id="fadeE"/.test(src3));
+  ok('those fades are positioned from the front, every paint',
+     /\$\("fadeE"\)|g\("gE","fadeE"/.test(src3));
+
+  /* a hole in the middle of a covered city is grid noise; drawing it as ground
+     used to punch the body in half */
+  ok('interior holes are bridged, not drawn',
+     /bridge interior holes/.test(src3) && /hs\[k\]=a\+\(b-a\)/.test(src3));
+}
+
+head('THE FOG AXIS  — true where it decides, compressed above');
+{
+  const tallest = Math.max(...SPOTS.map(s => s.e));
+  ok('H_TRUE clears the tallest spot', H_TRUE > tallest,
+     'H_TRUE ' + H_TRUE + ' vs ' + tallest + ' m — this is what keeps the verdict exact');
+  /* below the tallest spot the mapping must be the plain elevation axis, or a
+     dot and the fog line stop being comparable and the coupling is a fiction */
+  let worst = 0;
+  for (let h = 0; h <= tallest; h += 5) {
+    const plain = 213 - 0.392 * h + 13 * Math.exp(-h / 50);
+    worst = Math.max(worst, Math.abs(yFog(h) - plain));
+  }
+  ok('no compression below the tallest spot', worst < 1e-9, worst.toExponential(1) + ' px');
+
+  let mono = true;
+  for (let h = 1; h <= 900; h++) if (yFog(h) > yFog(h - 1) + 1e-9) mono = false;
+  ok('the fog axis is monotone', mono);
+
+  /* compression is what removed the need for a top fade: the body can no
+     longer reach the frame edge, so it can no longer read as a box */
+  ok('even a 900 m layer leaves sky above it', yFog(900) > 30, 'y=' + yFog(900).toFixed(0));
   ok('the ground end is still pinned', yFog(0) >= 224, 'yFog(0)=' + yFog(0).toFixed(1));
-  const src2 = fs.readFileSync(FILE, 'utf8');
-  ok('the wash is faded at the top rather than cut',
-     /mask id="skyFade"[\s\S]{0,300}url\(#fade\)/.test(src2));
-  ok('the fog line is not dimmed by that fade',
-     /id="fogLine"[^>]*mask="url\(#sky\)"/.test(src2));
-  ok('dots carry the ridge hairline', /\.dot\{[^}]*box-shadow:0 0 0 [\d.]+px var\(--ink\)/.test(src2));
+  ok('dots carry the ridge hairline',
+     /\.dot\{[^}]*box-shadow:0 0 0 [\d.]+px var\(--ink\)/.test(fs.readFileSync(FILE, 'utf8')));
 }
 
 head('THE EDGE  — the roll-in is drawn, not gated away');
