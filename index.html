@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.09.01.3 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.09.01.4 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -402,24 +402,44 @@ svg.g{fill:currentColor}
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to Dogpatch showing where cloud sits against the Twin Peaks ridge">
         <defs>
-          <!-- fog cannot sit below ground -->
-          <!-- The body's density follows how much fog there is, the way its
-               height follows how deep. At the front both fall to nothing
-               together, so the mass dissolves as it descends instead of ending
-               in an edge. One stop per column, rebuilt every frame from the
-               same eased heights the outline uses. -->
-          <linearGradient id="fogFill" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="0"></linearGradient>
-          <mask id="fogMask" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
-            <rect x="0" y="0" width="900" height="250" fill="#fff"/>
-            <path id="terrainMask" d="" fill="#000"/>
+          <!-- Horizontal ramps, one stop per column, rebuilt every frame. They
+               ride in the masks rather than in the fills, because a mask's
+               luminance multiplies the fill's alpha and that is how the body
+               gets a horizontal density and a vertical profile at once.
+               `cover` is how much fog there is; `deck` is whether it reaches
+               the ground. -->
+          <linearGradient id="rCover" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="0"></linearGradient>
+          <linearGradient id="rDeck"  gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="0"></linearGradient>
+          <!-- The vertical profile, anchored to the body's own top each frame.
+               Air is densest at the top and thins toward the ground, which is
+               what a layer sitting aloft looks like from underneath: you can
+               see across the city beneath a deck. Deck is the opposite, and
+               only appears where the fog is genuinely at street level, so the
+               mass stays solid to the pavement on the days it is. -->
+          <linearGradient id="fogAir" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="246">
+            <stop offset="0%"   stop-color="#A9B7BE" stop-opacity=".36"/>
+            <stop offset="55%"  stop-color="#A9B7BE" stop-opacity=".22"/>
+            <stop offset="100%" stop-color="#A9B7BE" stop-opacity=".09"/>
+          </linearGradient>
+          <linearGradient id="fogDeck" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="246">
+            <stop offset="0%"   stop-color="#A9B7BE" stop-opacity="0"/>
+            <stop offset="60%"  stop-color="#A9B7BE" stop-opacity=".05"/>
+            <stop offset="100%" stop-color="#A9B7BE" stop-opacity=".20"/>
+          </linearGradient>
+          <mask id="mCover" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
+            <rect x="0" y="0" width="900" height="250" fill="url(#rCover)"/>
+            <path id="terrainMask" d="" fill="#000"/>   <!-- fog cannot sit below ground -->
+          </mask>
+          <mask id="mDeck" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="250">
+            <rect x="0" y="0" width="900" height="250" fill="url(#rDeck)"/>
+            <path id="terrainMask2" d="" fill="#000"/>
           </mask>
         </defs>
-        <!-- One body, full bleed. It spans the frame at every hour and carries
-             everything in its height, so it grows out of the ground and sinks
-             back into it rather than ending somewhere on screen. -->
-        <g id="fogBody" fill="url(#fogFill)" mask="url(#fogMask)"></g>
-        <g id="fogLine" fill="none" stroke="url(#fogFill)" stroke-opacity=".9"
-           stroke-width="1" stroke-linecap="round" mask="url(#fogMask)"></g>
+        <!-- One body, full bleed, painted twice: the layer aloft and the part
+             of it that is on the ground. Same path, so it stays one mass. -->
+        <g id="fogBody"></g>
+        <g id="fogLine" fill="none" stroke="url(#rCover)" stroke-opacity=".45"
+           stroke-width="1" stroke-linecap="round" mask="url(#mCover)"></g>
         <path id="terrain" d="" fill="#1E2B33" stroke="#0E161C" stroke-width="1.25"
               stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
       </svg>
@@ -485,6 +505,7 @@ svg.g{fill:currentColor}
           <div><dt>The fog line</dt><dd>The body's top edge, drawn where cloud overhead crosses 45 per cent. Its softness is the model's own uncertainty about where the layer ends, so a vague edge means a vague reading.</dd></div>
           <div><dt>Height</dt><dd>Drawn to true scale up to 300 m, which is above every place on the chart, and compressed above that. The marine layer often sits at 700 m, and drawing that literally would push the cloud off the top of the picture and leave a third of it empty, since nowhere in the city is that high.</dd></div>
           <div><dt>The front</dt><dd>The model runs on a 3 km grid across a city 11 km wide, so it cannot place the fog's edge more precisely than about a quarter of the chart. The readings are smoothed at that scale before anything is drawn or decided, which is why the front arrives as a slope rather than a wall.</dd></div>
+          <div><dt>Underneath</dt><dd>The body is densest at the layer's top and thins toward the ground, which is what a deck sitting above you looks like: you can see across the city beneath it. On the hours the fog is genuinely at street level it stays solid all the way down, because then you cannot.</dd></div>
           <div><dt>Moving</dt><dd>Drag the hours and the layer grows and recedes rather than jumping. What you are watching is the same reading at a different hour, eased between the two.</dd></div>
           <div><dt>Between hours</dt><dd>The forecast is hourly. The scrubber moves in quarters and reads between two hours, which is where the layer is seen rolling in and out.</dd></div>
       <div><dt>Refresh</dt><dd>Hourly forecast, twenty-four hours ahead, all eleven spots in one request.</dd></div>
@@ -589,7 +610,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.09.01.3";
+const BUILD="2026.09.01.4";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1146,7 +1167,7 @@ function paint(){
      Nothing here can contradict the list, at any x: a dot is amber exactly when
      its elevation is at or above the curve at its own column, and both read the
      same smoothed field. */
-  fogTo(fr.spots.map(s=>s.sun), fr.spots.map(s=>s.x));
+  fogTo(fr.spots.map(s=>s.sun), fr.spots.map(s=>s.x), fr.spots.map(s=>s.here));
 
 }
 
@@ -1160,18 +1181,21 @@ function paint(){
    Easing the heights rather than cross-fading two paths is what keeps it a
    body: the mass deforms, it does not dissolve and reappear. */
 const EASE=.18, SETTLED=.35;          /* per frame, and the metres to stop at */
-let fogNow=null, fogAim=null, fogXs=null, fogRAF=null;
-function fogTo(aim,xs){
-  fogAim=aim; fogXs=xs;
-  if(!fogNow || fogNow.length!==aim.length){ fogNow=aim.slice(); drawFog(); return; }
+let fogNow=null, fogAim=null, fogXs=null, deckNow=null, deckAim=null, fogRAF=null;
+function fogTo(aim,xs,deck){
+  fogAim=aim; fogXs=xs; deckAim=deck;
+  if(!fogNow || fogNow.length!==aim.length){
+    fogNow=aim.slice(); deckNow=deck.slice(); drawFog(); return;
+  }
   if(!fogRAF) fogRAF=requestAnimationFrame(stepFog);
 }
 function stepFog(){
   let moving=false;
   for(let i=0;i<fogNow.length;i++){
     const d=fogAim[i]-fogNow[i];
-    if(Math.abs(d)<SETTLED){ fogNow[i]=fogAim[i]; continue; }
-    fogNow[i]+=d*EASE; moving=true;
+    if(Math.abs(d)<SETTLED) fogNow[i]=fogAim[i]; else { fogNow[i]+=d*EASE; moving=true; }
+    const g=deckAim[i]-deckNow[i];
+    if(Math.abs(g)<.4) deckNow[i]=deckAim[i]; else { deckNow[i]+=g*EASE; moving=true; }
   }
   drawFog();
   fogRAF = moving ? requestAnimationFrame(stepFog) : null;
@@ -1179,28 +1203,47 @@ function stepFog(){
 /* how solid the body is at a column: nothing where there is no layer, full
    once the layer is deep enough to be unambiguous, smooth in between */
 const DENSE=150;                      /* metres of layer for full density */
-const density=h=>{ const t=cl(h/DENSE,0,1); return t*t*(3-2*t); };
+const ramp=(v,hi)=>{ const t=cl(v/hi,0,1); return t*t*(3-2*t); };
 
 function drawFog(){
   const f=n=>(+n).toFixed(1);
   const pts=fogNow.map((h,i)=>({x:fogXs[i], y:yFog(Math.max(h,0))}));
   const top=[{x:0,y:pts[0].y}, ...pts, {x:VBW,y:pts[pts.length-1].y}];
   const crest=`M0,${f(top[0].y)}`+wave(top);
-  /* one stop per column, plus the two frame edges holding their neighbour's
-     value so the body reaches the sides without a seam */
-  const st=(x,h)=>`<stop offset="${(x/VBW*100).toFixed(2)}%" stop-color="#A9B7BE"`
-                 +` stop-opacity="${(density(h)*.22).toFixed(3)}"/>`;
-  $("fogFill").innerHTML = st(0,fogNow[0])
-    + fogNow.map((h,i)=>st(fogXs[i],h)).join("")
-    + st(VBW,fogNow[fogNow.length-1]);
+  const area=`${crest} L${VBW},${GROUND} L0,${GROUND} Z`;
+
+  /* one stop per column, plus the frame edges holding their neighbour's value
+     so the body reaches the sides without a seam. Greyscale, because these
+     ride in a mask: white passes the fill through, black holds it back. */
+  const stops=(get)=>{
+    const g=(x,v)=>{const l=Math.round(cl(v,0,1)*255).toString(16).padStart(2,"0");
+      return `<stop offset="${(x/VBW*100).toFixed(2)}%" stop-color="#${l}${l}${l}"/>`;};
+    return g(0,get(0)) + fogNow.map((h,i)=>g(fogXs[i],get(i))).join("")
+         + g(VBW,get(fogNow.length-1));
+  };
+  $("rCover").innerHTML = stops(i=>ramp(fogNow[i],DENSE));
+  /* the ground layer is gated twice: there has to be fog, and it has to be at
+     street level. Cover at your own altitude is exactly that question. */
+  $("rDeck").innerHTML  = stops(i=>ramp(fogNow[i],DENSE)*ramp(deckNow[i]-20,60));
+
+  /* the vertical profile spans the body's own depth, so a shallow layer fades
+     across its own thickness rather than across the whole frame */
+  const yTop=Math.min(...pts.map(p=>p.y));
+  [["fogAir",yTop],["fogDeck",yTop]].forEach(([id,y1])=>{
+    $(id).setAttribute("y1",f(y1)); $(id).setAttribute("y2",GROUND);
+  });
+
   /* a body with no height anywhere is buried under the terrain, so it costs
      nothing to keep drawing it, and the geometry never has to appear or vanish */
-  $("fogBody").innerHTML=`<path d="${crest} L${VBW},${GROUND} L0,${GROUND} Z"/>`;
+  $("fogBody").innerHTML =
+      `<path d="${area}" fill="url(#fogAir)"  mask="url(#mCover)"/>`
+    + `<path d="${area}" fill="url(#fogDeck)" mask="url(#mDeck)"/>`;
   $("fogLine").innerHTML=`<path data-t="${CLEAR}" vector-effect="non-scaling-stroke" d="${crest}"/>`;
 }
 
 (()=>{ const d=`M0,${GROUND} `+smooth(RIDGE)+` L${VBW},${GROUND} Z`;
-  $("terrain").setAttribute("d",d); $("terrainMask").setAttribute("d",d); })();
+  $("terrain").setAttribute("d",d); $("terrainMask").setAttribute("d",d);
+  $("terrainMask2").setAttribute("d",d); })();
 
 /* ── controls ──────────────────────────────────────────────────── */
 /* coalesce to one repaint per frame — a drag fires input far faster than
