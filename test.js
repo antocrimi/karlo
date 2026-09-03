@@ -314,13 +314,34 @@ head('ONE BODY  — cohesive, and anchored where the meaning is');
   const rim  = (store.fogLine._html || '').match(/<path/g) || [];
   ok('the body is a mass and its own edge', body.length <= 2 && rim.length === 1,
      body.length + ' fills, ' + rim.length + ' edge');
-  ok('the mass and its edge are painted from one ramp', (() => {
+  ok('the mass and its edge are gated by the same coverage ramp', (() => {
     const src2 = fs.readFileSync(FILE, 'utf8');
-    return /id="fogBody"[^>]*fill="url\(#fogFill\)"/.test(src2)
-        && /id="fogLine"[^>]*stroke="url\(#fogFill\)"/.test(src2);
+    return /mask="url\(#mCover\)"/.test(src2)
+        && /id="fogLine"[^>]*stroke="url\(#rCover\)"/.test(src2);
   })(), 'sharing the ramp is what stops the edge outliving the body at the front');
   ok('density falls to nothing where there is no layer',
      /const DENSE=/.test(fs.readFileSync(FILE, 'utf8')));
+
+  /* the vertical falloff has to be data, not decoration: a layer sitting aloft
+     thins toward the ground because you can see under it, and a layer on the
+     deck does not, because you cannot */
+  {
+    const src6 = fs.readFileSync(FILE, 'utf8');
+    const air = (src6.match(/id="fogAir"[\s\S]*?<\/linearGradient>/) || [''])[0];
+    const deck = (src6.match(/id="fogDeck"[\s\S]*?<\/linearGradient>/) || [''])[0];
+    const ops = g => (g.match(/stop-opacity="([\d.]+)"/g) || []).map(m => +m.match(/[\d.]+/)[0]);
+    const a = ops(air), d = ops(deck);
+    ok('the layer aloft thins toward the ground',
+       a.length >= 2 && a[0] > a[a.length - 1], a.join(' > '));
+    ok('the ground layer runs the other way',
+       d.length >= 2 && d[0] < d[d.length - 1], d.join(' < '));
+    ok('the ground layer is gated on fog actually being at street level',
+       /rDeck.*deckNow|deckNow\[i\]/.test(src6) && /fr\.spots\.map\(s=>s\.here\)/.test(src6),
+       'cover at your own altitude is exactly that question');
+    ok('the profile spans the body, not the frame',
+       /\$\(id\)\.setAttribute\("y1",f\(y1\)\)/.test(src6),
+       'anchoring to the frame would make a shallow layer nearly invisible');
+  }
 
   /* full bleed: the body spans the frame at every hour, so it can never be
      seen to end somewhere on screen */
