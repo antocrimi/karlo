@@ -35,6 +35,8 @@ A spot is **clear** when cloud overhead is under 45% *and* visibility is over 5 
 
 The chart's vertical axis is an elevation axis, and the cloud is drawn on it as a real surface running through all eleven places, with a leading edge where the layer runs out. Each spot has its own **sunlight line**: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. That is the same curve the surface is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree at any point along the section.
 
+The body is densest at the layer's top and thins toward the ground, because that is what a deck sitting above you looks like from underneath: you can see across the city beneath a low ceiling. That falloff is data rather than styling. On the hours the fog is genuinely at street level it stays solid to the pavement, gated on cloud cover at each place's own altitude, which is the same reading behind "fogged in" in the list.
+
 The fog is drawn as one body of cloud, full bleed. It spans the frame at every hour and carries everything in its height and its density, so it grows out of the ground and sinks back into it rather than ending somewhere on screen. Drag the hours and it moves: the heights ease toward the new reading instead of snapping to it.
 
 The model runs on a 3 km grid across a city 10.8 km wide, so one grid cell is a quarter of the chart and covers two or three of the eleven places. Treating them as independent draws a fog edge about seven times sharper than the model can resolve. The readings are smoothed at that scale first, once, before anything is drawn or decided, so the percentage in the list and the height of the body come from the same numbers.
