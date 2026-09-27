@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.09.01.4 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.09.27.1 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -504,7 +504,7 @@ svg.g{fill:currentColor}
           <div><dt>The line</dt><dd>Each spot has its own sunlight line: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. It is the same curve the band is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree.</dd></div>
           <div><dt>The fog line</dt><dd>The body's top edge, drawn where cloud overhead crosses 45 per cent. Its softness is the model's own uncertainty about where the layer ends, so a vague edge means a vague reading.</dd></div>
           <div><dt>Height</dt><dd>Drawn to true scale up to 300 m, which is above every place on the chart, and compressed above that. The marine layer often sits at 700 m, and drawing that literally would push the cloud off the top of the picture and leave a third of it empty, since nowhere in the city is that high.</dd></div>
-          <div><dt>The front</dt><dd>The model runs on a 3 km grid across a city 11 km wide, so it cannot place the fog's edge more precisely than about a quarter of the chart. The readings are smoothed at that scale before anything is drawn or decided, which is why the front arrives as a slope rather than a wall.</dd></div>
+          <div><dt>The front</dt><dd>The model runs on a 3 km grid across a city 11 km wide, so it cannot place the fog's edge more precisely than about a quarter of the chart. Each place is judged on its own grid cell and nothing else, so where two neighbours disagree the front falls between them. Add ?debug to the address to see what the model returned for every place.</dd></div>
           <div><dt>Underneath</dt><dd>The body is densest at the layer's top and thins toward the ground, which is what a deck sitting above you looks like: you can see across the city beneath it. On the hours the fog is genuinely at street level it stays solid all the way down, because then you cannot.</dd></div>
           <div><dt>Moving</dt><dd>Drag the hours and the layer grows and recedes rather than jumping. What you are watching is the same reading at a different hour, eased between the two.</dd></div>
           <div><dt>Between hours</dt><dd>The forecast is hourly. The scrubber moves in quarters and reads between two hours, which is where the layer is seen rolling in and out.</dd></div>
@@ -610,7 +610,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.09.01.4";
+const BUILD="2026.09.27.1";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -986,43 +986,36 @@ function split(fr){
    an open question in the briefing that could only be answered against live
    data; measuring it in the page answers it every hour instead of once. */
 function columns(fr){
-  const seen=new Set();
-  fr.spots.forEach(s=>seen.add(s.O.map(v=>Math.round(v)).join(",")));
-  return seen.size;
+  if(fr.cols!=null) return fr.cols;
+  return new Set(fr.spots.map(s=>s.O.map(v=>Math.round(v)).join(","))).size;
 }
 
 /* ── horizontal resolution ───────────────────────────────────────
-   The model runs on a 3 km grid and the section is 10.8 km wide, so one grid
-   cell is 250 chart units and spans two to three of the eleven places. Treating
-   the columns as independent draws a fog boundary about seven times sharper
-   than the model can resolve, which is what kept producing a front that ended
-   point blank. Smoothing across the columns at sigma of one spacing, roughly
-   190 units and comfortably inside a single cell, is the honest read.
+   Each place is judged on its own grid cell, unblended.
 
-   It is done to the overhead curve itself, once, before anything is drawn or
-   decided. Everything downstream — the percentage in the list, the sunlight
-   line, the drawn body — is then derived from the same smoothed field, so they
-   cannot disagree. Smoothing only the drawing would have made the picture
-   contradict the number beside it. A convex combination of monotone curves is
-   monotone, so the one property the geometry needs survives. */
-const KERNEL=[.0545,.2442,.4026,.2442,.0545];   /* gaussian, sigma one spacing */
+   Earlier builds blended each place's cloud with its neighbours so the drawn
+   front could not be sharper than the 3 km grid. Blending can never add what
+   the model knows: two places in one cell already receive identical readings,
+   so blending them is a no-op, and two places in different cells differ
+   because the model distinguishes them, so blending them overrides it. The
+   first version blended by position in the list rather than on the ground,
+   which gave Ocean Beach 60% of its reading from places more than a cell away
+   and turned a north-south sky into list-order holes; a distance-weighted
+   version still fogged Alamo Square, clear in its own cell, because Corona
+   Heights 1.3 km away was not. Either way the list said something about a
+   place that the model never said.
+
+   So the verdict for a place is what the model returned for that place, and
+   ?debug prints it. How sharp a front looks is a drawing question and stays
+   in the drawing: the crest passes through every place's own sun line and the
+   body's density fades where there is no layer. */
+const CELL_KM=3, KM_E=111.32*Math.cos(37.76*Math.PI/180), KM_N=111.32;
+const kmBetween=(a,b)=>Math.hypot((a.lon-b.lon)*KM_E,(a.lat-b.lat)*KM_N);
 function smoothAcross(frames){
   for(const fr of frames){
-    const n=fr.spots.length, src=fr.spots.map(s=>({O:s.O, here:s.here, beneath:s.beneath}));
-    fr.spots.forEach((s,i)=>{
-      const O=new Array(SCAN_N).fill(0); let here=0, beneath=0;
-      KERNEL.forEach((w,k)=>{
-        /* reflect at the ends rather than letting the edges pull toward zero */
-        let j=i+k-2; if(j<0) j=-j; if(j>n-1) j=2*(n-1)-j;
-        const t=src[cl(j,0,n-1)];
-        for(let q=0;q<SCAN_N;q++) O[q]+=t.O[q]*w;
-        here+=t.here*w; beneath+=t.beneath*w;
-      });
-      const overhead=overheadAt(O,s.elev);
-      Object.assign(s,{O, here, beneath, overhead, lowCloud:overhead,
-        sun:sunLine(O,CLEAR), inLayer:here>=CLEAR,
-        aboveFog: beneath>=60 && here<CLEAR && overhead<CLEAR});
-    });
+    /* how many different skies the model returned this hour */
+    fr.cols=new Set(fr.spots.map(s=>s.O.map(v=>Math.round(v)).join(","))).size;
+    fr.raw=fr.spots.map(s=>({O:s.O, here:s.here, beneath:s.beneath, sun:s.sun}));
   }
   return frames;
 }
@@ -1049,7 +1042,7 @@ function frameAt(t){
   const key=t.toFixed(3);
   if(S._fa && S._fa.k===key && S._fa.f===S.frames) return S._fa.v;
   const A=S.frames[i], B=S.frames[i+1], mix=(a,b)=>a+(b-a)*f;
-  const fr={t:mix(A.t,B.t), spots:A.spots.map((a,n)=>{
+  const fr={t:mix(A.t,B.t), cols:Math.max(A.cols??0,B.cols??0)||null, spots:A.spots.map((a,n)=>{
     const b=B.spots[n];
     const O=a.O.map((v,j)=>mix(v,b.O[j]));
     const overhead=overheadAt(O,a.elev);
@@ -1113,6 +1106,25 @@ function paintVerdict(sun,k,fr){
   copyfit($("verdict").querySelector(".v-name"));
 }
 
+/* ── ?debug ──────────────────────────────────────────────────────
+   When the screen and the window disagree, the question is always whether the
+   model said it or the code made it up. Add ?debug to the URL and each hour you
+   move to prints the model's own reading beside what the page did with it. */
+const DEBUG = typeof location!=="undefined" && /[?&]debug\b/.test(location.search||"");
+let dumped=null;
+function debugDump(k){
+  const h=Math.round(k), fr=S.frames[h];
+  if(!DEBUG || !fr || !fr.raw || dumped===h+":"+fr.t) return;
+  dumped=h+":"+fr.t;
+  const clear=new Set(split(fr).sun.map(s=>s.n));
+  console.log("NoKarl "+BUILD+"  +"+h+"h  "+new Date(fr.t*1000).toLocaleString("en-US",{timeZone:TZ})
+    +"  ·  distinct model columns: "+fr.cols);
+  console.table(fr.spots.map((s,i)=>({place:s.n, lat:s.lat, elev_m:Math.round(s.elev),
+    model_sunline_m:Math.round(fr.raw[i].sun), drawn_sunline_m:Math.round(s.sun),
+    cloud_over_pct:Math.round(s.lowCloud), vis_km:+(s.vis/1000).toFixed(1),
+    clear:clear.has(s.n)})));
+}
+
 function paint(){
   const k=S.h, fr=frameAt(k), {sun,fog}=split(fr);
   paintVerdict(sun,k,fr);
@@ -1142,8 +1154,11 @@ function paint(){
   [...$("board").querySelectorAll(".nm")].forEach(copyfit);
 
   const pick=sun.length?sun[0].n:null;
+  /* same rule as the list, visibility included: a smoky clear sky must not
+     light a dot the list files under Karl */
+  const lit=new Set(sun.map(s=>s.n));
   const state={};
-  fr.spots.forEach(s=>state[s.n]={on:s.lowCloud<CLEAR, pick:s.n===pick});
+  fr.spots.forEach(s=>state[s.n]={on:lit.has(s.n), pick:s.n===pick});
   [["dots","dot"],["peaks","pk"],["rail","b"]].forEach(([id])=>{
     [...$(id).children].forEach(n=>{
       const st=state[n.dataset.k]; if(!st) return;
@@ -1168,6 +1183,7 @@ function paint(){
      its elevation is at or above the curve at its own column, and both read the
      same smoothed field. */
   fogTo(fr.spots.map(s=>s.sun), fr.spots.map(s=>s.x), fr.spots.map(s=>s.here));
+  debugDump(k);
 
 }
 

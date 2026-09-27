@@ -278,7 +278,11 @@ The horizontal ramps ride in **masks** rather than in fills, because a mask's lu
 
 **Full bleed, and the front is a slope because the model cannot support a wall.** The section is 10.8 km across 900 units, so the model's 3 km grid is **250 units, a quarter of the chart**, spanning two to three places. Treating the eleven columns as independent drew a fog edge roughly seven times sharper than the model resolves, which is why every attempt at an ending — a vertical cut, a 34 px taper, a 78 px mask fade — read as an edge rather than as weather.
 
-`smoothAcross()` blends the overhead curves at sigma of one spacing, about 190 units and inside a single cell. It runs **once, on the field, before anything is drawn or decided**, so the percentage in the list, the sunlight line and the drawn body all come from the same numbers. Smoothing only the drawing would have made the picture contradict the figure beside it. A convex combination of monotone curves is monotone, so the property the geometry rests on survives. It also closes interior holes without a special case: the centre tap is 0.40, so neighbours always carry a dropped cell back up.
+**The field is not blended across places, as of 27 September.** Each place is judged on its own grid cell. `smoothAcross()` now only records the raw readings and counts distinct model columns; it no longer changes any curve.
+
+The blend it replaced ran on **list order**, and list order is longitude rank while the places also span 6.4 km north to south. "One spacing" was anything from 1.1 to 4.6 km, Ocean Beach took 60% of its reading from places more than a cell away, and the end reflection counted West Portal and GG Park twice. A sky that varied north to south came out as holes and humps that followed the array. A distance-weighted rewrite fixed that and exposed the real problem: blending can never add what the model knows. Two places in one cell already get identical readings, so blending them does nothing; two places in different cells differ because the model distinguishes them, so blending them overrides it. The distance version still fogged Alamo Square, clear in its own cell, because Corona Heights 1.3 km away was not.
+
+So a clear cell inside a covered city is now drawn clear. That is what the model said about that place, and `?debug` prints it. How sharp a front looks is a drawing question and stays in the drawing.
 
 The body now spans the frame at every hour and carries everything in **height and density together**. Where there is no layer the height is zero and the density is zero, so the mass sinks into the ground and dissolves at the same time, and nothing is ever seen to end on screen. Height alone could not do it: at the front the layer really is present or absent, so a height encoding will always step somewhere. Density is what makes the step invisible.
 
@@ -288,7 +292,7 @@ The body now spans the frame at every hour and carries everything in **height an
 
 **One body, seen on live data, 1 September.** A wash with a bright line on top read as two elements rather than as a mass of cloud. It is now a single filled body plus its own top edge at `.34` against a `.20` fill, close enough in value to belong to it. Three things make it cohesive:
 - The top is drawn only where there is a layer, so extent stays horizontal.
-- **Interior holes are bridged, not drawn.** Live data has cells that read clear in the middle of a covered city. Drawing one as ground pulled the body to the floor mid-city and split the mass in two, which the simulator never produced.
+- ~~**Interior holes are bridged, not drawn.**~~ Superseded 27 September: holes are the model's reading for that cell and are now shown. See above.
 - **The ends dissolve** over 78 px via a mask gradient positioned from the front each paint, rather than stopping at a vertical cut that read as a sharp line passing behind the terrain.
 
 **The fog's vertical axis is true to 300 m and compressed above it, and this is a deliberate departure from the §4 law.** Live data put the layer top at 500 to 900 m while the tallest place on the chart is Twin Peaks at 281 m, so a true-scale top spent most of its life pinned to the frame edge with a third of the picture empty beneath it. That band decides nothing: no dot can ever be in it.
@@ -326,7 +330,8 @@ Each of these was built and reverted. A fresh session will be tempted by all of 
 5. **Lit terrain above the fog line.** Ground standing above the layer painted in a warm fill, clipped to the fog surface. The intent was the Bernal photograph — sunlit ridge over grey city. In practice it mottled the terrain silhouette and read as murky brown. Reverted the same session.
 6. ~~**A leading edge on the fog band.**~~ **Reopened and shipped, 30 August.** Rejected twice on the grounds that the extent was not spatially coherent. Measurement says the run is contiguous in all 24 frames and the tops fall monotonically west to east; the incoherence was `layerOf()`'s threshold crossing, not the sampling. See §9. **A rejected direction is only as good as the measurement behind it — this one had none.**
 7. ~~**A fog surface drawn through all eleven per-spot tops.**~~ **Reopened and shipped, 30 August.** Same misdiagnosis as 6.
-8. **Panel card in the footer.** Added, then removed — dividers do the nav-versus-content job without a box.
+8. **Blending cloud readings across places.** Built twice: by list position, which mixed places up to 4.6 km apart, then by ground distance, which still overrode single cells. Blending is a no-op inside a grid cell and an override across one, so it can only ever change a place's verdict to something the model did not say about it. Removed 27 September. If a front looks too sharp, fix the drawing, never the field.
+9. **Panel card in the footer.** Added, then removed — dividers do the nav-versus-content job without a box.
 
 The pattern: motion and ornament have been proposed, built and rejected six times. Twice the mistake was adding representation to the cross-section, which works because it is abstract and quiet. The product's identity is restraint. Take that seriously before proposing the fourth.
 
@@ -351,6 +356,8 @@ Raised and deliberately left open.
 ---
 
 ## 12 · Working notes for the next session
+
+**`?debug`.** Add it to the URL and every hour you scrub to prints a table to the console: each place's latitude, elevation, the model's own sun line, the drawn sun line, cloud overhead, visibility, and the verdict, plus how many distinct columns the model returned. When the screen and the window disagree, read this before touching any code: it says whether the model or the page is responsible.
 
 **How Anto works.** Direction arrives as terse bullets. Execute exactly what is listed and nothing adjacent. Flag tradeoffs in a line; don't fix them unasked, because several flagged items are open on purpose. Present options at multiple altitudes and let him choose rather than collapsing to one recommendation. Be data-forward over opinion-forward. When something is supplied — an asset, a number, a name — it is the spec, not a starting point. On larger changes he will ask you to review and propose before building; do that rather than guessing.
 
