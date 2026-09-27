@@ -97,7 +97,8 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js = js.slice(0, js.lastIndexOf('})();'));
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
-        'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns,smoothAcross};';
+        'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns,smoothAcross,' +
+        'kmBetween,CELL_KM};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -115,7 +116,8 @@ const head = t => console.log(`\n${t}`);
 const { api, store } = harness();
 const { S, paint, simulate, split, profile, note, frameAt,
         SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
-        overheadCurve, overheadAt, sunLine, T_EDGE, H_TRUE, OFF_AXIS_KM, columns, smoothAcross } = api;
+        overheadCurve, overheadAt, sunLine, T_EDGE, H_TRUE, OFF_AXIS_KM, columns, smoothAcross,
+        kmBetween, CELL_KM } = api;
 /* load() smooths the field before anything is drawn or decided, so a harness
    that skips it is testing a different app from the one that ships */
 S.frames = smoothAcross(simulate());
@@ -384,27 +386,17 @@ head('ONE BODY  — cohesive, and anchored where the meaning is');
   const src4 = fs.readFileSync(FILE, 'utf8');
   ok('the field is smoothed before anything is decided',
      /smoothAcross\(await fetchLive\(\)\)/.test(src4) && /smoothAcross\(simulate\(\)\)/.test(src4));
-  ok('the kernel stays inside one grid cell', (() => {
-    const w = (src4.match(/const KERNEL=\[([^\]]+)\]/) || [])[1].split(',').map(Number);
-    const sum = w.reduce((a, b) => a + b, 0);
-    return Math.abs(sum - 1) < 1e-6 && w.length <= 5;
-  })(), 'a wider kernel would blur across cells the model does resolve');
-
-  /* and a hole in the middle of a covered city is closed by that smoothing
-     rather than by a special case */
+  /* The blend was removed on 1 Sept. A single clear cell inside a covered city
+     used to be hidden as grid noise; it is now shown, because it is what the
+     model said about that place and ?debug can prove it either way. */
+  ok('no place is judged on another place\'s cell', (() => {
+    const f = smoothAcross(simulate());
+    return f.every(fr => fr.spots.every((sp, i) => sp.O === fr.raw[i].O && sp.sun === fr.raw[i].sun));
+  })(), 'a verdict was moved by a neighbour');
   {
-    const O = overheadCurve([96, 92, 60, 5], 0, 96);
-    const solid = sunLine(O, CLEAR);
-    ok('an isolated clear column cannot punch through a covered city',
-       KERNEL_MID() < 1, 'the centre tap is ' + KERNEL_MID().toFixed(3) +
-       ', so neighbours always carry a hole back up (' + solid.toFixed(0) + ' m column)');
+    const O = overheadCurve([6, 8, 4, 3], 0, 6);
+    ok('an isolated clear cell stays clear', sunLine(O, CLEAR) === 0);
   }
-}
-
-function KERNEL_MID() {
-  const src = fs.readFileSync(FILE, 'utf8');
-  const w = (src.match(/const KERNEL=\[([^\]]+)\]/) || [])[1].split(',').map(Number);
-  return w[(w.length - 1) / 2];
 }
 
 head('MOTION  — the scrubber is the main interaction');
@@ -492,7 +484,9 @@ head('CONTINUOUS TIME');
   const before = frameAt(3.5).spots[0].sun;
   const kept = S.frames;
   /* sun is re-derived from the blended curve, so the curve is what has to move */
-  S.frames = kept.map(f => ({ ...f, spots: f.spots.map(sp => ({ ...sp, O: sp.O.map(() => 90) })) }));
+  /* force the opposite sky, or the check depends on what the simulator had at 3:30 */
+  const forced = before > 0 ? 0 : 90;
+  S.frames = kept.map(f => ({ ...f, spots: f.spots.map(sp => ({ ...sp, O: sp.O.map(() => forced) })) }));
   const after = frameAt(3.5).spots[0].sun;
   S.frames = kept;
   ok('the interpolation cache is invalidated by a refresh', after !== before,
@@ -502,6 +496,42 @@ head('CONTINUOUS TIME');
   const step = (fs.readFileSync(FILE, 'utf8')
     .match(/id="time"[^>]*step="([\d.]+)"/) || [])[1];
   ok('scrubber steps below the hour', step && +step < 1, 'step=' + step);
+}
+
+head('OWN CELL  — every place is judged on what the model said about it');
+{
+  /* the 1 Sept failure: a blend in list order gave Ocean Beach 60% of its reading
+     from places over a cell away and turned a north-south sky into list-order
+     holes. The blend is gone; these pin that it stays gone. */
+  /* a sky that varies only north to south must come out the way it went in */
+  const deckAt = lat => Math.max(0, Math.min(100, (lat - 37.748) * 9000));
+  const mkFrame = () => ({ t: 0, spots: SPOTS.map(s => {
+    const d = deckAt(s.lat), p = profile(s.e, [6, 8, d, d], 0, 6);
+    return { ...s, elev: s.e, lowCloud: p.overhead, here: p.here, aboveFog: p.aboveFog, sun: p.sun,
+             O: p.O, beneath: p.beneath, mid: p.mid, temp: 60, wind: 9, vis: 20000 };
+  }) });
+  const rawClear = split(mkFrame()).sun.map(s => s.n).sort().join(',');
+  const blended = smoothAcross([mkFrame()])[0];
+  const outClear = split(blended).sun.map(s => s.n).sort().join(',');
+  ok('a north-south sky comes out the way it went in', rawClear === outClear, 'in ' + rawClear + '  out ' + outClear);
+
+  /* the column count is the model's, not the blend's */
+  const same = { t: 0, spots: mkFrame().spots.map(s => ({ ...s, O: mkFrame().spots[0].O.slice() })) };
+  ok('column count reads the raw field', smoothAcross([same])[0].cols === 1,
+     'identical skies counted as ' + smoothAcross([{ t: 0, spots: same.spots.map(s => ({ ...s })) }])[0].cols);
+  ok('the model reading is kept beside the blend', !!blended.raw && blended.raw.length === SPOTS.length);
+}
+
+head('ONE VERDICT  — map dots and the list apply the same rule');
+{
+  let off = 0;
+  for (let k = 0; k < HOURS; k += 2) {
+    S.h = k; paint();
+    const lit = new Set(split(frameAt(k)).sun.map(s => s.n));
+    const src = require('fs').readFileSync(FILE, 'utf8');
+    if (!/state\[s\.n\]=\{on:lit\.has\(s\.n\)/.test(src)) { off = -1; break }
+  }
+  ok('dots light on the list rule, visibility included', off === 0);
 }
 
 head('THE SECTION  — every place sits near the line it cuts');
