@@ -76,6 +76,9 @@ The **quiet rule**: when nothing sits above the fog line, no place is named. Thi
 ### Amber is spent, not decorated
 `--clear` appears on the verdict, the clear map dots and labels, the open footer section, the live dot and the heart. Nowhere else. When the quiet rule fires the accent drains off the page automatically, because every amber element is gated on its own local predicate rather than on a "quiet mode" flag. Preserve that property.
 
+### Night is light blue
+Added 2026-10-06 (build `2026.10.06.1`). After sunset a clear place is still clear, but there is no sun to sit in. For the hour being viewed, `isNight(fr.t)` computes the sun's altitude over the city (low-precision solar position, about 0.1°, no API variable spent) and treats anything below −0.833°, the published sunset, as night. `paint()` toggles `night` on `<html>`. Under it, `--clear` and `--clear-dim` are redefined as `--night:#8CC2F2` and `--night-dim:#4F7697`, so every amber element turns light blue: dots, verdict glyph, name and temperature, hilltop and rail labels and their leaders, scrubber fill, heart. The pick loses its rays. This works only because no amber is hard-coded outside the two tokens, and a test enforces that. The logo PNG and the favicon keep their sun. Civil dusk (−6°) is the alternative threshold if sunset feels early.
+
 ### Legibility is non-negotiable, and you don't get it by hiding data
 Map labels are measured and packed at the current width; no fixed tiers. Hilltops are placed lowest-summit-first so a shorter peak's name can never sit above a taller one's.
 
@@ -98,6 +101,7 @@ Weather copy defaults to cheerful and useless. NoKarl personifies the fog as an 
 --line:rgba(169,183,190,.18)      --line-hi:rgba(169,183,190,.34)
 --fog:#A9B7BE      --fog-dim:#63757C      --fog-faint:#3B4A52
 --clear:#F0A03C    --clear-dim:#9A6520
+--night:#8CC2F2    --night-dim:#4F7697   /* replace --clear and --clear-dim after sunset */
 --paper:#E9EAE4
 ```
 

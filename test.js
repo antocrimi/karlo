@@ -98,7 +98,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
         'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns,smoothAcross,' +
-        'kmBetween,CELL_KM};';
+        'kmBetween,CELL_KM,sunAlt,isNight};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -696,6 +696,46 @@ ${dots.map(d => `<circle cx="${d.x}" cy="${d.y}" r="5" fill="${d.on ? '#F0A03C' 
   console.log('\n  wrote map-preview.svg');
 }
 
+
+/* ── night ───────────────────────────────────────────────────────────── */
+head('night');
+{
+  /* a fresh page: later blocks rebuild the DOM stub, so the first one's
+     store no longer sees what paint() touches */
+  const { api: nApi, store: nStore, html: htmlEl } = harness();
+  const { sunAlt, isNight, S, paint, simulate, smoothAcross, HOURS } = nApi;
+  const store = nStore;
+  const at = iso => Date.parse(iso) / 1000;
+  /* published San Francisco times, PDT: 6 Oct 2026 sunrise 7:11, sunset 6:42;
+     21 Jun 2026 sunset 8:35 */
+  ok('day before the 6 Oct sunset', !isNight(at('2026-10-07T01:35:00Z')), sunAlt(at('2026-10-07T01:35:00Z')).toFixed(2));
+  ok('night after the 6 Oct sunset', isNight(at('2026-10-07T01:50:00Z')), sunAlt(at('2026-10-07T01:50:00Z')).toFixed(2));
+  ok('night before the 6 Oct sunrise', isNight(at('2026-10-06T14:05:00Z')));
+  ok('day after the 6 Oct sunrise', !isNight(at('2026-10-06T14:15:00Z')));
+  ok('midsummer 8:25 pm is still day', !isNight(at('2026-06-21T03:25:00Z')));
+  ok('midsummer 8:45 pm is night', isNight(at('2026-06-21T03:45:00Z')));
+  ok('noon sun is high in June', sunAlt(at('2026-06-21T20:10:00Z')) > 70);
+
+  S.frames = smoothAcross(simulate());
+  let nightLit = 0, dayLit = 0, wrong = 0;
+  for (let k = 0; k < HOURS; k++) {
+    S.h = k; paint();
+    const fr = S.frames[k], night = isNight(fr.t);
+    if (htmlEl._cls.has('night') !== night) wrong++;
+    const lit = [...store.dots.children].filter(d => d._cls.has('on')).length;
+    if (lit) night ? nightLit++ : dayLit++;
+  }
+  ok('night class follows the sun at every hour', wrong === 0, wrong + ' hours wrong');
+  ok('the simulator has clear places after dark', nightLit > 0, nightLit + ' hours');
+  ok('and clear places in daylight', dayLit > 0, dayLit + ' hours');
+
+  const src = fs.readFileSync(FILE, 'utf8');
+  ok('night swaps the whole accent to light blue',
+     /\.night\{--clear:var\(--night\); --clear-dim:var\(--night-dim\)\}/.test(src));
+  ok('no hard-coded amber outside the tokens',
+     (src.replace(/<link rel="icon"[^>]*>/, '').match(/#F0A03C|#9A6520/gi) || []).length === 2);
+  ok('no rays at night, pick included', /\.night \.dot\.pick \.rays\{opacity:0/.test(src));
+}
 
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
