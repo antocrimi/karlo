@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.09.27.1 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.10.06.1 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -32,6 +32,7 @@
   --line:rgba(169,183,190,.18); --line-hi:rgba(169,183,190,.34);
   --fog:#A9B7BE; --fog-dim:#63757C; --fog-faint:#3B4A52;
   --clear:#F0A03C; --clear-dim:#9A6520;
+  --night:#8CC2F2; --night-dim:#4F7697;   /* a clear sky after sunset */
   --paper:#E9EAE4;
   --disp:'Bricolage Grotesque', system-ui, sans-serif;
   /* opsz maps to the rendered size automatically, so the 19px row names get
@@ -189,6 +190,13 @@ svg.g{fill:currentColor}
   transition:opacity .34s ease, transform .5s cubic-bezier(.22,.68,.3,1)}
 .dot.pick{transform:scale(1.16)}
 .dot.pick .rays{opacity:1; transform:scale(1) rotate(0deg)}
+/* After sunset a clear place is still clear, but there is no sun to sit in.
+   Every amber element reads from --clear and --clear-dim, so night swaps the
+   two tokens for light blue and the whole accent follows. The pick loses its
+   rays. The class sits on <html>, set per scrubbed hour from the sun's altitude. */
+.night{--clear:var(--night); --clear-dim:var(--night-dim)}
+.night .dot .rays,.night .dot.pick .rays{opacity:0; transform:scale(.5) rotate(-32deg)}
+.v-ico,.v-name,.v-temp,.pk,.rail b{transition:color .32s ease}
 
 /* Hilltops name themselves on the map at the height they sit; the rest
    name themselves in the rail. Tiers are not fixed — every label is
@@ -369,7 +377,7 @@ svg.g{fill:currentColor}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
 @media(prefers-reduced-motion:reduce){
-  .dot,.dot .rays,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
+  .dot,.dot .rays,.v-ico,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
 </style>
 <script type="application/ld+json">
@@ -610,7 +618,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.09.27.1";
+const BUILD="2026.10.06.1";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -683,6 +691,25 @@ function wave(pts){
 
 const $=i=>document.getElementById(i), cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const TZ="America/Los_Angeles";
+
+/* ── night ───────────────────────────────────────────────────────
+   Sun altitude over the city at a unix time, from the standard low-precision
+   solar position (good to about 0.1°, under a minute at the horizon). Night
+   is the sun's upper edge below the horizon with refraction, -0.833°, which
+   is the published sunset. No API variable is spent on it. */
+const SUN_LAT=37.76, SUN_LON=-122.44, SUNSET_ALT=-0.833;
+function sunAlt(t){
+  const r=Math.PI/180, d=t/86400-10957.5;            /* days from J2000 */
+  const g=(357.529+0.98560028*d)*r, q=280.459+0.98564736*d;
+  const L=(q+1.915*Math.sin(g)+0.020*Math.sin(2*g))*r;
+  const e=(23.439-0.00000036*d)*r;
+  const ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L));
+  const dec=Math.asin(Math.sin(e)*Math.sin(L));
+  const gmst=(280.46061837+360.98564736629*d)*r;
+  const ha=gmst+SUN_LON*r-ra, la=SUN_LAT*r;
+  return Math.asin(Math.sin(la)*Math.sin(dec)+Math.cos(la)*Math.cos(dec)*Math.cos(ha))/r;
+}
+const isNight=t=>sunAlt(t)<SUNSET_ALT;
 
 /* ── unit system: inferred from locale, overridable ─────────────
    Fahrenheit is used by the US, Liberia, Myanmar and a handful of
@@ -1127,6 +1154,7 @@ function debugDump(k){
 
 function paint(){
   const k=S.h, fr=frameAt(k), {sun,fog}=split(fr);
+  document.documentElement.classList.toggle("night",isNight(fr.t));
   paintVerdict(sun,k,fr);
   const nc=columns(fr);
   $("dResolve").textContent = `The model runs on a 3 km grid and the city is about 11 km `
