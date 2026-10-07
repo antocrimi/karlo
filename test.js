@@ -15,7 +15,7 @@ const path = require('path');
 const FILE = path.join(__dirname, 'index.html');
 
 /* ── a DOM small enough to read, large enough to boot the page ───────── */
-function harness({ width = 361, stageH = 152, locale = 'en-US', online = false } = {}) {
+function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, standalone = false } = {}) {
   const store = {}, handlers = {};
   const mk = id => {
     const n = {
@@ -78,15 +78,21 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false }
     createElement: t => { const n = mk(null); n.tagName = (t || 'div').toUpperCase(); return n },
     documentElement: html, body: mk('body'),
     querySelector: () => null, querySelectorAll: () => [],
-    fonts: { ready: Promise.resolve() }
+    fonts: { ready: Promise.resolve() },
+    visibilityState: 'visible',
+    addEventListener(t, f) { (handlers.document = handlers.document || {})[t] = f }
   };
   global.window = { ResizeObserver: null };
-  global.navigator = { language: locale };
+  /* Node 21+ ships a read-only navigator, and plain assignment is silently
+     ignored, so the locale and standalone switches never reached the page */
+  Object.defineProperty(global, 'navigator',
+    { value: { language: locale, standalone }, configurable: true, writable: true });
   global.matchMedia = () => ({ matches: false });
-  global.addEventListener = () => {};
+  global.addEventListener = (t, f) => { (handlers.window = handlers.window || {})[t] = f };
+  global.scrollY = 0; global.window.scrollY = 0;
   global.requestAnimationFrame = f => f();
   global.performance = { now: () => 0 };
-  global.fetch = () => Promise.reject(new Error('offline'));
+  global.fetch = () => { global.fetchCalls = (global.fetchCalls || 0) + 1; return Promise.reject(new Error('offline')); };
   global.AbortController = function () { this.signal = {}; this.abort = () => {} };
   global.setTimeout = f => { f(); return 0 };
   global.clearTimeout = () => {};
@@ -737,5 +743,55 @@ head('night');
   ok('no rays at night, pick included', /\.night \.dot\.pick \.rays\{opacity:0/.test(src));
 }
 
-console.log(`\n${pass} passed, ${fail} failed\n`);
-process.exit(fail ? 1 : 0);
+/* ── coming back, and pull to refresh ────────────────────────────────── */
+async function resumeTests() {
+head('resume and pull to refresh');
+{
+  const realNow = Date.now;
+  let clock = realNow();
+  Date.now = () => clock;
+  const h = harness({ standalone: true });
+  const tick = () => new Promise(r => setImmediate(r));
+  await tick(); await tick();
+  const st = h.store;
+  ok('first open fetches', global.fetchCalls > 0, global.fetchCalls);
+  let before = global.fetchCalls;
+  h.api.S.h = 7;
+  clock += 60e3; h.handlers.document.visibilitychange(); await tick();
+  ok('back within a minute keeps the scrub and does not refetch',
+     global.fetchCalls === before && h.api.S.h === 7, `${global.fetchCalls - before} fetches, h=${h.api.S.h}`);
+  clock += 10 * 60e3; h.handlers.document.visibilitychange(); await tick(); await tick();
+  ok('back after ten minutes refetches', global.fetchCalls === before + 1, global.fetchCalls - before);
+  ok('and returns to now', h.api.S.h === 0, h.api.S.h);
+  document.visibilityState = 'hidden'; before = global.fetchCalls;
+  clock += 10 * 60e3; h.handlers.document.visibilitychange(); await tick();
+  ok('going to the background does not fetch', global.fetchCalls === before);
+  document.visibilityState = 'visible';
+
+  const W = h.handlers.window;
+  ok('standalone app listens for the pull', !!(W.touchstart && W.touchmove && W.touchend));
+  const pull = dy => { W.touchstart({ target: {}, touches: [{ clientY: 100 }] });
+    W.touchmove({ touches: [{ clientY: 100 + dy }] }); W.touchend(); };
+  before = global.fetchCalls; pull(30); await tick();
+  ok('a short pull does nothing', global.fetchCalls === before);
+  pull(90); await tick(); await tick();
+  ok('a full pull refreshes', global.fetchCalls === before + 1, global.fetchCalls - before);
+  before = global.fetchCalls;
+  W.touchstart({ target: { closest: () => ({}) }, touches: [{ clientY: 100 }] });
+  W.touchmove({ touches: [{ clientY: 200 }] }); W.touchend(); await tick();
+  ok('dragging the scrubber never refreshes', global.fetchCalls === before);
+  global.scrollY = global.window.scrollY = 400; before = global.fetchCalls;
+  pull(120); await tick();
+  ok('a pull lower down the page is a scroll', global.fetchCalls === before);
+  global.scrollY = global.window.scrollY = 0;
+
+  const tab = harness({ standalone: false });
+  ok('Safari in a tab keeps its own pull to refresh', !tab.handlers.window || !tab.handlers.window.touchstart);
+  Date.now = realNow;
+}
+}
+
+resumeTests().catch(e => { fail++; console.log('  FAIL  resume tests threw   → ' + e.stack); }).then(() => {
+  console.log(`\n${pass} passed, ${fail} failed\n`);
+  process.exit(fail ? 1 : 0);
+});
