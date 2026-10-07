@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.10.06.2 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.10.07.1 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -279,6 +279,17 @@ svg.g{fill:currentColor}
 .f-refresh:hover{color:var(--fog)}
 .f-refresh:focus-visible{outline:2px solid var(--clear); outline-offset:2px; border-radius:50%}
 .f-refresh.spin svg{animation:spin .9s linear infinite}
+/* Pull to refresh, for the home screen app only: Safari in a tab has its own.
+   The page already bounces on iOS, so the glyph waits in the gap that opens
+   above the header and turns with the pull. Past the threshold it brightens,
+   and on release it spins until the forecast is back. */
+.ptr{position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 12px); z-index:5;
+  width:20px; height:20px; margin-left:-10px; color:var(--fog-dim);
+  opacity:0; pointer-events:none; transition:opacity .2s ease, color .2s ease}
+.ptr svg{width:100%; height:100%; display:block; fill:currentColor}
+.ptr.armed{color:var(--fog)}
+.ptr.spin{opacity:1; color:var(--fog)}
+.ptr.spin svg{animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── accordion. Tabs and panels are interleaved in the markup, so on a
@@ -393,6 +404,7 @@ svg.g{fill:currentColor}
 </script>
 </head>
 <body>
+<div class="ptr" id="ptr" aria-hidden="true"></div>
 <div class="wrap">
 
   <div class="titlerow">
@@ -619,7 +631,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.06.2";
+const BUILD="2026.10.07.1";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1318,6 +1330,7 @@ function buildFooter(){
       +`<span class="lb">${label}</span><span class="cv">${ico("caret_down")}</span>`;
   });
   $("refresh").innerHTML=ico("arrow_clockwise");
+  $("ptr").innerHTML=ico("arrow_clockwise");
   $("fPlace").innerHTML=ico("map_pin")
     +`<span>San Francisco, CA</span><b class="f-ver">v${BUILD}</b>`;
   $("fHeart").innerHTML=ico("heart");
@@ -1347,10 +1360,13 @@ function stampNow(live){
 }
 
 /* the only place data is fetched — on load, and on demand */
-let loading=false;
+let loading=false, loadedAt=0;
+const MIN_SPIN=600;   /* a fetch that returns at once still reads as a refresh */
 async function load(user){
   if(loading) return; loading=true;
+  const t0=Date.now();
   $("refresh").classList.add("spin");
+  if(user) $("ptr").classList.add("spin");
   if(user) $("updated").textContent="Updating…";
   let live=true;
   try{ S.frames=smoothAcross(await fetchLive()); }
@@ -1358,8 +1374,53 @@ async function load(user){
   if(user) S.h=0;                       /* a manual refresh returns you to now */
   $("time").value=S.h;
   paint(); safeLayout(); stampNow(live);
-  $("refresh").classList.remove("spin");
-  loading=false;
+  loadedAt=Date.now();
+  const done=()=>{ $("refresh").classList.remove("spin"); ptrReset(); loading=false; };
+  const wait=user ? MIN_SPIN-(Date.now()-t0) : 0;
+  wait>0 ? setTimeout(done,wait) : done();
+}
+
+/* ── coming back to the app ──────────────────────────────────────
+   Saved to the home screen, iOS keeps the page alive in the background and
+   hands it back as it was, so "Now" can be hours old. Coming back after more
+   than a few minutes fetches again and returns to now. A quick look away
+   keeps where you had scrubbed to. */
+const STALE=5*60e3;
+function resume(){
+  if(document.visibilityState==="hidden") return;
+  if(loadedAt && Date.now()-loadedAt>STALE) load(true);
+}
+if(document.addEventListener) document.addEventListener("visibilitychange",resume);
+addEventListener("pageshow",e=>{ if(e&&e.persisted) resume(); });
+
+/* ── pull to refresh, home screen app only ─────────────────────── */
+const STANDALONE = navigator.standalone===true ||
+  (typeof matchMedia==="function" && matchMedia("(display-mode: standalone)").matches);
+const PULL=72;
+let y0=null, pulled=0;
+function ptrReset(){
+  const p=$("ptr"); p.classList.remove("spin","armed");
+  p.style.opacity=""; p.style.transform="";
+}
+if(STANDALONE){
+  addEventListener("touchstart",e=>{
+    const t=e.target;
+    y0 = (window.scrollY>0 || loading || (t&&t.closest&&t.closest("input,button")))
+       ? null : e.touches[0].clientY;
+    pulled=0;
+  },{passive:true});
+  addEventListener("touchmove",e=>{
+    if(y0==null) return;
+    pulled=Math.max(0,e.touches[0].clientY-y0);
+    const p=$("ptr");
+    p.style.opacity=Math.min(1,pulled/PULL).toFixed(2);
+    p.style.transform=`rotate(${Math.round(pulled*3)}deg)`;
+    p.classList.toggle("armed",pulled>=PULL);
+  },{passive:true});
+  addEventListener("touchend",()=>{
+    if(y0!=null && pulled>=PULL) load(true); else if(!loading) ptrReset();
+    y0=null; pulled=0;
+  },{passive:true});
 }
 
 (async()=>{
