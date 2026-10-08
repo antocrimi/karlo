@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.10.07.1 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.10.08.1 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -631,7 +631,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.07.1";
+const BUILD="2026.10.08.1";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -771,7 +771,7 @@ function simulate(){
   const h0=+new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",hour12:false})
              .format(new Date());
   const out=[];
-  for(let k=0;k<HOURS;k++){
+  for(let k=0;k<=HOURS;k++){
     const hr=(h0+k)%24;
     const diurnal=cl(50+38*Math.cos((hr-5)/24*2*Math.PI),0,100)/100;
     const deep=cl((k-13)/7,0,1);
@@ -818,8 +818,10 @@ async function fetchLive(){
   const j=await r.json(), A=Array.isArray(j)?j:[j];
   const T=A[0].hourly.time, now=Math.floor(Date.now()/1000);
   let base=T.findIndex(t=>t>now); base=base<1?0:base-1;
+  /* one hour more than the scrubber spans: the first frame is the top of the
+     current hour, so "now" sits up to an hour into it and +24h needs one more */
   const out=[];
-  for(let k=0;k<HOURS;k++){
+  for(let k=0;k<=HOURS;k++){
     const i=Math.min(base+k,T.length-1);
     out.push({t:T[i], spots:SPOTS.map((s,n)=>{
       const h=A[n].hourly;
@@ -1074,9 +1076,10 @@ function smoothAcross(frames){
    blended on their own. The picture and the list stay the same object at
    3:15 pm as they are on the hour. */
 function frameAt(t){
-  t=cl(t,0,HOURS-1);
+  const N=S.frames.length;
+  t=cl(t,0,N-1);
   const i=Math.floor(t), f=t-i;
-  if(f<1e-6 || i>=HOURS-1) return S.frames[Math.min(i,HOURS-1)];
+  if(f<1e-6 || i>=N-1) return S.frames[Math.min(i,N-1)];
   /* keyed on the frame array too, or a refresh serves the previous forecast's
      geometry at every position the scrubber had already visited */
   const key=t.toFixed(3);
@@ -1166,7 +1169,11 @@ function debugDump(k){
 }
 
 function paint(){
-  const k=S.h, fr=frameAt(k), {sun,fog}=split(fr);
+  /* The forecast is hourly and its first frame is the top of the hour, so at
+     7:46 the scrubber's "now" used to show 7:00, which before sunrise was
+     still night. The scrubber counts from the clock and the frame is looked
+     up that many minutes into the hour. */
+  const k=S.h, fr=frameAt(k+nowOff()), {sun,fog}=split(fr);
   document.documentElement.classList.toggle("night",isNight(fr.t));
   paintVerdict(sun,k,fr);
   const nc=columns(fr);
@@ -1380,6 +1387,13 @@ async function load(user){
   wait>0 ? setTimeout(done,wait) : done();
 }
 
+/* minutes since the first frame, in hours, so slider 0 is the clock */
+function nowOff(){
+  if(!S.frames||!S.frames.length) return 0;
+  const m=Math.floor((Date.now()/1000-S.frames[0].t)/60);
+  return cl(m,0,59)/60;
+}
+
 /* ── coming back to the app ──────────────────────────────────────
    Saved to the home screen, iOS keeps the page alive in the background and
    hands it back as it was, so "Now" can be hours old. Coming back after more
@@ -1392,6 +1406,16 @@ function resume(){
 }
 if(document.addEventListener) document.addEventListener("visibilitychange",resume);
 addEventListener("pageshow",e=>{ if(e&&e.persisted) resume(); });
+addEventListener("focus",resume);
+/* iOS does not always tell a home screen app it is back. Timers are frozen
+   in the background and fire as soon as it wakes, so a slow tick catches
+   what the events miss, and while open it keeps "now" moving with the clock. */
+let lastOff=null;
+if(typeof setInterval==="function") setInterval(()=>{
+  if(document.visibilityState==="hidden" || loading) return;
+  if(loadedAt && Date.now()-loadedAt>STALE){ load(true); return; }
+  const o=nowOff(); if(o!==lastOff){ lastOff=o; if(S.frames) paint(); }
+},20e3);
 
 /* ── pull to refresh, home screen app only ─────────────────────── */
 const STANDALONE = navigator.standalone===true ||

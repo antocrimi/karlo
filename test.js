@@ -785,6 +785,25 @@ head('resume and pull to refresh');
   ok('a pull lower down the page is a scroll', global.fetchCalls === before);
   global.scrollY = global.window.scrollY = 0;
 
+  /* the bug from the phone: 7:46 am on 8 Oct, sunrise 7:13, forecast frames
+     starting at the top of the hour. "Now" must be 7:46 and daylight. */
+  {
+    const h2 = harness();
+    await tick(); await tick();
+    const t0 = Date.parse('2026-10-08T14:00:00Z') / 1000;    /* 7:00 am PDT */
+    h2.api.S.frames = h2.api.S.frames.map((f, k) => ({ ...f, t: t0 + k * 3600 }));
+    clock = Date.parse('2026-10-08T14:46:00Z');
+    h2.api.S.h = 0; h2.api.paint();
+    ok('frames span one hour past the scrubber', h2.api.S.frames.length === h2.api.HOURS + 1, h2.api.S.frames.length);
+    ok('now at 7:46 am is daylight, not the 7:00 frame', !h2.html._cls.has('night'));
+    clock = Date.parse('2026-10-08T14:10:00Z');                /* 7:10, before sunrise */
+    h2.api.paint();
+    ok('7:10 am is still night', h2.html._cls.has('night'));
+    before = global.fetchCalls; clock = Date.parse('2026-12-01T00:00:00Z');   /* well past the last load */
+    h2.handlers.window.focus(); await tick(); await tick();
+    ok('focus after a long gap refetches too', global.fetchCalls > before);
+  }
+
   const tab = harness({ standalone: false });
   ok('Safari in a tab keeps its own pull to refresh', !tab.handlers.window || !tab.handlers.window.touchstart);
   Date.now = realNow;
