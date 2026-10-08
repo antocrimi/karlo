@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.10.08.1 — keep in step with BUILD in the script -->
+<!-- NoKarl build 2026.10.08.2 — keep in step with BUILD in the script -->
 <title>NoKarl — where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
@@ -631,7 +631,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.08.1";
+const BUILD="2026.10.08.2";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1402,7 +1402,26 @@ function nowOff(){
 const STALE=5*60e3;
 function resume(){
   if(document.visibilityState==="hidden") return;
+  checkBuild();
   if(loadedAt && Date.now()-loadedAt>STALE) load(true);
+}
+
+/* ── staying current with the code ───────────────────────────────
+   A home screen app can keep running a page that has since been replaced on
+   the server, and GitHub Pages lets phones cache it for ten minutes. On every
+   return, at most once a minute, ask the server for the page past every cache
+   and reload if its build differs from the one running. */
+let buildCheckedAt=0;
+async function checkBuild(){
+  if(typeof location==="undefined" || !/^https?:/.test(location.protocol||"")) return;
+  if(Date.now()-buildCheckedAt<60e3) return;
+  buildCheckedAt=Date.now();
+  try{
+    const r=await fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"});
+    if(!r.ok) return;
+    const m=(await r.text()).match(/const BUILD="([^"]+)"/);
+    if(m && m[1]!==BUILD) location.reload();
+  }catch(e){}
 }
 if(document.addEventListener) document.addEventListener("visibilitychange",resume);
 addEventListener("pageshow",e=>{ if(e&&e.persisted) resume(); });
@@ -1413,6 +1432,7 @@ addEventListener("focus",resume);
 let lastOff=null;
 if(typeof setInterval==="function") setInterval(()=>{
   if(document.visibilityState==="hidden" || loading) return;
+  checkBuild();
   if(loadedAt && Date.now()-loadedAt>STALE){ load(true); return; }
   const o=nowOff(); if(o!==lastOff){ lastOff=o; if(S.frames) paint(); }
 },20e3);

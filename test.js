@@ -92,7 +92,11 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, 
   global.scrollY = 0; global.window.scrollY = 0;
   global.requestAnimationFrame = f => f();
   global.performance = { now: () => 0 };
-  global.fetch = () => { global.fetchCalls = (global.fetchCalls || 0) + 1; return Promise.reject(new Error('offline')); };
+  global.fetch = u => {
+    if (String(u).includes('open-meteo')) global.fetchCalls = (global.fetchCalls || 0) + 1;
+    else global.pageFetches = (global.pageFetches || []).concat(String(u));
+    return Promise.reject(new Error('offline'));
+  };
   global.AbortController = function () { this.signal = {}; this.abort = () => {} };
   global.setTimeout = f => { f(); return 0 };
   global.clearTimeout = () => {};
@@ -802,6 +806,26 @@ head('resume and pull to refresh');
     before = global.fetchCalls; clock = Date.parse('2026-12-01T00:00:00Z');   /* well past the last load */
     h2.handlers.window.focus(); await tick(); await tick();
     ok('focus after a long gap refetches too', global.fetchCalls > before);
+  }
+
+  /* a phone running an old build reloads itself on return */
+  {
+    const h3 = harness();
+    await tick(); await tick();
+    let reloaded = 0;
+    global.location = { protocol: 'https:', pathname: '/karlo/', reload: () => reloaded++ };
+    const realFetch = global.fetch;
+    global.fetch = u => String(u).includes('?build=')
+      ? Promise.resolve({ ok: true, text: () => Promise.resolve('<script>const BUILD="2099.01.01.1";</script>') })
+      : realFetch(u);
+    clock += 2 * 60e3; h3.handlers.document.visibilitychange(); await tick(); await tick(); await tick();
+    ok('an old build reloads when a newer one is live', reloaded === 1, reloaded);
+    global.fetch = u => String(u).includes('?build=')
+      ? Promise.resolve({ ok: true, text: () => Promise.resolve(`const BUILD="${h3.api.BUILD}";`) })
+      : realFetch(u);
+    clock += 2 * 60e3; h3.handlers.document.visibilitychange(); await tick(); await tick(); await tick();
+    ok('the current build does not reload', reloaded === 1, reloaded);
+    global.fetch = realFetch; delete global.location;
   }
 
   const tab = harness({ standalone: false });
