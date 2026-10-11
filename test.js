@@ -744,6 +744,8 @@ head('night');
      /\.night\{--clear:var\(--night\); --clear-dim:var\(--night-dim\)\}/.test(src));
   ok('no hard-coded amber outside the tokens',
      (src.replace(/<link rel="icon"[^>]*>/, '').match(/#F0A03C|#9A6520/gi) || []).length === 2);
+  ok('hilltop leader is placed from the label centre, so bold cannot move it',
+     /\.pk::after\{[^}]*left:calc\(50% \+ var\(--dx/.test(src) && !/--lx/.test(src));
   ok('no rays at night, pick included', /\.night \.dot\.pick \.rays\{opacity:0/.test(src));
 }
 
