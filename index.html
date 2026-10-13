@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- NoKarl build 2026.10.11.1 — keep in step with BUILD in the script -->
-<title>NoKarl — where the fog isn't, in San Francisco</title>
-<meta name="description" content="Where is it sunny in San Francisco right now? NoKarl reads low cloud, wind and temperature across eleven SF spots — Ocean Beach to Dogpatch — and shows which side of the fog line each one is on for the next 24 hours.">
+<!-- Karl build 2026.10.13.1 — keep in step with BUILD in the script -->
+<title>Karl: where the fog isn't, in San Francisco</title>
+<meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://antocrimi.github.io/karlo/">
 <meta name="theme-color" content="#0E161C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="NoKarl">
+<meta name="apple-mobile-web-app-title" content="Karl">
 <meta name="color-scheme" content="dark">
-<meta property="og:title" content="NoKarl">
+<meta property="og:title" content="Karl">
 <meta property="og:description" content="Where the fog isn't, in San Francisco.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://antocrimi.github.io/karlo/">
@@ -396,7 +396,7 @@ svg.g{fill:currentColor}
 }
 </style>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"NoKarl",
+{"@context":"https://schema.org","@type":"WebApplication","name":"Karl",
 "url":"https://antocrimi.github.io/karlo/","applicationCategory":"Weather",
 "operatingSystem":"Any","browserRequirements":"Requires JavaScript",
 "description":"A San Francisco microclimate app. It ranks eleven places across the city on low cloud, wind and temperature, splitting them by the fog line so you know where the sky is clear enough to go outside.",
@@ -485,7 +485,7 @@ svg.g{fill:currentColor}
   <footer class="foot">
     <div class="f-top">
       <div class="f-brand">
-        <img src="logo.png" alt="NoKarl" width="638" height="196">
+        <img src="logo.png" alt="Karl" width="638" height="196">
         <p>Your SF sun chasing guide.</p>
       </div>
       <div class="f-live">
@@ -634,7 +634,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.11.1";
+const BUILD="2026.10.13.1";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1163,7 +1163,7 @@ function debugDump(k){
   if(!DEBUG || !fr || !fr.raw || dumped===h+":"+fr.t) return;
   dumped=h+":"+fr.t;
   const clear=new Set(split(fr).sun.map(s=>s.n));
-  console.log("NoKarl "+BUILD+"  +"+h+"h  "+new Date(fr.t*1000).toLocaleString("en-US",{timeZone:TZ})
+  console.log("Karl "+BUILD+"  +"+h+"h  "+new Date(fr.t*1000).toLocaleString("en-US",{timeZone:TZ})
     +"  ·  distinct model columns: "+fr.cols);
   console.table(fr.spots.map((s,i)=>({place:s.n, lat:s.lat, elev_m:Math.round(s.elev),
     model_sunline_m:Math.round(fr.raw[i].sun), drawn_sunline_m:Math.round(s.sun),

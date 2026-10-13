@@ -1,8 +1,8 @@
-# NoKarl
+# Karl
 
 Where the fog isn't, in San Francisco. Eleven spots, twenty-four hours, one place at a time.
 
-NoKarl reads live forecast data across the city and splits eleven places at the fog line: clear on one side, under Karl on the other. When nothing is clear it says so and names no place.
+Karl reads live forecast data across the city and splits eleven places at the fog line: clear on one side, under Karl on the other. When nothing is clear it says so and names no place.
 
 The eleven are chosen for somewhere worth sitting outside, and then constrained by the chart. A cross section only means something if the places sit near the line it cuts, so a place more than 2.5 km off that line does not go on it however good it is. Fort Mason and McLaren failed that rule: both sat alone in a grid square to the side of the transect rather than further along it, and Fort Mason takes its fog through the Golden Gate rather than over the Twin Peaks ridge, so the section drew it as a spike in the middle of the city.
 

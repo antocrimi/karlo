@@ -1,4 +1,4 @@
-# NoKarl — Project Briefing
+# Karl: project briefing
 
 **Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
@@ -13,7 +13,7 @@
 
 A San Francisco microclimate product. It answers one question: *where in the city is the sky clear enough to go outside right now.*
 
-Karl is local vernacular for the SF fog. NoKarl is where Karl isn't.
+Karl is local vernacular for the SF fog, and the app takes its name: it shows where Karl isn't. (Called NoKarl until October 2026.)
 
 **Tagline:** "Your SF sun chasing guide." — one line, used in both the masthead and the footer, both set in `--fog-dim`.
 
@@ -76,6 +76,9 @@ The **quiet rule**: when nothing sits above the fog line, no place is named. Thi
 ### Amber is spent, not decorated
 `--clear` appears on the verdict, the clear map dots and labels, the open footer section, the live dot and the heart. Nowhere else. When the quiet rule fires the accent drains off the page automatically, because every amber element is gated on its own local predicate rather than on a "quiet mode" flag. Preserve that property.
 
+### Named Karl
+Decided 2026-10-13 (build `2026.10.13.1`). The app is called Karl, after the fog, and NoKarl is retired: page title, home screen name, share card, structured data and docs. The repo stays `antocrimi/karlo` for now because renaming it moves the GitHub Pages address and breaks saved home screen shortcuts and shared links.
+
 ### Fresh on every return
 Added 2026-10-07 (build `2026.10.07.1`). Saved to the iPhone home screen, iOS resumes the page as it was, so "Now" went stale. Two fixes. Coming back after more than five minutes (`STALE`) refetches and returns the scrubber to now; a quicker look away keeps the scrub. In the home screen app only (`navigator.standalone` or `display-mode: standalone`), pulling down from the top past 72 px refreshes, with the footer's `arrow_clockwise` glyph turning with the pull in the gap above the header and spinning for at least 600 ms while it loads. Safari in a tab keeps its own pull to refresh, so ours stays off there. A pull that starts on the scrubber or a button never counts.
 
@@ -96,7 +99,7 @@ Two fixes came from this: the temperature centres against the whole two-line lef
 Base CSS is the phone. Media queries only add. Breakpoints: 560px (type and layout), 720px (footer nav goes horizontal — below that "How it works" cannot fit a quarter column), 860px (map flattens).
 
 ### The voice is wry, never earnest
-Weather copy defaults to cheerful and useless. NoKarl personifies the fog as an adversary you outmanoeuvre. Quiet-rule line: "Karl's winning right now."
+Weather copy defaults to cheerful and useless. Karl personifies the fog as an adversary you outmanoeuvre. Quiet-rule line: "Karl's winning right now."
 
 ---
 
@@ -248,7 +251,7 @@ Map labels are measured and packed on load, on font swap and on resize, driven b
 
 **Unresolved:** whether a request covering eleven coordinates bills as one call or eleven. The published rule only describes the ten-variable and two-week thresholds "for a single location". Confirm with info@open-meteo.com before assuming the free tier covers commercial traffic.
 
-**The one thing that costs money:** the free tier is non-commercial only. The moment NoKarl carries an ad or a subscription it needs the $29 plan. That is a business decision, not a technical one.
+**The one thing that costs money:** the free tier is non-commercial only. The moment Karl carries an ad or a subscription it needs the $29 plan. That is a business decision, not a technical one.
 
 ---
 
