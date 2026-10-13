@@ -747,6 +747,11 @@ head('night');
   ok('the app is called Karl everywhere on the page', !/NoKarl/.test(src));
   ok('canonical, og and structured data use byekarl.com',
      !/antocrimi\.github\.io/.test(src) && (src.match(/https:\/\/byekarl\.com\//g) || []).length >= 4);
+  ok('desktop: two panes from 1100px, map left and list right',
+     /@media\(min-width:1100px\)\{[^@]*grid-template-columns:minmax\(0,1\.7fr\) minmax\(340px,1fr\)[^@]*\.pane\{grid-column:1; align-self:stretch\}[^@]*#board\{grid-column:2\}/.test(src));
+  ok('desktop: the map pane only sticks on windows tall enough to hold it',
+     /@media\(min-width:1100px\) and \(min-height:760px\)\{ \.pane \.ridge\{position:sticky/.test(src));
+  ok('no layout prototype switch left in the page', !/data-lay|lay=/.test(src.replace(/family=[^"]*/g, '')));
   ok('CNAME file names the domain',
      fs.readFileSync(require('path').join(require('path').dirname(FILE), 'CNAME'), 'utf8').trim() === 'byekarl.com');
   ok('hilltop leader is placed from the label centre, so bold cannot move it',

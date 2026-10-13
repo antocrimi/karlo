@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.13.2 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.13.3 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -391,32 +391,23 @@ svg.g{fill:currentColor}
   .cols p{font-size:16px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
-/* ══ PROTOTYPE desktop layouts, switched by ?lay=a|b|c ════════════ */
+/* ══ desktop: two panes ═══════════════════════════════════════════
+   From 1100px the page stops being a stretched phone column. The map,
+   verdict and scrubber sit in a left pane; the ranked list scrolls on the
+   right. The left pane sticks only when the window is tall enough to hold
+   it, so a short laptop screen never clips the scrubber. The pane wraps the
+   ridge because sticky stops at its parent, and the parent must be the row,
+   not the whole grid, or the map slides over the footer. */
 @media(min-width:1100px){
-  html[data-lay=a] .wrap{max-width:1120px}
-  html[data-lay=a] .stage{aspect-ratio:900/300}
-  html[data-lay=a] .rows{display:grid; grid-template-columns:1fr 1fr; column-gap:56px}
-
-  html[data-lay=b] .wrap{max-width:1360px; display:grid;
+  .wrap{max-width:1360px; display:grid;
     grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr); column-gap:72px; align-items:start}
-  html[data-lay=b] .titlerow,html[data-lay=b] .sub,html[data-lay=b] .foot{grid-column:1 / -1}
-  html[data-lay=b] .ridge{grid-column:1; position:sticky; top:20px}
-  html[data-lay=b] #board{grid-column:2}
-  html[data-lay=b] #board .sec:first-child{margin-top:24px}
-  html[data-lay=b] .stage{aspect-ratio:900/290}
-
-  html[data-lay=c] .wrap{max-width:1640px}
-  html[data-lay=c] .ridge{display:grid; grid-template-columns:minmax(0,1fr)}
-  html[data-lay=c] .ridge>.sec{grid-row:1}
-  html[data-lay=c] .ridge-head{grid-row:2; border-top:0; padding-top:0}
-  html[data-lay=c] .verdict{grid-row:3; grid-column:1; z-index:3; align-self:start; padding-top:18px; margin:0; pointer-events:none}
-  html[data-lay=c] .stage{grid-row:3; grid-column:1; aspect-ratio:900/210}
-  html[data-lay=c] .rail{grid-row:4}
-  html[data-lay=c] .timebar{grid-row:5}
-  html[data-lay=c] .v-name{font-size:40px}
-  html[data-lay=c] .v-temp{font-size:56px}
-  html[data-lay=c] .rows{display:grid; grid-template-columns:repeat(3,1fr); column-gap:56px}
+  .titlerow,.sub,.foot{grid-column:1 / -1}
+  .pane{grid-column:1; align-self:stretch}
+  #board{grid-column:2}
+  #board .sec:first-child{margin-top:24px}
+  .stage{aspect-ratio:900/290}
 }
+@media(min-width:1100px) and (min-height:760px){ .pane .ridge{position:sticky; top:20px} }
 
 @media(prefers-reduced-motion:reduce){
   .dot,.dot .rays,.v-ico,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
@@ -432,7 +423,6 @@ svg.g{fill:currentColor}
 "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
 "isBasedOn":{"@type":"Dataset","name":"Open-Meteo forecast","url":"https://open-meteo.com/","license":"https://creativecommons.org/licenses/by/4.0/"}}
 </script>
-<script>try{var m=location.search.match(/[?&]lay=(\w)/);if(m)document.documentElement.dataset.lay=m[1]}catch(e){}</script>
 </head>
 <body>
 <div class="ptr" id="ptr" aria-hidden="true"></div>
@@ -447,6 +437,7 @@ svg.g{fill:currentColor}
 
   <p class="sub">Your SF sun chasing guide.</p>
 
+  <div class="pane">
   <div class="ridge">
     <h2 class="sec">Best spot</h2>
     <div class="verdict" id="verdict" aria-live="polite"></div>
@@ -506,6 +497,7 @@ svg.g{fill:currentColor}
              aria-label="Time, hours from now" aria-valuetext="Now">
       <div class="tb-scale"><span>Now</span><span>+12h</span><span>+24h</span></div>
     </div>
+  </div>
   </div>
 
   <div id="board"></div>
@@ -662,7 +654,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.13.2";
+const BUILD="2026.10.13.3";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
