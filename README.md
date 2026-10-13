@@ -6,7 +6,7 @@ Karl reads live forecast data across the city and splits eleven places at the fo
 
 The eleven are chosen for somewhere worth sitting outside, and then constrained by the chart. A cross section only means something if the places sit near the line it cuts, so a place more than 2.5 km off that line does not go on it however good it is. Fort Mason and McLaren failed that rule: both sat alone in a grid square to the side of the transect rather than further along it, and Fort Mason takes its fog through the Golden Gate rather than over the Twin Peaks ridge, so the section drew it as a spike in the middle of the city.
 
-Live at [antocrimi.github.io/karlo](https://antocrimi.github.io/karlo/).
+Live at [byekarl.com](https://byekarl.com/).
 
 It is a project site, not a user site, so it is served from the `/karlo/` sub-path. The `canonical`, `og:url` and `og:image` tags in `index.html` are absolute and have to carry that sub-path: `og-image.png` at the bare domain is a 404, which is a link preview with no image and nothing on the page to show it. `test.js` checks them against this README so the two cannot drift.
 

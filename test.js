@@ -629,19 +629,19 @@ const vars = [...new Set([...hourly, ...extra, ...LEVELS.map(L => L.k)])];
 ok(`${vars.length} hourly variables — bills as one call`, vars.length <= 10, vars.join(','));
 ok('one batched request for all spots', /latitude="?\+SPOTS\.map/.test(src) || src.includes('SPOTS.map(s=>s.lat).join(",")'));
 
-head('DEPLOY PATH  — this is a project site, served from /karlo/');
+head("DEPLOY ADDRESS  — byekarl.com");
 {
-  /* The site is a project page, not a user page, so every absolute self-URL
-     has to carry the sub-path. Pointing them at the bare domain sends search
-     engines somewhere else and makes og-image.png a 404, which is a link
-     preview with no image and nothing on the page to reveal it. */
+  /* Every absolute self-URL has to agree with the address the README names.
+     A canonical or og:image that points somewhere else sends search engines
+     to the wrong place and makes the link preview lose its image. The site
+     moved from the /karlo/ project path to byekarl.com on 2026-10-13. */
   const readme = fs.readFileSync(path.join(__dirname, 'README.md'), 'utf8');
   const base = (readme.match(/Live at \[[^\]]+\]\((https:\/\/[^)]+?\/)\)/) || [])[1];
   ok('the README states a live URL', !!base, base || 'none found');
 
-  const abs = [...src.matchAll(/(?:href|content)="(https:\/\/[a-z0-9-]+\.github\.io[^"]*)"/g)]
+  const abs = [...src.matchAll(/(?:href|content)="(https:\/\/(?:byekarl\.com|[a-z0-9-]+\.github\.io)[^"]*)"/g)]
     .map(m => m[1]);
-  const jsonld = [...src.matchAll(/"url":"(https:\/\/[a-z0-9-]+\.github\.io[^"]*)"/g)]
+  const jsonld = [...src.matchAll(/"url":"(https:\/\/(?:byekarl\.com|[a-z0-9-]+\.github\.io)[^"]*)"/g)]
     .map(m => m[1]);
   const all = [...abs, ...jsonld];
   ok('the page carries absolute self-URLs to check', all.length >= 4, all.length + ' found');
@@ -745,6 +745,10 @@ head('night');
   ok('no hard-coded amber outside the tokens',
      (src.replace(/<link rel="icon"[^>]*>/, '').match(/#F0A03C|#9A6520/gi) || []).length === 2);
   ok('the app is called Karl everywhere on the page', !/NoKarl/.test(src));
+  ok('canonical, og and structured data use byekarl.com',
+     !/antocrimi\.github\.io/.test(src) && (src.match(/https:\/\/byekarl\.com\//g) || []).length >= 4);
+  ok('CNAME file names the domain',
+     fs.readFileSync(require('path').join(require('path').dirname(FILE), 'CNAME'), 'utf8').trim() === 'byekarl.com');
   ok('hilltop leader is placed from the label centre, so bold cannot move it',
      /\.pk::after\{[^}]*left:calc\(50% \+ var\(--dx/.test(src) && !/--lx/.test(src));
   ok('no rays at night, pick included', /\.night \.dot\.pick \.rays\{opacity:0/.test(src));

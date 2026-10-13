@@ -1,6 +1,6 @@
 # Karl: working on this repo
 
-Karl shows where the fog (local name: Karl) isn't across eleven San Francisco places. It is one static page served by GitHub Pages from `main` at https://antocrimi.github.io/karlo/. This file says how to work on it. `BRIEFING.md` holds the design rationale, the decisions log and the rejected directions; read it before changing anything visible.
+Karl shows where the fog (local name: Karl) isn't across eleven San Francisco places. It is one static page served by GitHub Pages from `main` at https://byekarl.com/. This file says how to work on it. `BRIEFING.md` holds the design rationale, the decisions log and the rejected directions; read it before changing anything visible.
 
 ## Start of every session
 

@@ -2,7 +2,7 @@
 
 **Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
-**Status:** shipped prototype, live at `antocrimi.github.io/karlo/`. A **project** site, so it is served from the `/karlo/` sub-path and every absolute URL in the head has to carry it. One HTML file, no build step, no dependencies, plus two image assets.
+**Status:** shipped prototype, live at `byekarl.com`. GitHub Pages serves the old `antocrimi.github.io/karlo/` address as a redirect to it. The custom domain sits at the root, so absolute URLs in the head carry no sub-path. One HTML file, no build step, no dependencies, plus two image assets.
 **Last worked:** 1 September 2026 — the fog redrawn as one body on a part-compressed axis, after seeing live data on a phone. Before that, 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time, then the roster constrained to the transect and the ridge given a hairline.
 
 **Companion file:** `CLAUDE.md` carries Anto's voice rules, attribution tiers and working preferences. It governs every word written for or as him. This file governs the product.
@@ -78,6 +78,9 @@ The **quiet rule**: when nothing sits above the fog line, no place is named. Thi
 
 ### Named Karl
 Decided 2026-10-13 (build `2026.10.13.1`). The app is called Karl, after the fog, and NoKarl is retired: page title, home screen name, share card, structured data and docs. The repo stays `antocrimi/karlo` for now because renaming it moves the GitHub Pages address and breaks saved home screen shortcuts and shared links.
+
+### Own domain
+Decided 2026-10-13 (build `2026.10.13.2`). The site lives at `byekarl.com`, registered at Cloudflare ($10.46 a year, privacy included). DNS is four A records for GitHub Pages and a `www` CNAME to `antocrimi.github.io`, all set to DNS only because a Cloudflare proxy blocks GitHub's certificate. A `CNAME` file at the repo root holds the domain. Open-Meteo is unaffected: calls come from each visitor's browser, the free tier stays valid while the site has no ads, paywall or sponsorship, and the CC BY 4.0 credit stays in the footer. The repo stays `antocrimi/karlo`. Saved home screen shortcuts follow the redirect, and re-adding one points it at the new address.
 
 ### Fresh on every return
 Added 2026-10-07 (build `2026.10.07.1`). Saved to the iPhone home screen, iOS resumes the page as it was, so "Now" went stale. Two fixes. Coming back after more than five minutes (`STALE`) refetches and returns the scrubber to now; a quicker look away keeps the scrub. In the home screen app only (`navigator.standalone` or `display-mode: standalone`), pulling down from the top past 72 px refreshes, with the footer's `arrow_clockwise` glyph turning with the pull in the gap above the header and spinning for at least 600 ms while it loads. Safari in a tab keeps its own pull to refresh, so ours stays off there. A pull that starts on the scrubber or a button never counts.
