@@ -391,6 +391,33 @@ svg.g{fill:currentColor}
   .cols p{font-size:16px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
+/* ══ PROTOTYPE desktop layouts, switched by ?lay=a|b|c ════════════ */
+@media(min-width:1100px){
+  html[data-lay=a] .wrap{max-width:1120px}
+  html[data-lay=a] .stage{aspect-ratio:900/300}
+  html[data-lay=a] .rows{display:grid; grid-template-columns:1fr 1fr; column-gap:56px}
+
+  html[data-lay=b] .wrap{max-width:1360px; display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr); column-gap:72px; align-items:start}
+  html[data-lay=b] .titlerow,html[data-lay=b] .sub,html[data-lay=b] .foot{grid-column:1 / -1}
+  html[data-lay=b] .ridge{grid-column:1; position:sticky; top:20px}
+  html[data-lay=b] #board{grid-column:2}
+  html[data-lay=b] #board .sec:first-child{margin-top:24px}
+  html[data-lay=b] .stage{aspect-ratio:900/290}
+
+  html[data-lay=c] .wrap{max-width:1640px}
+  html[data-lay=c] .ridge{display:grid; grid-template-columns:minmax(0,1fr)}
+  html[data-lay=c] .ridge>.sec{grid-row:1}
+  html[data-lay=c] .ridge-head{grid-row:2; border-top:0; padding-top:0}
+  html[data-lay=c] .verdict{grid-row:3; grid-column:1; z-index:3; align-self:start; padding-top:18px; margin:0; pointer-events:none}
+  html[data-lay=c] .stage{grid-row:3; grid-column:1; aspect-ratio:900/210}
+  html[data-lay=c] .rail{grid-row:4}
+  html[data-lay=c] .timebar{grid-row:5}
+  html[data-lay=c] .v-name{font-size:40px}
+  html[data-lay=c] .v-temp{font-size:56px}
+  html[data-lay=c] .rows{display:grid; grid-template-columns:repeat(3,1fr); column-gap:56px}
+}
+
 @media(prefers-reduced-motion:reduce){
   .dot,.dot .rays,.v-ico,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
@@ -405,6 +432,7 @@ svg.g{fill:currentColor}
 "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
 "isBasedOn":{"@type":"Dataset","name":"Open-Meteo forecast","url":"https://open-meteo.com/","license":"https://creativecommons.org/licenses/by/4.0/"}}
 </script>
+<script>try{var m=location.search.match(/[?&]lay=(\w)/);if(m)document.documentElement.dataset.lay=m[1]}catch(e){}</script>
 </head>
 <body>
 <div class="ptr" id="ptr" aria-hidden="true"></div>
