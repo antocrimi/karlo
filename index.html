@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.13.6 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.13.7 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -60,9 +60,9 @@ body{
 /* ══ masthead + segmented toggle ════════════════════════════════ */
 .titlerow{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0 12px}
 h1{margin:0; flex:0 1 auto; min-width:0}
-/* wordmark is width-driven: 40vw on phones for prominence without dominance,
-   climbing to a 400px ceiling on desktop */
-h1 img{display:block; width:clamp(165px, 44vw, 440px); height:auto; object-fit:contain}
+/* wordmark is width-driven on phones (44vw) and stops at the 390px phone size,
+   172px, so it never grows with the window */
+h1 img{display:block; width:clamp(165px, 44vw, 172px); height:auto; object-fit:contain}
 
 /* unit override — muted, secondary. Default is inferred from locale. */
 .units{display:flex; align-items:center; gap:1px; flex:0 0 auto}
@@ -238,7 +238,6 @@ svg.g{fill:currentColor}
 .rail b.on{color:var(--clear)}
 .rail b.pick{font-weight:600}
 @media(max-width:374px){ .pk,.rail b{font-size:10.5px} }
-@media(min-width:560px){ .pk,.rail b{font-size:12px} }
 
 /* ══ full data — split at the fog line ════════════════════════ */
 .rows{display:block}
@@ -263,7 +262,7 @@ svg.g{fill:currentColor}
 .foot{margin-top:44px; padding-top:26px; border-top:1px solid var(--line-hi)}
 
 .f-top{display:grid; gap:22px}
-.f-brand img{display:block; width:clamp(150px,38vw,190px); height:auto}
+.f-brand img{display:block; width:150px; height:auto}
 .f-brand p{margin:11px 0 0; font-family:var(--mono); font-size:13px; color:var(--fog-dim)}
 
 .f-live{display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -352,25 +351,10 @@ svg.g{fill:currentColor}
 
 @media(min-width:560px){
   :root{--pad:24px}
-  /* the wordmark and the type hold one size from here up: the window can be
-     dragged wider without anything growing. Phones below 560px scale with the
-     screen. Where 440px plus the unit toggle cannot share a line, the toggle
-     drops under the wordmark. */
-  h1 img{width:440px}
-  .titlerow{flex-wrap:wrap; row-gap:6px}
-  .acc-t{font-size:15.5px}
+  /* Type and the wordmark are set once, at the phone size, and never grow with
+     the window. Wider windows get more room, not bigger letters. */
   .stage{aspect-ratio:900/300}
-  .verdict{min-height:68px}
-  .v-head{min-height:40px}
-  .v-ico svg{width:33px; height:33px}
-  .v-name{font-size:30px}
-  .v-temp{font-size:48px}
-  .sec{font-size:22px; margin:46px 0 18px}
-  .tr{grid-template-columns:40px 1fr auto; gap:18px}
-  .ri svg{width:33px; height:33px}
-  .nm{font-size:20px}
-  .tp{font-size:23px}
-  .cols p{font-size:16px}
+  .sec{margin:46px 0 18px}
   /* brand and live status share a line, split by a rule */
   .f-top{grid-template-columns:1fr auto; gap:34px; align-items:center}
   .f-live{display:block; padding-left:34px; border-left:1px solid var(--line)}
@@ -387,14 +371,13 @@ svg.g{fill:currentColor}
 @media(min-width:720px){
   .acc{display:grid; grid-template-columns:repeat(4,1fr)}
   .acc-t{grid-row:1; padding:0 13px; gap:10px; min-height:62px;
-    border-bottom:1px solid var(--line); font-size:15.5px}
+    border-bottom:1px solid var(--line)}
   .acc-t .lb{flex:0 1 auto}
   .acc-t .cv{display:none; margin-left:2px}          /* only the open one shows it */
   .acc-t[aria-expanded="true"] .cv{display:block}
   .acc-p{grid-row:2; grid-column:1 / -1; padding:26px 0 30px}
   .cols{grid-template-columns:repeat(4,1fr); gap:32px}
   .cols.two{grid-template-columns:repeat(3,1fr)}
-  .cols p{font-size:16px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
 /* ══ footer panels on a wide window ═══════════════════════════════
@@ -686,7 +669,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.13.6";
+const BUILD="2026.10.13.7";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1411,7 +1394,7 @@ function drawFog(){
 /* ── controls ──────────────────────────────────────────────────── */
 /* coalesce to one repaint per frame — a drag fires input far faster than
    the browser paints, and each paint rebuilds the list, dots and rail */
-let raf=null, rz=null;
+let raf=null, rz=null, rz2=null;
 /* an unpacked label is worth more than no label, so a failed pass still
    reveals them rather than leaving the map nameless */
 const safeLayout=()=>{ try{ relayout(); }catch(e){ try{ placed(); }catch(_){} } };
@@ -1603,10 +1586,15 @@ if(STANDALONE){
      a font swap or a rotation during the fetch has to be answered. */
   safeLayout();
   /* one observer covers first layout, webfont swap, rotation and resize */
-  if(window.ResizeObserver) new ResizeObserver(()=>{
-    clearTimeout(rz); rz=setTimeout(safeLayout,120);
-  }).observe($("rail"));
-  else addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(safeLayout,140); });
+  /* Labels are placed in pixels from the stage's own width and height, so the
+     stage is watched as well as the rail: its height changes at breakpoints
+     where the aspect ratio does, and a rail-only observer can miss that in
+     Safari and leave the names stranded where the old height put them. The
+     window resize event is a second net, and the layout is also re-run once
+     more after the last change has settled. */
+  const again=()=>{ clearTimeout(rz); rz=setTimeout(()=>{ safeLayout(); clearTimeout(rz2); rz2=setTimeout(safeLayout,350); },120); };
+  if(window.ResizeObserver){ const ro=new ResizeObserver(again); ro.observe($("rail")); ro.observe($("stage")); }
+  addEventListener("resize",again);
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ safeLayout(); syncSide(); });
   addEventListener("resize",syncSide);
   addEventListener("scroll",()=>{ if(!sideRaf) sideRaf=requestAnimationFrame(()=>{ sideRaf=0; syncSide(); }); },{passive:true});

@@ -754,7 +754,16 @@ head('night');
      /@media\(min-width:1100px\) and \(min-height:760px\)\{/.test(src));
   ok('desktop: both panes pin, the list window is driven by the page scroll',
      /\.pane \.ridge\{position:sticky; top:44px\}[^@]*\.side\{min-height:var\(--side-h,0px\)\}[^@]*#board\{position:sticky; top:20px; max-height:calc\(100vh - 40px\); overflow:hidden/.test(src));
-  ok('wordmark holds one size from 560px up', /@media\(min-width:560px\)\{[^@]*h1 img\{width:440px\}/.test(src) && !/37\.4vw/.test(src));
+  ok('wordmark stops at the 390px phone size and never grows with the window',
+     /h1 img\{display:block; width:clamp\(165px, 44vw, 172px\)/.test(src) && !/h1 img\{width:/.test(src));
+  ok('no min-width rule changes a font size, so type never grows with the window', (() => {
+     const bad = []; const re = /@media\(min-width:(\d+)px\)[^{]*\{/g; let m;
+     while ((m = re.exec(src))) {
+       let i = re.lastIndex, d = 1; while (d && i < src.length) { const c = src[i++]; d += (c === '{') - (c === '}'); }
+       if (/font-size:/.test(src.slice(re.lastIndex, i))) bad.push(m[1]);
+     }
+     return bad.length === 0;
+  })());
   ok('no type size depends on the window width', !/font-size:[^;}]*(vw|vh|vmin|vmax)/.test(src));
   {
     const sp = api.sideProgress;
@@ -769,6 +778,9 @@ head('night');
   ok('footer: Method text is held to 68 characters at any width', /\.meth > div\{display:grid; grid-template-columns:130px minmax\(0,68ch\)/.test(src));
   ok('footer: no paragraph in a panel runs wider than 68 characters',
      (src.match(/\.cols p\{[^}]*max-width:(\d+)ch/) || [])[1] <= 68);
+  ok('labels re-measure when the stage changes size, not only the rail',
+     /ro\.observe\(\$\("rail"\)\); ro\.observe\(\$\("stage"\)\)/.test(src) && /addEventListener\("resize",again\)/.test(src));
+  ok('and once more after the last change has settled', /rz2=setTimeout\(safeLayout,350\)/.test(src));
   ok('no layout prototype switch left in the page', !/data-lay|lay=/.test(src.replace(/family=[^"]*/g, '')));
   ok('CNAME file names the domain',
      fs.readFileSync(require('path').join(require('path').dirname(FILE), 'CNAME'), 'utf8').trim() === 'byekarl.com');
