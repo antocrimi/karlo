@@ -762,6 +762,12 @@ head('night');
     ok('list window: it stops at the end, so the panes can unlock', sp(5000, 300, 1000, 700) === 300);
     ok('list window: a short list never scrolls', sp(900, 300, 600, 700) === 0);
   }
+  ok('footer: every panel flows in one row from 1100px, whatever the column count',
+     /@media\(min-width:1100px\)\{\s*\.cols,\.cols\.two\{grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:minmax\(0,1fr\)/.test(src));
+  ok('footer: Method runs in two columns on wide windows', /\.meth\{column-count:2/.test(src));
+  ok('footer: Method text is held to 68 characters at any width', /\.meth > div\{display:grid; grid-template-columns:130px minmax\(0,68ch\)/.test(src));
+  ok('footer: no paragraph in a panel runs wider than 68 characters',
+     (src.match(/\.cols p\{[^}]*max-width:(\d+)ch/) || [])[1] <= 68);
   ok('no layout prototype switch left in the page', !/data-lay|lay=/.test(src.replace(/family=[^"]*/g, '')));
   ok('CNAME file names the domain',
      fs.readFileSync(require('path').join(require('path').dirname(FILE), 'CNAME'), 'utf8').trim() === 'byekarl.com');

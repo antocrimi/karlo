@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.13.4 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.13.5 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -372,7 +372,7 @@ svg.g{fill:currentColor}
   .f-live-b{justify-content:flex-start; gap:12px}
   .f-refresh{margin:-8px 0 -8px -8px}
 
-  .meth > div{display:grid; grid-template-columns:130px 1fr; gap:20px; align-items:baseline}
+  .meth > div{display:grid; grid-template-columns:130px minmax(0,68ch); gap:20px; align-items:baseline}
   .meth dd{margin:0}
 
 }
@@ -391,6 +391,18 @@ svg.g{fill:currentColor}
   .cols p{font-size:16px}
 }
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
+/* ══ footer panels on a wide window ═══════════════════════════════
+   From 1100px every panel reads as one horizontal band: columns flow in a
+   single row whatever their number (five in "How it works"), and the long
+   Method list runs in two columns so a line stays near 60 characters instead
+   of 130. Below 1100px the panels wrap and the Method list is one column with
+   its text held to 68 characters. */
+@media(min-width:1100px){
+  .cols,.cols.two{grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:24px 28px}
+  .meth{column-count:2; column-gap:64px}
+  .meth > div{break-inside:avoid}
+  .meth > div:nth-last-child(1){border-bottom:0}
+}
 /* ══ desktop: two panes ═══════════════════════════════════════════
    From 1100px the page stops being a stretched phone column. The map,
    verdict and scrubber sit in a left pane; the ranked list sits on the right.
@@ -669,7 +681,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.13.4";
+const BUILD="2026.10.13.5";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
