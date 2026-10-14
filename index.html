@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.13.5 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.13.6 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -352,7 +352,13 @@ svg.g{fill:currentColor}
 
 @media(min-width:560px){
   :root{--pad:24px}
-  h1 img{width:clamp(264px, 37.4vw, 440px)}
+  /* the wordmark and the type hold one size from here up: the window can be
+     dragged wider without anything growing. Phones below 560px scale with the
+     screen. Where 440px plus the unit toggle cannot share a line, the toggle
+     drops under the wordmark. */
+  h1 img{width:440px}
+  .titlerow{flex-wrap:wrap; row-gap:6px}
+  .acc-t{font-size:15.5px}
   .stage{aspect-ratio:900/300}
   .verdict{min-height:68px}
   .v-head{min-height:40px}
@@ -420,7 +426,6 @@ svg.g{fill:currentColor}
   .side{grid-column:2; align-self:stretch}
   #board .sec:first-child{margin-top:24px}
   .stage{aspect-ratio:900/290}
-  h1 img{width:440px}
 }
 @media(min-width:1100px) and (min-height:760px){
   /* the ridge sits 24px lower than the board's window because its heading
@@ -681,7 +686,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.13.5";
+const BUILD="2026.10.13.6";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven

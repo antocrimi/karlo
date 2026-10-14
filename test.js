@@ -754,7 +754,8 @@ head('night');
      /@media\(min-width:1100px\) and \(min-height:760px\)\{/.test(src));
   ok('desktop: both panes pin, the list window is driven by the page scroll',
      /\.pane \.ridge\{position:sticky; top:44px\}[^@]*\.side\{min-height:var\(--side-h,0px\)\}[^@]*#board\{position:sticky; top:20px; max-height:calc\(100vh - 40px\); overflow:hidden/.test(src));
-  ok('desktop: wordmark holds one size on wide screens', /@media\(min-width:1100px\)\{[^@]*h1 img\{width:440px\}/.test(src));
+  ok('wordmark holds one size from 560px up', /@media\(min-width:560px\)\{[^@]*h1 img\{width:440px\}/.test(src) && !/37\.4vw/.test(src));
+  ok('no type size depends on the window width', !/font-size:[^;}]*(vw|vh|vmin|vmax)/.test(src));
   {
     const sp = api.sideProgress;
     ok('list window: nothing scrolls until the pane pins', sp(100, 300, 1000, 700) === 0);
