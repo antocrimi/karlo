@@ -15,7 +15,7 @@ const path = require('path');
 const FILE = path.join(__dirname, 'index.html');
 
 /* ── a DOM small enough to read, large enough to boot the page ───────── */
-function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, standalone = false } = {}) {
+function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, standalone = false, fetchImpl = null } = {}) {
   const store = {}, handlers = {};
   const mk = id => {
     const n = {
@@ -97,6 +97,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, 
     else global.pageFetches = (global.pageFetches || []).concat(String(u));
     return Promise.reject(new Error('offline'));
   };
+  if (fetchImpl) global.fetch = fetchImpl;
   global.AbortController = function () { this.signal = {}; this.abort = () => {} };
   global.setTimeout = f => { f(); return 0 };
   global.clearTimeout = () => {};
@@ -108,7 +109,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, 
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
         'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns,smoothAcross,' +
-        'kmBetween,CELL_KM,sunAlt,isNight};';
+        'kmBetween,CELL_KM,sunAlt,isNight,sideProgress};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -395,7 +396,7 @@ head('ONE BODY  — cohesive, and anchored where the meaning is');
      in the list and the height of the body come from the same numbers */
   const src4 = fs.readFileSync(FILE, 'utf8');
   ok('the field is smoothed before anything is decided',
-     /smoothAcross\(await fetchLive\(\)\)/.test(src4) && /smoothAcross\(simulate\(\)\)/.test(src4));
+     /smoothAcross\(await fetchLive\(\)\)/.test(src4) && /smoothAcross\(saved\?saved\.frames:simulate\(\)\)/.test(src4));
   /* The blend was removed on 1 Sept. A single clear cell inside a covered city
      used to be hidden as grid noise; it is now shown, because it is what the
      model said about that place and ?debug can prove it either way. */
@@ -748,9 +749,19 @@ head('night');
   ok('canonical, og and structured data use byekarl.com',
      !/antocrimi\.github\.io/.test(src) && (src.match(/https:\/\/byekarl\.com\//g) || []).length >= 4);
   ok('desktop: two panes from 1100px, map left and list right',
-     /@media\(min-width:1100px\)\{[^@]*grid-template-columns:minmax\(0,1\.7fr\) minmax\(340px,1fr\)[^@]*\.pane\{grid-column:1; align-self:stretch\}[^@]*#board\{grid-column:2\}/.test(src));
-  ok('desktop: the map pane only sticks on windows tall enough to hold it',
-     /@media\(min-width:1100px\) and \(min-height:760px\)\{ \.pane \.ridge\{position:sticky/.test(src));
+     /@media\(min-width:1100px\)\{[^@]*grid-template-columns:minmax\(0,1\.7fr\) minmax\(340px,1fr\)[^@]*\.pane\{grid-column:1; align-self:stretch\}[^@]*\.side\{grid-column:2; align-self:stretch\}/.test(src));
+  ok('desktop: pinning needs a window at least 760px tall',
+     /@media\(min-width:1100px\) and \(min-height:760px\)\{/.test(src));
+  ok('desktop: both panes pin, the list window is driven by the page scroll',
+     /\.pane \.ridge\{position:sticky; top:44px\}[^@]*\.side\{min-height:var\(--side-h,0px\)\}[^@]*#board\{position:sticky; top:20px; max-height:calc\(100vh - 40px\); overflow:hidden/.test(src));
+  ok('desktop: wordmark holds one size on wide screens', /@media\(min-width:1100px\)\{[^@]*h1 img\{width:440px\}/.test(src));
+  {
+    const sp = api.sideProgress;
+    ok('list window: nothing scrolls until the pane pins', sp(100, 300, 1000, 700) === 0);
+    ok('list window: it follows the page once pinned', sp(480, 300, 1000, 700) === 200);
+    ok('list window: it stops at the end, so the panes can unlock', sp(5000, 300, 1000, 700) === 300);
+    ok('list window: a short list never scrolls', sp(900, 300, 600, 700) === 0);
+  }
   ok('no layout prototype switch left in the page', !/data-lay|lay=/.test(src.replace(/family=[^"]*/g, '')));
   ok('CNAME file names the domain',
      fs.readFileSync(require('path').join(require('path').dirname(FILE), 'CNAME'), 'utf8').trim() === 'byekarl.com');
@@ -777,7 +788,8 @@ head('resume and pull to refresh');
   ok('back within a minute keeps the scrub and does not refetch',
      global.fetchCalls === before && h.api.S.h === 7, `${global.fetchCalls - before} fetches, h=${h.api.S.h}`);
   clock += 10 * 60e3; h.handlers.document.visibilitychange(); await tick(); await tick();
-  ok('back after ten minutes refetches', global.fetchCalls === before + 1, global.fetchCalls - before);
+  /* the offline stub fails every call, so one load is an attempt and one retry */
+  ok('back after ten minutes refetches', global.fetchCalls === before + 2, global.fetchCalls - before);
   ok('and returns to now', h.api.S.h === 0, h.api.S.h);
   document.visibilityState = 'hidden'; before = global.fetchCalls;
   clock += 10 * 60e3; h.handlers.document.visibilitychange(); await tick();
@@ -791,7 +803,7 @@ head('resume and pull to refresh');
   before = global.fetchCalls; pull(30); await tick();
   ok('a short pull does nothing', global.fetchCalls === before);
   pull(90); await tick(); await tick();
-  ok('a full pull refreshes', global.fetchCalls === before + 1, global.fetchCalls - before);
+  ok('a full pull refreshes', global.fetchCalls === before + 2, global.fetchCalls - before);
   before = global.fetchCalls;
   W.touchstart({ target: { closest: () => ({}) }, touches: [{ clientY: 100 }] });
   W.touchmove({ touches: [{ clientY: 200 }] }); W.touchend(); await tick();
@@ -846,7 +858,64 @@ head('resume and pull to refresh');
 }
 }
 
-resumeTests().catch(e => { fail++; console.log('  FAIL  resume tests threw   → ' + e.stack); }).then(() => {
+/* ── when the forecast fails ─────────────────────────────────────────── */
+async function failureTests() {
+head('failure is explained, and a saved forecast comes before the simulator');
+{
+  const tick = () => new Promise(r => setImmediate(r));
+  const good = () => {                      /* a real-shaped Open-Meteo answer for all eleven spots */
+    const n = 72, t0 = Math.floor(Date.now() / 3600e3) * 3600 - 7200;
+    const hourly = { time: Array.from({ length: n }, (_, i) => t0 + i * 3600),
+      temperature_2m: Array(n).fill(64), cloud_cover_low: Array(n).fill(10), visibility: Array(n).fill(24000),
+      wind_speed_10m: Array(n).fill(9), cloud_cover_mid: Array(n).fill(0) };
+    for (const L of api0.LEVELS) hourly[L.k] = Array(n).fill(0);
+    return Array.from({ length: api0.SPOTS.length }, () => ({ elevation: 50, hourly }));
+  };
+  const api0 = harness().api;
+  const ls = {};
+  global.localStorage = { getItem: k => (k in ls ? ls[k] : null), setItem: (k, v) => { ls[k] = String(v) }, removeItem: k => { delete ls[k] } };
+  const realFetch = global.fetch;
+  const run = async mk => {
+    const h = harness({ fetchImpl: mk }); await tick(); await tick(); await tick(); await tick();
+    return h;
+  };
+  const reply = (status, body) => () => Promise.resolve({ ok: status < 400, status, json: () => Promise.resolve(body) });
+  const text = (h, id) => h.store[id].textContent;
+
+  for (const k of Object.keys(ls)) delete ls[k];
+  let h = await run(() => Promise.reject(new TypeError('Failed to fetch')));
+  ok('unreachable host says so, and is labeled simulated',
+     text(h, 'liveLabel') === 'Simulated' && text(h, 'updated') === 'Could not reach Open-Meteo', text(h, 'updated'));
+  ok('the scrubber does not claim live while simulated', text(h, 'tbRel') === 'Simulated', text(h, 'tbRel'));
+
+  h = await run(reply(429, {}));
+  ok('a busy service reads as busy', text(h, 'updated') === 'Open-Meteo is busy (429)', text(h, 'updated'));
+  h = await run(reply(500, {}));
+  ok('a server error shows its status', text(h, 'updated') === 'Open-Meteo error (500)', text(h, 'updated'));
+  h = await run(reply(200, { nonsense: true }));
+  ok('an unreadable answer says so', text(h, 'updated') === 'Forecast unreadable', text(h, 'updated'));
+
+  let calls = 0;
+  h = await run(() => (++calls === 1 ? Promise.reject(new TypeError('x')) : reply(200, good())()));
+  ok('one failed attempt is retried and the page ends up live',
+     calls === 2 && text(h, 'liveLabel') === 'Live forecast', calls + ' calls, ' + text(h, 'liveLabel'));
+  ok('a good answer is kept for later', !!ls['karl.raw']);
+
+  h = await run(() => Promise.reject(new TypeError('x')));
+  ok('with a saved forecast, a failure shows it instead of the simulator',
+     text(h, 'liveLabel') === 'Saved forecast' && /^From .* · Could not reach Open-Meteo$/.test(text(h, 'updated')),
+     text(h, 'liveLabel') + ' / ' + text(h, 'updated'));
+  ok('and the scrubber says saved', text(h, 'tbRel') === 'Saved', text(h, 'tbRel'));
+
+  const o = JSON.parse(ls['karl.raw']); o.at -= 7 * 3600e3; ls['karl.raw'] = JSON.stringify(o);
+  h = await run(() => Promise.reject(new TypeError('x')));
+  ok('a forecast older than six hours is not trusted', text(h, 'liveLabel') === 'Simulated', text(h, 'liveLabel'));
+
+  global.fetch = realFetch; delete global.localStorage;
+}
+}
+
+resumeTests().then(failureTests).catch(e => { fail++; console.log('  FAIL  async tests threw   → ' + e.stack); }).then(() => {
   console.log(`\n${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.13.3 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.13.4 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -393,21 +393,36 @@ svg.g{fill:currentColor}
 @media(min-width:860px){ .stage{aspect-ratio:900/250} }
 /* ══ desktop: two panes ═══════════════════════════════════════════
    From 1100px the page stops being a stretched phone column. The map,
-   verdict and scrubber sit in a left pane; the ranked list scrolls on the
-   right. The left pane sticks only when the window is tall enough to hold
-   it, so a short laptop screen never clips the scrubber. The pane wraps the
-   ridge because sticky stops at its parent, and the parent must be the row,
-   not the whole grid, or the map slides over the footer. */
+   verdict and scrubber sit in a left pane; the ranked list sits on the right.
+   On windows tall enough for it (760px), both panes pin to the top and the
+   list scrolls inside its window, driven by the page scroll (syncSide). When
+   the list reaches its end the panes unlock and travel up with the footer.
+   Each pane wraps its content because sticky stops at its parent, and the
+   parent has to be the row, not the whole grid, or the pane slides over the
+   footer. The wordmark and the type hold one size from here up. */
 @media(min-width:1100px){
   .wrap{max-width:1360px; display:grid;
     grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr); column-gap:72px; align-items:start}
   .titlerow,.sub,.foot{grid-column:1 / -1}
   .pane{grid-column:1; align-self:stretch}
-  #board{grid-column:2}
+  .side{grid-column:2; align-self:stretch}
   #board .sec:first-child{margin-top:24px}
   .stage{aspect-ratio:900/290}
+  h1 img{width:440px}
 }
-@media(min-width:1100px) and (min-height:760px){ .pane .ridge{position:sticky; top:20px} }
+@media(min-width:1100px) and (min-height:760px){
+  /* the ridge sits 24px lower than the board's window because its heading
+     margin collapses outside it; offsetting by the same 24px keeps the two
+     headings on one line while pinned */
+  .pane .ridge{position:sticky; top:44px}
+  .side{min-height:var(--side-h,0px)}
+  #board{position:sticky; top:20px; max-height:calc(100vh - 40px); overflow:hidden; padding-bottom:30px;
+    -webkit-mask-image:linear-gradient(#000 calc(100% - 30px),transparent); mask-image:linear-gradient(#000 calc(100% - 30px),transparent)}
+  /* headings stay at the top of the window while rows pass under them; the
+     margins become padding so the opaque ground covers them */
+  #board .sec{position:sticky; top:0; z-index:2; margin:0; padding:40px 0 16px; background:var(--ink)}
+  #board .sec:first-child{margin-top:0; padding-top:24px}
+}
 
 @media(prefers-reduced-motion:reduce){
   .dot,.dot .rays,.v-ico,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
@@ -500,7 +515,7 @@ svg.g{fill:currentColor}
   </div>
   </div>
 
-  <div id="board"></div>
+  <div class="side" id="side"><div id="board"></div></div>
 
   <footer class="foot">
     <div class="f-top">
@@ -654,7 +669,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.13.3";
+const BUILD="2026.10.13.4";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -826,19 +841,40 @@ function simulate(){
   return out;
 }
 
-/* ── live: every hour reads the same hourly array, so the whole
-     48-hour sweep is internally consistent ─────────────────────── */
-async function fetchLive(){
-  const u="https://api.open-meteo.com/v1/forecast"
-   +"?latitude="+SPOTS.map(s=>s.lat).join(",")+"&longitude="+SPOTS.map(s=>s.lon).join(",")
-   +"&hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
-   +",cloud_cover_mid"+","+LEVELS.map(L=>L.k).join(",")   /* 9 — under the 10 that bill as 2 */
-   +"&forecast_days=3&timeformat=unixtime&temperature_unit=fahrenheit"
-   +"&wind_speed_unit=mph&timezone="+TZ;
-  const c=new AbortController(), to=setTimeout(()=>c.abort(),8000);
-  const r=await fetch(u,{signal:c.signal}); clearTimeout(to);
-  if(!r.ok) throw new Error(r.status);
-  const j=await r.json(), A=Array.isArray(j)?j:[j];
+/* Why a fetch failed, kept as a kind so the footer can say it plainly.
+   A blocked or unreachable host, a timeout, a busy service, a bad status and an
+   unreadable answer are different problems and used to all read "No connection". */
+function failure(kind,status){ const e=new Error(kind+(status?" "+status:"")); e.kind=kind; e.status=status; return e; }
+const reasonOf=e=>{
+  if(!e||!e.kind) return "Forecast unreadable";
+  if(e.kind==="offline")  return (typeof navigator!=="undefined" && navigator.onLine===false) ? "No connection" : "Could not reach Open-Meteo";
+  if(e.kind==="timeout")  return "Open-Meteo timed out";
+  if(e.kind==="http")     return e.status===429 ? "Open-Meteo is busy (429)" : "Open-Meteo error ("+e.status+")";
+  return "Forecast unreadable";
+};
+const RAW_KEY="karl.raw", RAW_MAX_H=6;
+async function getOnce(u,ms){
+  const c=new AbortController(), to=setTimeout(()=>c.abort(),ms);
+  let r;
+  try{ r=await fetch(u,{signal:c.signal}); }
+  catch(err){ clearTimeout(to); throw failure(err&&err.name==="AbortError"?"timeout":"offline"); }
+  clearTimeout(to);
+  if(!r.ok) throw failure("http",r.status);
+  try{ return await r.json(); } catch(err){ throw failure("data"); }
+}
+/* one retry for the failures that are often brief: unreachable, timeout, busy or 5xx */
+async function getJSON(u){
+  try{ return await getOnce(u,8000); }
+  catch(e){
+    const again = e.kind==="offline"||e.kind==="timeout"||(e.kind==="http"&&(e.status===429||e.status>=500));
+    if(!again) throw e;
+    await new Promise(r=>setTimeout(r,1500));
+    return await getOnce(u,8000);
+  }
+}
+function buildFrames(j){
+  const A=Array.isArray(j)?j:[j];
+  if(A.length<SPOTS.length||!A[0].hourly) throw failure("data");
   const T=A[0].hourly.time, now=Math.floor(Date.now()/1000);
   let base=T.findIndex(t=>t>now); base=base<1?0:base-1;
   /* one hour more than the scrubber spans: the first frame is the top of the
@@ -858,6 +894,28 @@ async function fetchLive(){
     })});
   }
   return out;
+}
+/* every hour reads the same hourly array, so the whole sweep is internally
+   consistent. The last good answer is kept, so a failed refresh falls back to
+   a real forecast before it ever falls back to the simulator. */
+async function fetchLive(){
+  const u="https://api.open-meteo.com/v1/forecast"
+   +"?latitude="+SPOTS.map(s=>s.lat).join(",")+"&longitude="+SPOTS.map(s=>s.lon).join(",")
+   +"&hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m"
+   +",cloud_cover_mid"+","+LEVELS.map(L=>L.k).join(",")   /* 9 — under the 10 that bill as 2 */
+   +"&forecast_days=3&timeformat=unixtime&temperature_unit=fahrenheit"
+   +"&wind_speed_unit=mph&timezone="+TZ;
+  const j=await getJSON(u);
+  const out=buildFrames(j);
+  try{ localStorage.setItem(RAW_KEY,JSON.stringify({at:Date.now(),j})); }catch(e){}
+  return out;
+}
+function loadSaved(){
+  try{
+    const o=JSON.parse(localStorage.getItem(RAW_KEY)||"null");
+    if(!o||!o.j||Date.now()-o.at>RAW_MAX_H*3600e3) return null;
+    return {frames:buildFrames(o.j), at:o.at};
+  }catch(e){ return null; }
 }
 
 /* ── map layer is built once. Scrubbing only toggles classes, so the
@@ -1206,7 +1264,7 @@ function paint(){
     + `the cross section has to draw with.`;
   $("tbAt").textContent=stamp(fr.t,k);
   $("time").style.setProperty("--p",(k/(HOURS-1)*100).toFixed(1)+"%");
-  $("tbRel").textContent=relLabel(k);
+  $("tbRel").textContent=(S.src&&S.src!=="live"&&k===0)?(S.src==="sim"?"Simulated":"Saved"):relLabel(k);
   $("time").setAttribute("aria-valuetext",stamp(fr.t,k));
 
   const row=(s,i,cls)=>`
@@ -1223,6 +1281,7 @@ function paint(){
     : "";
   $("board").innerHTML = group("Clear spots",sun,"clear") + group("Under Karl",fog,"fog");
   [...$("board").querySelectorAll(".nm")].forEach(copyfit);
+  syncSide();
 
   const pick=sun.length?sun[0].n:null;
   /* same rule as the list, visibility included: a smoky clear sky must not
@@ -1380,13 +1439,13 @@ function buildFooter(){
   $("refresh").addEventListener("click",()=>load(true));
 }
 
-function stampNow(live){
+function stampNow(live,why,saved){
+  const clock=t=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"}).format(t);
   $("liveDot").classList.toggle("sim",!live);
-  $("liveLabel").textContent = live ? "Live forecast" : "Simulated";
-  $("updated").textContent = live
-    ? "Updated "+new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"})
-        .format(new Date())
-    : "No connection";
+  $("liveLabel").textContent = live ? "Live forecast" : saved ? "Saved forecast" : "Simulated";
+  $("updated").textContent = live ? "Updated "+clock(new Date())
+    : saved ? "From "+clock(new Date(saved.at))+" · "+why
+    : why;
 }
 
 /* the only place data is fetched — on load, and on demand */
@@ -1398,16 +1457,42 @@ async function load(user){
   $("refresh").classList.add("spin");
   if(user) $("ptr").classList.add("spin");
   if(user) $("updated").textContent="Updating…";
-  let live=true;
+  let live=true, why="", saved=null;
   try{ S.frames=smoothAcross(await fetchLive()); }
-  catch(err){ live=false; S.frames=smoothAcross(simulate()); }
+  catch(err){
+    live=false; why=reasonOf(err); saved=loadSaved();
+    S.frames=smoothAcross(saved?saved.frames:simulate());
+  }
+  S.src = live ? "live" : saved ? "saved" : "sim";
   if(user) S.h=0;                       /* a manual refresh returns you to now */
   $("time").value=S.h;
-  paint(); safeLayout(); stampNow(live);
+  paint(); safeLayout(); stampNow(live,why,saved);
   loadedAt=Date.now();
   const done=()=>{ $("refresh").classList.remove("spin"); ptrReset(); loading=false; };
   const wait=user ? MIN_SPIN-(Date.now()-t0) : 0;
   wait>0 ? setTimeout(done,wait) : done();
+}
+
+/* ── desktop list window ──────────────────────────────────────────
+   The right pane is pinned and its list is scrolled by the page scroll, so
+   the wheel works anywhere on the page and the list simply moves under the
+   pinned header. sideProgress is how far into the list the page has gone:
+   zero before the pane pins, the full overflow once the list has reached its
+   end, after which the panes unlock and travel up with the footer. */
+const sideProgress=(scrollY,top,full,view)=>cl(scrollY-(top-20),0,Math.max(0,full-view));
+const sideMQ=typeof matchMedia==="function" ? matchMedia("(min-width:1100px) and (min-height:760px)") : {matches:false};
+let sideOn=false, sideRaf=0;
+function syncSide(){
+  const side=$("side"), board=$("board");
+  if(!sideMQ.matches){
+    if(sideOn){ sideOn=false; side.style.setProperty("--side-h","0px"); board.scrollTop=0; }
+    return;
+  }
+  sideOn=true;
+  const full=board.scrollHeight, view=board.clientHeight;
+  side.style.setProperty("--side-h",full+"px");
+  const top=side.getBoundingClientRect().top+(window.scrollY||0);
+  board.scrollTop=sideProgress(window.scrollY||0,top,full,view);
 }
 
 /* minutes since the first frame, in hours, so slider 0 is the clock */
@@ -1505,7 +1590,9 @@ if(STANDALONE){
     clearTimeout(rz); rz=setTimeout(safeLayout,120);
   }).observe($("rail"));
   else addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(safeLayout,140); });
-  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(safeLayout);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ safeLayout(); syncSide(); });
+  addEventListener("resize",syncSide);
+  addEventListener("scroll",()=>{ if(!sideRaf) sideRaf=requestAnimationFrame(()=>{ sideRaf=0; syncSide(); }); },{passive:true});
   await load(false);
 })();
 })();
