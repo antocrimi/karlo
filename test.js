@@ -595,6 +595,14 @@ head('LABELS DO NOT COLLIDE  — at the smallest viewport');
     const rl = hits(boxesOf(h.store.rail, W).filter(b => b.r > b.l));
     ok(`${W}px: hilltop labels do not overlap`, pk.length === 0, pk.join(' | '));
     ok(`${W}px: rail labels do not overlap`, rl.length === 0, rl.join(' | '));
+    {
+      const SP = h.api.SPOTS, Hh = Math.round(W * 380 / 900), R = 9;
+      const onDot = boxesOf(h.store.peaks, W).filter(b => SP.some(s => {
+        const cx = s.x / h.api.VBW * W, cy = s.y / h.api.VBH * Hh;
+        return b.l < cx + R && b.r > cx - R && b.t < cy + R && b.b > cy - R;
+      })).map(b => b.k);
+      ok(`${W}px: no hilltop label sits on a dot`, onDot.length === 0, onDot.join(', '));
+    }
   }
 }
 
@@ -775,8 +783,8 @@ head('night');
   ok('footer: every panel flows in one row from 1100px, whatever the column count',
      /@media\(min-width:1100px\)\{\s*\.cols,\.cols\.two\{grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:minmax\(0,1fr\)/.test(src));
   ok('footer: Method runs in two columns on wide windows', /\.meth\{column-count:2/.test(src));
-  ok('footer: Method text is held to 68 characters at any width', /\.meth > div\{display:grid; grid-template-columns:130px minmax\(0,68ch\)/.test(src));
-  ok('footer: no paragraph in a panel runs wider than 68 characters',
+  ok('footer: Method text is held to about 70 characters at any width', /\.meth > div\{display:grid; grid-template-columns:130px minmax\(0,54ch\)/.test(src));
+  ok('footer: no paragraph in a panel runs wider than 60ch',
      (src.match(/\.cols p\{[^}]*max-width:(\d+)ch/) || [])[1] <= 68);
   ok('labels re-measure when the stage changes size, not only the rail',
      /ro\.observe\(\$\("rail"\)\); ro\.observe\(\$\("stage"\)\)/.test(src) && /addEventListener\("resize",again\)/.test(src));

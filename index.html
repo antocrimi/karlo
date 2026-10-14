@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.13.7 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.13.8 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -268,13 +268,14 @@ svg.g{fill:currentColor}
 .f-live{display:flex; align-items:center; justify-content:space-between; gap:12px;
   font-family:var(--mono); font-size:12.5px; color:var(--fog-dim)}
 .f-live-a{display:flex; align-items:center; gap:9px; min-width:0}
-.f-live-b{display:flex; align-items:center; gap:10px; flex:0 0 auto}
+.f-live-b{display:flex; align-items:center; gap:10px; flex:0 1 auto; min-width:0}
 .dotlive{width:8px; height:8px; border-radius:50%; background:var(--clear);
   flex:0 0 auto; transition:background .3s ease}
 .dotlive.sim{background:var(--fog-faint)}
 #liveLabel{color:var(--fog); white-space:nowrap}
-.f-stamp{white-space:nowrap}
-.f-refresh{width:34px; height:34px; margin:-8px -6px -8px 0; padding:0; border:0;
+.f-stamp{overflow-wrap:anywhere}
+.f-top > *{min-width:0}
+.f-refresh{width:44px; height:44px; margin:-13px -11px -13px 0; padding:0; border:0;
   background:none; cursor:pointer; color:var(--fog-dim); display:grid; place-items:center;
   transition:color .2s; -webkit-tap-highlight-color:transparent}
 .f-refresh svg{width:17px; height:17px; fill:currentColor}
@@ -360,9 +361,9 @@ svg.g{fill:currentColor}
   .f-live{display:block; padding-left:34px; border-left:1px solid var(--line)}
   .f-live-a{margin-bottom:8px}
   .f-live-b{justify-content:flex-start; gap:12px}
-  .f-refresh{margin:-8px 0 -8px -8px}
+  .f-refresh{margin:-13px 0 -13px -13px}
 
-  .meth > div{display:grid; grid-template-columns:130px minmax(0,68ch); gap:20px; align-items:baseline}
+  .meth > div{display:grid; grid-template-columns:130px minmax(0,54ch); gap:20px; align-items:baseline}
   .meth dd{margin:0}
 
 }
@@ -402,7 +403,7 @@ svg.g{fill:currentColor}
    parent has to be the row, not the whole grid, or the pane slides over the
    footer. The wordmark and the type hold one size from here up. */
 @media(min-width:1100px){
-  .wrap{max-width:1360px; display:grid;
+  .wrap{max-width:1392px; display:grid;
     grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr); column-gap:72px; align-items:start}
   .titlerow,.sub,.foot{grid-column:1 / -1}
   .pane{grid-column:1; align-self:stretch}
@@ -669,7 +670,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.13.7";
+const BUILD="2026.10.13.8";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -941,6 +942,7 @@ function relayout(){
   const W=rail.clientWidth, H=stage.clientHeight;
   if(!W||!H){ requestAnimationFrame(relayout); return; }   /* not laid out yet */
   const PAD=7, DOTR=6, LEAD=7, boxes=[];   /* DOTR tracks the dot's radius */
+  const dotBoxes=SPOTS.map(s=>({l:s.x/VBW*W-DOTR-3, r:s.x/VBW*W+DOTR+3, t:s.y/VBH*H-DOTR-3, b:s.y/VBH*H+DOTR+3}));
 
   /* Place hilltops from the lowest summit upward, and only ever raise.
      Because each label processed is taller than the last, a shorter peak's
@@ -956,8 +958,11 @@ function relayout(){
       let y=dotY-DOTR-LEAD-lh;
       for(let guard=0; guard<8; guard++){
         const hit=boxes.find(b=>l<b.r+PAD && r>b.l-PAD && Math.abs(y-b.y)<lh+5);
-        if(!hit) break;
-        y=hit.y-lh-5;
+        /* a neighbouring hill's dot is an obstacle too: on a phone Potrero Hill's
+           name ran into Bernal Heights' marker */
+        const dh=dotBoxes.find(d=>l<d.r && r>d.l && y<d.b && y+lh>d.t);
+        if(!hit && !dh) break;
+        y=Math.min(hit?hit.y-lh-5:Infinity, dh?dh.t-lh-2:Infinity);
         if(y<0){ y=0; break; }
       }
       boxes.push({l,r,y});
