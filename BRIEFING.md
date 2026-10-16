@@ -267,7 +267,7 @@ One batched request covers all eleven coordinates and **nine** hourly variables:
   ?latitude=<11 csv>&longitude=<11 csv>
   &hourly=temperature_2m,cloud_cover_low,visibility,wind_speed_10m,cloud_cover_mid,
           cloud_cover_1000hPa,cloud_cover_975hPa,cloud_cover_950hPa,cloud_cover_925hPa
-  &forecast_days=3&timeformat=unixtime
+  &forecast_days=2&timeformat=unixtime
   &temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Los_Angeles
 ```
 
@@ -395,7 +395,7 @@ What it does not say. These are the shortest-lead forecasts stitched together, s
 | 2 days | 68% | 54% | 23% |
 | 3 days | 66% | 52% | 25% |
 
-All three stations pooled, 9,450 hours. The loss comes between one and two days ahead: the share of layers caught falls from 81 to 54 per cent, then stays flat. False alarms barely move. At KSFO the same step goes from 69 to 50 per cent, and at KHAF from 91 to 57. So the forecast is dependable for about a day and misses roughly half the layers beyond that. The scrubber spans 24 hours (`HOURS`), so the page only shows the dependable range and no warning is needed. The page requests `forecast_days=3` and uses at most 25 hours of it; two days would be enough. Corrected the same day: an earlier version of this paragraph wrongly said the scrubber runs to 72 hours. Nothing changed on the site.
+All three stations pooled, 9,450 hours. The loss comes between one and two days ahead: the share of layers caught falls from 81 to 54 per cent, then stays flat. False alarms barely move. At KSFO the same step goes from 69 to 50 per cent, and at KHAF from 91 to 57. So the forecast is dependable for about a day and misses roughly half the layers beyond that. The scrubber spans 24 hours (`HOURS`), so the page only shows the dependable range and no warning is needed. The page requested `forecast_days=3` and used at most 25 hours of it, so build `2026.10.16.1` asks for two days. That changes the size of the request and no reading the page shows. The latest "now" is 11:30 pm local, which reaches hour 47 of the 48, and a test pins that case. Corrected the same day: an earlier version of this paragraph wrongly said the scrubber runs to 72 hours. Nothing changed on the site.
 
 ---
 

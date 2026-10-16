@@ -1167,7 +1167,33 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
 }
 }
 
-resumeTests().then(failureTests).then(hapticTests).then(analyticsTests).catch(e => { fail++; console.log('  FAIL  async tests threw   → ' + e.stack); }).then(() => {
+/* ── forecast window ─────────────────────────────────────────────────── */
+async function windowTests() {
+head('the request asks for two days, and two days still cover the scrubber at 11:30 pm');
+{
+  const tick = () => new Promise(r => setImmediate(r));
+  global.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  const n = 48, t0 = 1.8e9 - (1.8e9 % 3600);          /* an hour boundary standing in for local midnight */
+  const hourly = { time: Array.from({ length: n }, (_, i) => t0 + i * 3600), temperature_2m: Array(n).fill(64),
+    cloud_cover_low: Array(n).fill(10), visibility: Array(n).fill(24000), wind_speed_10m: Array(n).fill(9), cloud_cover_mid: Array(n).fill(0) };
+  const h = harness(); await tick(); await tick(); await tick();
+  for (const L of h.api.LEVELS) hourly[L.k] = Array(n).fill(0);
+  const json = Array.from({ length: h.api.SPOTS.length }, () => ({ elevation: 50, hourly }));
+  const urls = [];
+  const realFetch = global.fetch, realNow = Date.now;
+  global.fetch = u => { urls.push(String(u)); return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(json) }); };
+  Date.now = () => (t0 + 23.5 * 3600) * 1000;           /* 11:30 pm, the latest "now" a two-day request must serve */
+  h.handlers.refresh.click(); await tick(); await tick(); await tick();
+  Date.now = realNow; global.fetch = realFetch;
+  ok('the request asks for two days', urls.length > 0 && /forecast_days=2(&|$)/.test(urls[0]), urls[0]);
+  const f = h.api.S.frames;
+  ok('there is a frame for every scrubber hour plus one', f && f.length === h.api.HOURS + 1, f && f.length);
+  ok('the last frame is a real hour, not a repeat of the data edge', f && f[f.length - 1].t === t0 + 47 * 3600 && f[f.length - 2].t === t0 + 46 * 3600,
+     f && f.slice(-2).map(x => x.t - t0));
+}
+}
+
+resumeTests().then(failureTests).then(hapticTests).then(analyticsTests).then(windowTests).catch(e => { fail++; console.log('  FAIL  async tests threw   → ' + e.stack); }).then(() => {
   console.log(`\n${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 });
