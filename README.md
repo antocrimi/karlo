@@ -65,4 +65,4 @@ Inferred from the browser's locale, with a manual override in the footer. Scorin
 
 It's a 3 km model resolving a fog edge sharper than 3 km. It can be wrong, and it's verifiable by looking out of a window — twice now that's exactly how a bug was found. See `BRIEFING.md` §9 for the accuracy work and what's planned next.
 
-The build tag in the footer (`v2026.08.31`) shows which version is actually being served, which is useful when a deploy looks like it hasn't landed.
+The build tag (`v2026.08.31`) shows in the footer only on a device flagged with `?me`, so visitors see the place alone. It tells you which version is actually being served, which is useful when a deploy looks like it hasn't landed.

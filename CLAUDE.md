@@ -16,7 +16,7 @@ Karl shows where the fog (local name: Karl) isn't across eleven San Francisco pl
 
 ## Rules
 
-- **Build tag.** Every deploy bumps `BUILD` in the script and the matching HTML comment above `<title>`. Format is date plus number, `YYYY.MM.DD.N`. The footer shows it, and the home screen app reloads itself when the live build differs from the one it is running.
+- **Build tag.** Every deploy bumps `BUILD` in the script and the matching HTML comment above `<title>`. Format is date plus number, `YYYY.MM.DD.N`. The footer shows it only on a device flagged with `?me`, and the home screen app reloads itself when the live build differs from the one it is running.
 - **Tests.** Add a test with every fix or feature. Never push to `main` with a failing test.
 - **Design changes** (anything that looks different): show screenshots in the conversation and wait for approval before merging to `main`. Work on a branch and push the branch.
 - **Fixes with no visual change** can go straight to `main` once tests pass. Say so when reporting.

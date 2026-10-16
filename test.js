@@ -977,6 +977,7 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
      s._a['data-website-id'] === 'd59c07a5-fe76-4f55-be9d-cde3f01de557' &&
      s._a['data-domains'] === 'byekarl.com' && s._a['data-do-not-track'] === 'true', JSON.stringify(s._a));
   ok('the footer does not say the device is excluded', !/not counted/.test(h.store.fPlace.innerHTML));
+  ok('a visitor sees the place and no build tag', /San Francisco, CA/.test(h.store.fPlace.innerHTML) && !/f-ver|v2026/.test(h.store.fPlace.innerHTML), h.store.fPlace.innerHTML);
 
   for (const host of ['localhost', 'antocrimi.github.io', '']) {
     clear(); setup(host, ''); harness(); await tick();
@@ -993,6 +994,7 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
   ok('?me adds no script', scripts().length === 0, scripts().length);
   ok('?me is removed from the address', replaced.length === 1 && replaced[0] === '/', JSON.stringify(replaced));
   ok('the footer says this device is not counted', /not counted/.test(h.store.fPlace.innerHTML), h.store.fPlace.innerHTML);
+  ok('a flagged device sees the build tag', new RegExp('v' + h.api.BUILD).test(h.store.fPlace.innerHTML), h.store.fPlace.innerHTML);
 
   clear(); setup('byekarl.com', '?debug&me');
   harness(); await tick();

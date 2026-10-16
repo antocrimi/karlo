@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.15.5 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.15.6 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -674,7 +674,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.15.5";
+const BUILD="2026.10.15.6";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1486,7 +1486,7 @@ function buildFooter(){
   $("refresh").innerHTML=ico("arrow_clockwise");
   $("ptr").innerHTML=ico("arrow_clockwise");
   $("fPlace").innerHTML=ico("map_pin")
-    +`<span>San Francisco, CA</span><b class="f-ver">v${BUILD}</b>`+(ME?`<b class="f-ver off">not counted</b>`:"");
+    +`<span>San Francisco, CA</span>`+(ME?`<b class="f-ver">v${BUILD}</b><b class="f-ver off">not counted</b>`:"");
   if(ME) $("fPlace").classList.add("me");
   $("fHeart").innerHTML=ico("heart");
 
