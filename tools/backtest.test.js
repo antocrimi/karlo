@@ -35,4 +35,8 @@ ok(vis.hit === 1 && vis.cn === 2, "visibility 2.5 mi is under 5 km and 10 mi is 
 ok(L.tally(pairs, L.predLevels(95), L.truthLayer).hit === 0, "threshold above the data catches nothing");
 ok(L.tally([{ t: t0, obs: { layers: [], vsbyMi: null }, m: {} }], L.predLow(45), L.truthLayer).hit === 0, "missing fields are skipped, not counted");
 ok(L.localHour(t0) === 9, "16:00 UTC in August is 9 am Pacific");
+const tot = L.pairHours(obs, { time: model.time, cloud_cover: [95, 20, 90] });
+const tt = L.tally(tot, L.predTotal(45), L.truthAny);
+ok(tt.hit === 2 && tt.miss === 1, "total cover against any broken layer: " + JSON.stringify(tt));
+ok(L.tally(tot, L.predTotal(45), L.truthAny).fa === 0 && L.truthAny({ obs: { layers: [{ cov: "FEW", ft: 300 }] } }) === false, "few cloud is not broken");
 console.log(n + " backtest tests passed");

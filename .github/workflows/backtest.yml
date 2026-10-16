@@ -7,7 +7,7 @@ on:
       start: { description: "First day, YYYY-MM-DD", default: "2026-06-01" }
       end:   { description: "Last day, YYYY-MM-DD",  default: "2026-10-10" }
   push:
-    branches: [backtest]
+    branches: [backtest, lead-time]
 permissions:
   contents: write
 jobs:

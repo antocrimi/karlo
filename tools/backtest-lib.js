@@ -73,6 +73,9 @@ const lowPressure = m => {
 const truthLayer = p => (p.obs.layers.length === 0 && p.obs.vsbyMi == null) ? null : (ceilingFt(p.obs.layers) !== null && ceilingFt(p.obs.layers) <= CEIL_FT);
 const predLevels = th => p => { const v = lowPressure(p.m); return v === null ? null : v >= th; };
 const predLow = th => p => p.m.cloud_cover_low == null ? null : p.m.cloud_cover_low >= th;
+/* Any broken or overcast layer at any height: the proxy truth for total cloud cover. */
+const truthAny = p => p.obs.layers.length === 0 ? null : p.obs.layers.some(l => l.cov === "BKN" || l.cov === "OVC" || l.cov === "VV");
+const predTotal = th => p => p.m.cloud_cover == null ? null : p.m.cloud_cover >= th;
 const truthVis = p => p.obs.vsbyMi == null ? null : p.obs.vsbyMi < VIS_KM * SM_PER_KM;
 const predVis = p => p.m.visibility == null ? null : p.m.visibility < VIS_KM * 1000;
 
@@ -105,5 +108,5 @@ function row(label, c) {
 }
 const HEAD = "| | hours | METAR yes | right | caught | false alarm |\n|---|---|---|---|---|---|";
 
-module.exports = { parseIem, ceilingFt, pairHours, lowPressure, truthLayer, predLevels, predLow, truthVis, predVis,
+module.exports = { parseIem, ceilingFt, pairHours, lowPressure, truthLayer, truthAny, predTotal, predLevels, predLow, truthVis, predVis,
   tally, stats, localHour, localMonth, row, HEAD, CEIL_FT, LEVELS };
