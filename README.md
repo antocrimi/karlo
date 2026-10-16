@@ -12,7 +12,7 @@ It is served from the root of `byekarl.com` through a `CNAME` file and GitHub Pa
 
 ## Deploy
 
-Put `index.html` and `logo.png` at the repo root, then Settings → Pages → Source: **Deploy from a branch**, branch `main`, folder `/ (root)`.
+Put `index.html` and `logo.webp` at the repo root, then Settings → Pages → Source: **Deploy from a branch**, branch `main`, folder `/ (root)`.
 
 `og-image.png` (1200×630) is optional and only feeds link previews.
 

@@ -1191,7 +1191,43 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
 {
   const src = fs.readFileSync(FILE, 'utf8');
   head('copy that must stay true');
+  const UK = /\bgrey\b|per cent|colour|neighbour|centre|\bmetres?\b|behaviour|favour|organis|recognis|artefact/gi;
+  const shown = src.slice(src.indexOf('<body'), src.indexOf('<script>', src.indexOf('<body'))).replace(/<!--[\s\S]*?-->/g, '');
+  ok('visible copy uses US spelling', !UK.test(shown), (shown.match(UK) || []).join());
+  ok('visible copy has no em dash and no exclamation mark', !/—|!(?=\s|<|$)/.test(shown.replace(/<[^>]+>/g, ' ')));
   ok('the page does not claim a clear-sky tiebreak, which no longer exists', !/clear-sky figure|break ties/i.test(src.replace(/\/\*[\s\S]*?\*\//g, '')));
+}
+
+/* ── the wordmark ────────────────────────────────────────────────────── */
+{
+  head('wordmark: weight and shape');
+  const src = fs.readFileSync(FILE, 'utf8');
+  const file = path.join(__dirname, 'logo.webp');
+  const buf = fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0);
+  /* a WebP with transparency is VP8X, whose canvas size sits at bytes 24 to 29 */
+  const w = buf.length > 30 && buf.toString('ascii', 12, 16) === 'VP8X' ? buf.readUIntLE(24, 3) + 1 : 0;
+  const h = buf.length > 30 && buf.toString('ascii', 12, 16) === 'VP8X' ? buf.readUIntLE(27, 3) + 1 : 0;
+  const tags = [...src.matchAll(/<img src="logo\.webp" alt="Karl" width="(\d+)" height="(\d+)">/g)];
+  ok('the wordmark is a WebP under 30 KB', buf.length > 0 && buf.length < 30000, buf.length + ' bytes');
+  ok('it is wide enough for a 3x screen at the largest size the page shows (172 px)', w >= 516, w + ' px');
+  ok('both uses carry the file\'s own width and height, so nothing shifts as it loads', tags.length === 2 && tags.every(m => +m[1] === w && +m[2] === h), tags.map(m => m[1] + 'x' + m[2]).join() + ' vs ' + w + 'x' + h);
+  ok('nothing still points at logo.png', !/logo\.png/.test(src));
+}
+
+/* ── loading state ───────────────────────────────────────────────────── */
+{
+  head('loading state: boxes where the answer will sit');
+  const src = fs.readFileSync(FILE, 'utf8');
+  const markup = src.slice(src.indexOf('<body'));
+  const inside = id => { const i = markup.indexOf('id="' + id + '"'); return markup.slice(i, i + 1600); };
+  ok('the verdict starts as a placeholder', /sk sk-name/.test(inside('verdict')));
+  ok('the list starts as six placeholder rows', (inside('board').match(/class="tr"/g) || []).length === 6);
+  ok('placeholders are hidden from screen readers', /aria-hidden="true"/.test(inside('verdict')) && /aria-hidden="true"/.test(inside('board')));
+  ok('the first labels say Loading, not Live', /id="tbRel">Loading</.test(markup) && /id="liveLabel">Loading</.test(markup));
+  const css = src.slice(src.indexOf('/* ══ loading'), src.indexOf('@media(prefers-reduced-motion:reduce)'));
+  ok('the sheen uses the line tokens and no colour of its own', css.includes('var(--line-hi)') && !/#[0-9a-f]{3,6}\b|rgba?\(/i.test(css.replace(/\/\*[\s\S]*?\*\//g, '')));
+  ok('reduced motion holds the sheen still', /prefers-reduced-motion:reduce\)\{\s*\.sk\{animation:none\}/.test(src));
+  ok('paint replaces the placeholders', !/class="sk/.test(store.board._html || '') && !/class="sk/.test(store.verdict._html || ''));
 }
 
 /* ── nothing left behind ─────────────────────────────────────────────── */

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.16.6 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.16.7 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -427,7 +427,27 @@ svg.g{fill:currentColor}
   #board .sec:first-child{margin-top:0; padding-top:24px}
 }
 
+/* ══ loading — boxes where the answer will sit ═════════════════
+   Static markup inside #verdict and #board. paint() replaces both with
+   innerHTML, so nothing needs removing. The sheen is the two line tokens
+   and moves slowly; with reduced motion it holds still. Row heights match
+   the real rows so the footer does not jump when the list arrives. */
+.sk{display:block; border-radius:6px; background:var(--line);
+  background-image:linear-gradient(100deg,var(--line) 30%,var(--line-hi) 50%,var(--line) 70%);
+  background-size:300% 100%; animation:skm 1.8s ease-in-out infinite}
+@keyframes skm{from{background-position:100% 0}to{background-position:0 0}}
+.sk-ico{flex:0 0 30px; width:30px; height:30px; border-radius:50%}
+.sk-name{flex:0 0 150px; width:150px; height:22px}
+.sk-cond{width:196px; height:11px; margin:13px 0 4px}
+.sk-temp{flex:0 0 auto; width:76px; height:40px}
+.sk-title{width:112px; height:18px}
+.sk-ri{width:29px; height:29px; border-radius:50%; justify-self:center}
+.sk-nm{width:44%; height:15px; margin:3px 0}
+.sk-strip{width:70%; height:10px; margin:10px 0 4px}
+.sk-tp{width:42px; height:21px}
+
 @media(prefers-reduced-motion:reduce){
+  .sk{animation:none}
   .dot,.dot .rays,.v-ico,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
 </style>
@@ -447,7 +467,7 @@ svg.g{fill:currentColor}
 <div class="wrap">
 
   <div class="titlerow">
-    <h1><img src="logo.png" alt="Karl" width="638" height="196"></h1>
+    <h1><img src="logo.webp" alt="Karl" width="516" height="159"></h1>
     <div class="units" id="units" role="group" aria-label="Temperature unit">
       <button data-u="C" aria-pressed="false">°C</button><s aria-hidden="true"></s><button data-u="F" aria-pressed="true">°F</button>
     </div>
@@ -458,7 +478,9 @@ svg.g{fill:currentColor}
   <div class="pane">
   <div class="ridge">
     <h2 class="sec">Best spot</h2>
-    <div class="verdict" id="verdict" aria-live="polite"></div>
+    <div class="verdict" id="verdict" aria-live="polite"><div class="v-row" aria-hidden="true">
+      <span class="v-main"><span class="v-head"><i class="sk sk-ico"></i><i class="sk sk-name"></i></span><i class="sk sk-cond"></i></span>
+      <i class="sk sk-temp"></i></div></div>
     <div class="ridge-head"><span>← West</span><span>East →</span></div>
     <div class="stage" id="stage">
       <svg viewBox="0 0 900 250" preserveAspectRatio="none" aria-label="Cross section of San Francisco from Ocean Beach to Dogpatch showing where cloud sits against the Twin Peaks ridge">
@@ -510,7 +532,7 @@ svg.g{fill:currentColor}
     <div class="rail" id="rail"></div>
 
     <div class="timebar">
-      <div class="tb-head"><span class="tb-at" id="tbAt">Now</span><span class="tb-rel" id="tbRel">Live</span></div>
+      <div class="tb-head"><span class="tb-at" id="tbAt">Now</span><span class="tb-rel" id="tbRel">Loading</span></div>
       <input type="range" id="time" min="0" max="23" step="0.25" value="0"
              aria-label="Time, hours from now" aria-valuetext="Now">
       <div class="tb-scale"><span>Now</span><span>+12h</span><span>+24h</span></div>
@@ -518,16 +540,16 @@ svg.g{fill:currentColor}
   </div>
   </div>
 
-  <div class="side" id="side"><div id="board"></div></div>
+  <div class="side" id="side"><div id="board"><div aria-hidden="true"><h2 class="sec"><i class="sk sk-title"></i></h2><div class="rows"><div class="tr"><i class="sk sk-ri"></i><span><i class="sk sk-nm"></i><i class="sk sk-strip"></i></span><i class="sk sk-tp"></i></div><div class="tr"><i class="sk sk-ri"></i><span><i class="sk sk-nm"></i><i class="sk sk-strip"></i></span><i class="sk sk-tp"></i></div><div class="tr"><i class="sk sk-ri"></i><span><i class="sk sk-nm"></i><i class="sk sk-strip"></i></span><i class="sk sk-tp"></i></div><div class="tr"><i class="sk sk-ri"></i><span><i class="sk sk-nm"></i><i class="sk sk-strip"></i></span><i class="sk sk-tp"></i></div><div class="tr"><i class="sk sk-ri"></i><span><i class="sk sk-nm"></i><i class="sk sk-strip"></i></span><i class="sk sk-tp"></i></div><div class="tr"><i class="sk sk-ri"></i><span><i class="sk sk-nm"></i><i class="sk sk-strip"></i></span><i class="sk sk-tp"></i></div></div></div></div></div>
 
   <footer class="foot">
     <div class="f-top">
       <div class="f-brand">
-        <img src="logo.png" alt="Karl" width="638" height="196">
+        <img src="logo.webp" alt="Karl" width="516" height="159">
         <p>Your SF sun chasing guide.</p>
       </div>
       <div class="f-live">
-        <span class="f-live-a"><i class="dotlive" id="liveDot"></i><b id="liveLabel">Live forecast</b></span>
+        <span class="f-live-a"><i class="dotlive" id="liveDot"></i><b id="liveLabel">Loading</b></span>
         <span class="f-live-b">
           <span class="f-stamp" id="updated">Updating…</span>
           <button class="f-refresh" id="refresh" aria-label="Refresh the forecast"></button>
@@ -546,7 +568,7 @@ svg.g{fill:currentColor}
             twenty degrees warmer than Ocean Beach in the same hour.</p></div>
           <div><h3>The hills</h3><p>The marine layer is shallow, usually a thousand to
             sixteen hundred feet, so hilltops stand above it while the streets below stay
-            grey. Going up is a different move from going east.</p></div>
+            gray. Going up is a different move from going east.</p></div>
           <div><h3>The forecast</h3><p>Eleven places, from Ocean Beach in the west to
             Dogpatch in the east, twenty-four hours ahead, so you can see which side of
             the fog line each one is on.</p></div>
@@ -559,14 +581,14 @@ svg.g{fill:currentColor}
       <button class="acc-t" aria-expanded="false" id="t-met"></button>
       <div class="acc-p" id="p-met" role="region" aria-labelledby="t-met" hidden>
         <dl class="meth">
-          <div><dt>Clear</dt><dd>Cloud overhead under 45 per cent and visibility over 5 km. Both, or it is not clear.</dd></div>
+          <div><dt>Clear</dt><dd>Cloud overhead under 45 percent and visibility over 5 km. Both, or it is not clear.</dd></div>
           <div><dt>Order</dt><dd>Calmest first inside each group, so exposed spots sink to the bottom.</dd></div>
           <div><dt>Quiet rule</dt><dd>When nothing sits above the line, no place is named. Silence is the honest answer.</dd></div>
           <div><dt>Elevation</dt><dd>Cloud is read at four altitudes and compared against each spot's own elevation, so a hilltop standing above the layer is not counted as fogged in.</dd></div>
           <div><dt>The line</dt><dd>Each spot has its own sunlight line: the height you would have to climb to get out from under the cloud. Stand at or above it and you are clear. It is the same curve the band is drawn from, at that spot's own place in the city, so the picture and the list cannot disagree.</dd></div>
-          <div><dt>The fog line</dt><dd>The body's top edge, drawn where cloud overhead crosses 45 per cent. Its softness is the model's own uncertainty about where the layer ends, so a vague edge means a vague reading.</dd></div>
+          <div><dt>The fog line</dt><dd>The body's top edge, drawn where cloud overhead crosses 45 percent. Its softness is the model's own uncertainty about where the layer ends, so a vague edge means a vague reading.</dd></div>
           <div><dt>Scale</dt><dd>Drawn to true scale up to 300 m, which is above every place on the chart, and compressed above that. The marine layer often sits at 700 m, and drawing that literally would push the cloud off the top of the picture and leave a third of it empty, since nowhere in the city is that high.</dd></div>
-          <div><dt>The front</dt><dd>The model runs on a 3 km grid across a city 11 km wide, so it cannot place the fog's edge more precisely than about a quarter of the chart. Each place is judged on its own grid cell and nothing else, so where two neighbours disagree the front falls between them. Add ?debug to the address to see what the model returned for every place.</dd></div>
+          <div><dt>The front</dt><dd>The model runs on a 3 km grid across a city 11 km wide, so it cannot place the fog's edge more precisely than about a quarter of the chart. Each place is judged on its own grid cell and nothing else, so where two neighbors disagree the front falls between them. Add ?debug to the address to see what the model returned for every place.</dd></div>
           <div><dt>Underneath</dt><dd>The body is densest at the layer's top and thins toward the ground, which is what a deck sitting above you looks like: you can see across the city beneath it. On the hours the fog is genuinely at street level it stays solid all the way down, because then you cannot.</dd></div>
           <div><dt>Moving</dt><dd>Drag the hours and the layer grows and recedes rather than jumping. What you are watching is the same reading at a different hour, eased between the two.</dd></div>
           <div><dt>Between hours</dt><dd>The forecast is hourly. The scrubber moves in quarters and reads between two hours, which is where the layer is seen rolling in and out.</dd></div>
@@ -674,7 +696,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.16.6";
+const BUILD="2026.10.16.7";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1125,7 +1147,7 @@ function columns(fr){
 /* ── horizontal resolution ───────────────────────────────────────
    Each place is judged on its own grid cell, unblended.
 
-   Earlier builds blended each place's cloud with its neighbours so the drawn
+   Earlier builds blended each place's cloud with its neighbors so the drawn
    front could not be sharper than the 3 km grid. Blending can never add what
    the model knows: two places in one cell already receive identical readings,
    so blending them is a no-op, and two places in different cells differ

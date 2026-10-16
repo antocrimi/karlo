@@ -12,7 +12,7 @@ Karl shows where the fog (local name: Karl) isn't across eleven San Francisco pl
 
 - Everything ships in `index.html`: markup, CSS and script. No build step and no dependencies. Keep it that way. The one exception is the Umami script that counts visits (see "Counting visits" in `BRIEFING.md`).
 - `test.js` is a headless harness that runs the page's script against a stubbed DOM. `node test.js` runs it; `node test.js --svg` also writes `map-preview.svg`.
-- Assets at the root: `logo.png`, `og-image.png`, `apple-touch-icon.png`.
+- Assets at the root: `logo.webp`, `og-image.png`, `apple-touch-icon.png`.
 
 ## Rules
 

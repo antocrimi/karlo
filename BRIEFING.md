@@ -33,7 +33,7 @@ The original brief also asked for a push at 3pm weekdays and 10am weekends. **Th
 
 Single column, mobile-first, in this order:
 
-1. **Masthead** — `logo.png` wordmark at `clamp(165px, 44vw, 440px)`, plus a muted `°C / °F` control
+1. **Masthead** — `logo.webp` wordmark at `clamp(165px, 44vw, 172px)`, plus a muted `°C / °F` control
 2. **Tagline**
 3. **"Best spot"** — section heading with a trailing rule
 4. **Verdict** — glyph + name + conditions on the left, temperature on the right, all amber
@@ -258,7 +258,7 @@ Score no longer drives ordering. It only breaks ties on equal wind and is not di
 
 ```
 index.html    everything — markup, CSS, JS. No build, no dependencies.
-logo.png      masthead wordmark, 638×196, required at repo root
+logo.webp     masthead wordmark, 516×159, required at repo root
 og-image.png  1200×630 social card, link previews only
 README.md     deploy note + data constraints
 ```
@@ -442,9 +442,9 @@ Raised and deliberately left open.
 11. **Scrubber fill stays amber** in the quiet state, the only accent left on a page that says there is no sun. Decided: leave it.
 12. **Post-MVP, pinned 2026-10-15: native app and widgets.** A native build, and a home screen widget in particular, are deferred until after the MVP. They are the only route to real haptics on the scrubber: Safari plays its tick only for a finger press on a real `<input type=\"checkbox\" switch>`, and a click from script does nothing (tested on Anto's iPhone with seven trials; only the real switch ticked). The web build keeps its Android buzzes. A native wrapper would end the single-file, no-build rule, so it is a separate decision.
 13. **Failure state shows a full ranking from the simulator.** Found in the 2026-10-16 audit. When Open-Meteo returns 429, 500 or junk, the page still draws a best spot in full color (for example "Bernal Heights, 69°") and labels it only with a small gray "Simulated" at the scrubber and a footer line far below. A visitor could read invented numbers as a forecast. Options: leave it, strengthen the label beside the best spot, or replace the ranking with a plain "Could not load the forecast" state and a retry. Needs a decision and screenshots.
-14. **Layout shift at load, 0.16.** Found in the 2026-10-16 audit, measured in Chromium with the forecast mocked. Before data arrives the page is short, so the footer sits at about 700 px on a phone, then leaves the screen when the list renders (a shift score of 0.16 against the 0.1 "good" line). Reserving the list height would stop it. Visual change, so it needs screenshots.
-15. **`logo.png` weighs 60 KB for a 172 px wordmark.** Found in the 2026-10-16 audit. It is the largest thing on first paint and appears twice (header and footer; the second use is cached). A 516 px export (three times the display size) or a palette PNG would be a fraction of that. A palette version measured 10 KB; the glow on the sun may band, so it needs screenshots.
-16. **Visible copy breaks the US spelling rule in three places.** Found in the 2026-10-16 audit: "grey" in How it works, and "per cent" twice in Method ("Clear" and "The fog line"). Should read "gray" and "percent". Copy change, so it waits for approval.
+14. **Loading boxes, `2026.10.16.7`, pending approval.** Before data arrived the page was short, so the footer sat near the bottom of a phone and then left the screen when the list rendered (layout shift 0.167). The verdict and the list now start as gray boxes with a slow sheen, in the two line tokens, still under reduced motion. Six placeholder rows match the real row height, so the footer starts below the fold and the shift measures 0.0001. The first labels read "Loading" instead of "Live". This adds motion, and §10 warns that motion has been rejected six times; the sheen is one slow gradient on neutral boxes and nothing else moves.
+15. **Wordmark weight, `2026.10.16.7`, pending approval.** `logo.png` was 60 KB for a mark shown at 172 px at most (150 px in the footer). It is now `logo.webp`, 516 px wide (three times the largest display size) at quality 95: 22 KB, 64% smaller. Against the original resampled to the same size the mean difference is 0.35 of 255 and the only visible change, amplified ten times, is a faint line along the cloud and sun overlap. A 256-color PNG came to 10 KB but differed by a mean of 1.9 and would band in the sun, so it was dropped. Lossless WebP is 39 KB if exact pixels matter more than the extra 17 KB. The original PNG stays in git history.
+16. **Copy fixed, `2026.10.16.7`, pending approval.** "grey" to "gray", "per cent" to "percent" twice, and "neighbours" to "neighbors" in Method. A test now fails on UK spellings, em dashes and exclamation marks in the visible markup.
 
 ---
 
@@ -464,7 +464,7 @@ Raised and deliberately left open.
 
 ```
 index.html      the whole app
-logo.png        required at repo root
+logo.webp       required at repo root
 og-image.png    link previews only
 test.js         headless checks — node test.js
 BRIEFING.md     this file, read first
