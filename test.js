@@ -1241,6 +1241,18 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
   ok('nothing still points at logo.png', !/logo\.png/.test(src));
 }
 
+/* ── the reload glyph ────────────────────────────────────────────────── */
+{
+  head('reload glyph turns about its own centre');
+  const src = fs.readFileSync(FILE, 'utf8');
+  const g = (src.match(/ refresh:'(<g fill="none"[\s\S]*?)',\n/) || [])[1] || '';
+  const half = g.match(/<path d="[^"]+"\/><path d="[^"]+"\/>/g) || [];
+  ok('the glyph is two identical halves, the second turned 180 degrees about the middle of the box',
+     half.length === 2 && half[0] === half[1] && g.includes('transform="rotate(180 128 128)"'), half.length + ' halves');
+  ok('nothing still uses the one-arrow glyph', !/arrow_clockwise/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')));
+  ok('the retry is an outline button with no fill', /\.retry\{[^}]*background:transparent;[^}]*border:1px solid var\(--fog-dim\)/.test(src));
+}
+
 /* ── loading state ───────────────────────────────────────────────────── */
 {
   head('loading state: boxes where the answer will sit');

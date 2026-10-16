@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.16.9 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.16.10 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -129,13 +129,13 @@ svg.g{fill:currentColor}
 .retry{display:flex; align-items:center; justify-content:center; gap:10px;
   width:100%; max-width:420px; height:52px; padding:0 20px;
   font-family:var(--disp); font-weight:700; font-size:17px; letter-spacing:-.01em;
-  color:var(--ink); background:var(--paper); border:0; border-radius:14px; cursor:pointer;
-  -webkit-tap-highlight-color:transparent; transition:filter .15s, transform .1s}
-.retry svg{width:19px; height:19px; display:block; fill:currentColor}
-.retry:hover{filter:brightness(1.07)}
-.retry:active{transform:scale(.985)}
+  color:var(--paper); background:transparent; border:1px solid var(--fog-dim); border-radius:14px; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; transition:border-color .15s, color .15s}
+.retry svg{width:19px; height:19px; display:block}
+.retry:hover{border-color:var(--fog)}
+.retry:active{border-color:var(--paper)}
 .retry:focus-visible{outline:2px solid var(--clear); outline-offset:3px}
-.retry:disabled{cursor:default; filter:none; transform:none; opacity:.72}
+.retry:disabled{cursor:default; color:var(--fog); border-color:var(--line-hi)}
 .retry:disabled svg{animation:spin .9s linear infinite}
 .retry[hidden]{display:none}
 .tb-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:4px}
@@ -666,7 +666,10 @@ const G={
  info:'<path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/>',
  map_pin:'<path d="M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z"/>',
  heart:'<path d="M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z"/>',
- arrow_clockwise:'<path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z"/>',
+ /* Two arrows head to tail: the second half is the first turned 180 degrees about
+    the centre of the box, so the shape is balanced and turns about its own
+    centre. A single-arrow glyph carries its weight to one side and wobbles. */
+ refresh:'<g fill="none" stroke="currentColor" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><path d="M37.4,85.7A100,100,0,0,1,218.6,85.7"/><path d="M234.4,42.5L218.6,85.7L175.4,70.0"/><g transform="rotate(180 128 128)"><path d="M37.4,85.7A100,100,0,0,1,218.6,85.7"/><path d="M234.4,42.5L218.6,85.7L175.4,70.0"/></g></g>',
  caret_down:'<path d="M216.49,104.49l-80,80a12,12,0,0,1-17,0l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17Z"/>',
  fogx:'<path d="M120,208H72a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Zm64-16H160a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Zm-24,32H104a8,8,0,0,0,0,16h56a8,8,0,0,0,0-16Zm72-124a76.08,76.08,0,0,1-76,76H76A52,52,0,0,1,76,72a53.26,53.26,0,0,1,8.92.76A76.08,76.08,0,0,1,232,100Zm-16,0A60.06,60.06,0,0,0,96,96.46a8,8,0,0,1-16-.92q.21-3.66.77-7.23A38.11,38.11,0,0,0,76,88a36,36,0,0,0,0,72h80A60.07,60.07,0,0,0,216,100Z"/>',
 };
@@ -712,7 +715,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.16.9";
+const BUILD="2026.10.16.10";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1541,9 +1544,9 @@ function buildFooter(){
     $("t-"+k).innerHTML=`<span class="ic">${ico(g)}</span>`
       +`<span class="lb">${label}</span><span class="cv">${ico("caret_down")}</span>`;
   });
-  $("refresh").innerHTML=ico("arrow_clockwise");
-  $("retryIco").innerHTML=ico("arrow_clockwise");
-  $("ptr").innerHTML=ico("arrow_clockwise");
+  $("refresh").innerHTML=ico("refresh");
+  $("retryIco").innerHTML=ico("refresh");
+  $("ptr").innerHTML=ico("refresh");
   $("fPlace").innerHTML=ico("map_pin")
     +`<span>San Francisco, CA</span>`;
   if(ME){ $("fMe").innerHTML=`<b class="f-ver">v${BUILD}</b><b class="f-ver">not counted</b>`; $("fMe").hidden=false; }
