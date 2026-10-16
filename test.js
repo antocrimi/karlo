@@ -942,6 +942,14 @@ head('failure is explained, and a saved forecast comes before the simulator');
 }
 }
 
+head('closed footer rows share one colour on touch screens');
+{
+  const src = fs.readFileSync(FILE, 'utf8');
+  const hovers = [...src.matchAll(/\.acc-t:hover\{[^}]*\}/g)].map(m => src.slice(0, m.index));
+  ok('the row hover colour exists once', hovers.length === 1, hovers.length);
+  ok('and only where a real pointer exists', hovers.length === 1 && /@media\(hover:hover\)\{\s*$/.test(hovers[0]), hovers[0] && hovers[0].slice(-40));
+}
+
 head('leaders are one flat light grey');
 {
   const src = fs.readFileSync(FILE, 'utf8');

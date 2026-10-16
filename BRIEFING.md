@@ -109,6 +109,9 @@ Builds `2026.10.15.2` to `.5`. The lines from a label to its place (hilltop lead
 ### The build tag is for Anto only
 Builds `2026.10.15.6` and `.7`, pending approval. The footer used to show `v<BUILD>` beside the place for every visitor. It now appears only on a device flagged with `?me`: the colophon row is unchanged, and one line under it reads the build tag and "not counted". Everyone else sees the row alone, "San Francisco, CA" on one side and "Built with ♥ by Anto" on the other. The build is still in the script and in the HTML comment above `<title>`, so the home screen app still reloads itself when the live build differs, and a stale page is still spotted from a flagged device.
 
+### Closed footer rows are one colour
+Build `2026.10.15.8`. After a footer row was opened and closed on a phone it stayed brighter than the others, because the `:hover` colour sticks after a tap on touch screens. The hover colour now applies only where the device has a real pointer (`@media(hover:hover)`), so on a phone every closed row is the same grey and only the open row is amber.
+
 ### Counting visits
 Build `2026.10.15.1`, pending approval. Visits are counted with Umami Cloud on its free Hobby plan (100,000 events a month, one site, six months of data). It is the one outside script on the page and the single exception to "no dependencies". It sets no cookies, loads only on byekarl.com, honors Do Not Track and records nothing that identifies a person. Besides page views it records five events: `scrub` (the hour at release, at most twelve a visit), `panel` (which footer panel opened), `units`, `refresh` (button or pull) and `forecast` (live, saved or simulated, with the reason when it is not live). The `forecast` event is how often the "Simulated" state really happens and why.
 
