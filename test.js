@@ -942,16 +942,23 @@ head('failure is explained, and a saved forecast comes before the simulator');
 }
 }
 
-head('leaders are the divider grey, and a clear place\'s matches its dot');
+head('leaders are light, and only the best spot\'s matches its dot');
 {
   const src = fs.readFileSync(FILE, 'utf8');
   const pk = (src.match(/\.pk::after\{[^}]*\}/) || [''])[0], rail = (src.match(/\.rail i\{[^}]*\}/) || [''])[0];
   ok('hilltop leaders use --line', /background:var\(--line\)/.test(pk), pk);
   ok('rail ticks use --line', /background:var\(--line\)/.test(rail), rail);
+  ok('a clear place that is not the pick keeps a light leader', !/\.pk\.on::after|\.rail i\.on/.test(src));
   const dot = (src.match(/\.dot\.on\{[^}]*background:(var\(--[a-z-]+\))/) || [])[1];
-  ok('a clear place\'s hilltop leader is the colour of its dot', !!dot && new RegExp('\\.pk\\.on::after\\{background:' + dot.replace(/[()]/g, '\\$&') + '\\}').test(src), dot);
-  ok('and so is its rail tick', !!dot && new RegExp('\\.rail i\\.on\\{background:' + dot.replace(/[()]/g, '\\$&') + '\\}').test(src), dot);
-  ok('no leader uses the dim accent', !/\.(pk\.on::after|rail i\.on)\{[^}]*clear-dim/.test(src));
+  const esc = dot ? dot.replace(/[()]/g, '\\$&') : '';
+  ok('the pick\'s hilltop leader is the colour of its dot', !!dot && new RegExp('\\.pk\\.pick::after\\{background:' + esc + '\\}').test(src), dot);
+  ok('and so is its rail tick', !!dot && new RegExp('\\.rail i\\.pick\\{background:' + esc + '\\}').test(src), dot);
+  ok('no leader uses the dim accent', !/\.(pk\.pick::after|rail i\.pick)\{[^}]*clear-dim/.test(src));
+  const h = harness(); h.api.S.frames = h.api.smoothAcross(h.api.simulate()); h.api.S.h = 12; h.api.paint();
+  const kids = h.store.rail.children;
+  const tickPicks = kids.filter(n => n.tagName === 'I' && n._cls.has('pick')).map(n => n.dataset.k);
+  const labelPicks = kids.filter(n => n.tagName === 'B' && n._cls.has('pick')).map(n => n.dataset.k);
+  ok('exactly one rail tick is the pick, and it is the bold label\'s', tickPicks.length === 1 && labelPicks.length === 1 && tickPicks[0] === labelPicks[0], tickPicks + ' / ' + labelPicks);
 }
 
 /* ── counting visits ─────────────────────────────────────────────────── */
