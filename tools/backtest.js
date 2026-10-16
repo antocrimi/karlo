@@ -54,6 +54,12 @@ async function model(s) {
     md.push("");
   }
   const everyone = [].concat(...Object.values(all));
+  const EDGES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 101];
+  const day = p => { const h = L.localHour(p.t); return h >= 6 && h <= 18; };
+  md.push("## How sure to be: the model's cover against what the airports saw", "", "Pooled over the three stations. The 45 per cent line sits inside the 40 to 49 row.", "",
+    "### All hours", "", L.CAL_HEAD, ...L.calibration(everyone, EDGES).map(L.calRow), "",
+    "### 06:00 to 18:00 only", "", L.CAL_HEAD, ...L.calibration(everyone.filter(day), EDGES).map(L.calRow), "");
+  for (const s of STATIONS) md.push("### " + s.name + ", 06:00 to 18:00", "", L.CAL_HEAD, ...L.calibration(all[s.id].filter(day), EDGES).map(L.calRow), "");
   md.push("## All three stations", "", L.HEAD, L.row("levels >= 45", L.tally(everyone, L.predLevels(45), L.truthLayer)), "");
   const text = md.join("\n");
   fs.writeFileSync("report.md", text);

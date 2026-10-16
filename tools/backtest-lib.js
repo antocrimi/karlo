@@ -95,6 +95,21 @@ function stats(c) {
            pod: pct(c.hit, c.hit + c.miss), far: pct(c.fa, c.hit + c.fa) };
 }
 
+/* How often a METAR layer was there, by the model's own cover (reliability). */
+function calibration(pairs, edges) {
+  const rows = edges.slice(0, -1).map((lo, i) => ({ lo, hi: edges[i + 1], n: 0, yes: 0 }));
+  for (const p of pairs) {
+    const v = lowPressure(p.m), t = truthLayer(p);
+    if (v === null || t === null) continue;
+    const r = rows.find(x => v >= x.lo && v < x.hi) || (v >= edges[edges.length - 1] ? rows[rows.length - 1] : null);
+    if (!r) continue;
+    r.n++; if (t) r.yes++;
+  }
+  return rows;
+}
+const calRow = r => "| " + r.lo + " to " + (r.hi - 1) + " | " + r.n + " | " + (r.n ? Math.round(100 * r.yes / r.n) + "%" : "-") + " |";
+const CAL_HEAD = "| model cover | hours | METAR layer present |\n|---|---|---|";
+
 const fmt = v => v === null ? "-" : String(v);
 function localHour(t) {
   return +new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", hour12: false }).format(t * 1000) % 24;
@@ -109,4 +124,4 @@ function row(label, c) {
 const HEAD = "| | hours | METAR yes | right | caught | false alarm |\n|---|---|---|---|---|---|";
 
 module.exports = { parseIem, ceilingFt, pairHours, lowPressure, truthLayer, truthAny, predTotal, predLevels, predLow, truthVis, predVis,
-  tally, stats, localHour, localMonth, row, HEAD, CEIL_FT, LEVELS };
+  tally, stats, calibration, calRow, CAL_HEAD, localHour, localMonth, row, HEAD, CEIL_FT, LEVELS };

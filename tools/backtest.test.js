@@ -39,4 +39,7 @@ const tot = L.pairHours(obs, { time: model.time, cloud_cover: [95, 20, 90] });
 const tt = L.tally(tot, L.predTotal(45), L.truthAny);
 ok(tt.hit === 2 && tt.miss === 1, "total cover against any broken layer: " + JSON.stringify(tt));
 ok(L.tally(tot, L.predTotal(45), L.truthAny).fa === 0 && L.truthAny({ obs: { layers: [{ cov: "FEW", ft: 300 }] } }) === false, "few cloud is not broken");
+const cal = L.calibration(pairs, [0, 50, 101]);
+ok(cal.length === 2 && cal[1].n === 1 && cal[1].yes === 1 && cal[0].n === 2 && cal[0].yes === 1, "calibration bins: " + JSON.stringify(cal));
+ok(L.calRow({ lo: 40, hi: 50, n: 4, yes: 3 }) === "| 40 to 49 | 4 | 75% |", "calibration row");
 console.log(n + " backtest tests passed");
