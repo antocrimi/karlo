@@ -376,6 +376,18 @@ What METAR uniquely buys is *observation* rather than model. Open-Meteo is model
 
 **Before phase two, measure.** Log the verdict hourly against METAR and a few webcams for two or three weeks. Without an error rate per spot and per hour, every further fix is a guess. Expect the error to cluster at 7–10am and on the hills.
 
+**First back-test, 2026-10-16.** `tools/backtest.js` pairs archived Open-Meteo forecasts (Historical Forecast API, `historical-forecast-api.open-meteo.com`) with hourly METARs from the Iowa Environmental Mesonet for KSFO, KOAK and KHAF, 1 June to 10 October 2026, about 3,150 paired hours per station. It runs as a GitHub Action (`.github/workflows/backtest.yml`, by hand or on a push to the `backtest` branch) because the build workspace cannot reach those hosts, and writes `out/report.md` to the `backtest-results` branch. The test is "METAR has a broken or overcast layer at or below 2,500 ft" against "any of the four pressure-level cloud covers is at or above the threshold". Results with Karl's 45 per cent line:
+
+| | right | caught | false alarm |
+|---|---|---|---|
+| KSFO | 89% | 81% | 23% |
+| KOAK | 91% | 87% | 17% |
+| KHAF | 72% | 65% | 10% |
+
+What it says. At the two Bay airports the model finds a low layer 81 to 87 per cent of the time. The weak hours are the night, 03:00 to 05:00 at KSFO (57 to 77 per cent caught), and not the 7 to 10 am window the earlier note expected, where it catches 88 to 94 per cent. Afternoon false alarms run 40 to 55 per cent at KSFO, on only 3 to 10 observed layer hours each, so that figure is noisy. The coast station sits in a layer 66 per cent of the hours and the model misses a third of them, which is the 3 km grid not resolving the coastal edge. `cloud_cover_low` catches 98 to 100 per cent but alarms 23 to 44 per cent of the time, which supports the 22 August decision to read pressure levels. Raising the line from 45 to 60 trades a catch rate of 81 to 67 per cent at KSFO for fewer false alarms, so the current line sits in a sensible place.
+
+What it does not say. These are the shortest-lead forecasts stitched together, so a person reading the 48 hour scrubber sees something worse. It tests the model's low layer, not Karl's verdict, which also depends on the sun line and on each place's elevation. The airports are not among the eleven places. Visibility cannot be judged at KSFO (no hour under 5 km in the sample) and KOAK (three). Open question: whether to repeat this with lead time as a variable, using the previous-runs API.
+
 ---
 
 ## 10 · Rejected directions — do not re-propose

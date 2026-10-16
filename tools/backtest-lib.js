@@ -103,7 +103,7 @@ function row(label, c) {
   const s = stats(c);
   return "| " + label + " | " + s.n + " | " + s.obsYes + " | " + fmt(s.acc) + "% | " + fmt(s.pod) + "% | " + fmt(s.far) + "% |";
 }
-const HEAD = "| | hours | METAR layer | right | caught | false alarm |\n|---|---|---|---|---|---|";
+const HEAD = "| | hours | METAR yes | right | caught | false alarm |\n|---|---|---|---|---|---|";
 
 module.exports = { parseIem, ceilingFt, pairHours, lowPressure, truthLayer, predLevels, predLow, truthVis, predVis,
   tally, stats, localHour, localMonth, row, HEAD, CEIL_FT, LEVELS };
