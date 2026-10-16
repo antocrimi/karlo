@@ -1188,6 +1188,13 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
   ok('no term appears twice', new Set(dts).size === dts.length, dts.filter((d, i) => dts.indexOf(d) !== i).join());
 }
 
+/* ── copy that must stay true ───────────────────────────────────────── */
+{
+  const src = fs.readFileSync(FILE, 'utf8');
+  head('copy that must stay true');
+  ok('the page does not claim a clear-sky tiebreak, which no longer exists', !/clear-sky figure|break ties/i.test(src.replace(/\/\*[\s\S]*?\*\//g, '')));
+}
+
 /* ── forecast window ─────────────────────────────────────────────────── */
 async function windowTests() {
 head('the request asks for two days, and two days still cover the scrubber at 11:30 pm');
