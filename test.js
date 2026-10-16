@@ -1033,9 +1033,7 @@ head('a tick when the best spot changes and when a refresh lands, and nowhere el
 
   h = await mkH(false); global.fetch = goodFetch;
   h.handlers.refresh.click(); await tick(); await tick(); await tick();
-  const lab = (global.document.body.children || []).find(c => c.tagName === 'LABEL');
-  ok('without a vibration API a hidden switch is clicked instead', !!lab && lab._clicks === 1 && lab.children[0]._a.switch === '', lab && lab._clicks);
-  ok('and it is hidden from view and from assistive tech', !!lab && lab._a['aria-hidden'] === 'true' && /opacity:0/.test(lab.style.cssText), lab && lab.style.cssText);
+  ok('without a vibration API nothing is added to the page and nothing throws', !(global.document.body.children || []).some(c => c.tagName === 'LABEL'));
 
   global.fetch = realFetch; delete global.localStorage; delete global.navigator.vibrate;
   global.matchMedia = () => ({ matches: false });

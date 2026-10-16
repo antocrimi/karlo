@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.16.1 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.16.2 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -675,7 +675,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.16.1";
+const BUILD="2026.10.16.2";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1453,29 +1453,18 @@ if(COUNTED){
 /* ── haptics ─────────────────────────────────────────────────────
    Two moments only: the best spot changes while the scrubber moves (a double
    tick) and a refresh the person asked for lands on live data (a single tick).
-   Android has navigator.vibrate. iOS has no vibration API, so a hidden switch
-   input is clicked through its label, which plays the system switch tick. That
-   is a WebKit quirk and best effort: it may do nothing in some contexts and
-   every failure is swallowed. Nothing fires for reduced motion, and a pick that
-   flickers between two places is held to one buzz per 150 ms. */
+   Android has navigator.vibrate. iOS Safari has no vibration API, and a
+   hidden switch clicked from script produces no tick there (tested on an
+   iPhone, 2026-10-15, seven trials), so iOS gets nothing until there is a
+   native app. Nothing fires for reduced motion, and a pick that flickers
+   between two places is held to one buzz per 150 ms. */
 const calm=()=>typeof matchMedia==="function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-let hapEl=null, hapAt=0;
+let hapAt=0;
 function haptic(kind){
   try{
     if(calm()) return;
     if(kind==="pick"){ const now=Date.now(); if(now-hapAt<150) return; hapAt=now; }
-    if(typeof navigator!=="undefined" && navigator.vibrate){
-      navigator.vibrate(kind==="pick" ? [10,50,10] : 16); return;
-    }
-    if(!hapEl){
-      const l=document.createElement("label"), i=document.createElement("input");
-      l.setAttribute("aria-hidden","true");
-      l.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none";
-      i.type="checkbox"; i.setAttribute("switch",""); i.tabIndex=-1;
-      l.appendChild(i); document.body.appendChild(l); hapEl=l;
-    }
-    hapEl.click();
-    if(kind==="pick") setTimeout(()=>{ try{ hapEl.click(); }catch(e){} },60);
+    if(typeof navigator!=="undefined" && navigator.vibrate) navigator.vibrate(kind==="pick" ? [10,50,10] : 16);
   }catch(e){}
 }
 
