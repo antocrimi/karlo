@@ -942,6 +942,15 @@ head('failure is explained, and a saved forecast comes before the simulator');
 }
 }
 
+head('leaders are the divider grey');
+{
+  const src = fs.readFileSync(FILE, 'utf8');
+  const pk = (src.match(/\.pk::after\{[^}]*\}/) || [''])[0], rail = (src.match(/\.rail i\{[^}]*\}/) || [''])[0];
+  ok('hilltop leaders use --line', /background:var\(--line\)/.test(pk), pk);
+  ok('rail ticks use --line', /background:var\(--line\)/.test(rail), rail);
+  ok('a clear place does not recolor its leader', !/\.pk\.on::after|\.rail i\.on/.test(src));
+}
+
 /* ── counting visits ─────────────────────────────────────────────────── */
 async function analyticsTests() {
 head('visits are counted on byekarl.com only, never on a flagged device, and without cookies');
