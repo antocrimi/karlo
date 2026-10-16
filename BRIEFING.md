@@ -370,7 +370,7 @@ The count went nine, five, two. Nine and five were both attempts to buy softness
 
 **`yFog` is `yM` plus a shoreline correction**, `13·e^(−h/50)`, because `Y0 = 213` is a regression intercept while the drawn shoreline is at 218 and the frame edges at 222 and 224. Without it a zero-metre contour floats a sliver of fog over an empty beach that the terrain mask cannot cover, the sliver being genuinely above the ground line. It decays to under 2 px by 110 m, the lowest pressure sample, so it never touches a height that decides anything. **`yM` itself is untouched: it remains the law for the terrain.**
 
-**Phase two, not built.** METAR ceiling from KSFO, KOAK, KHAF. Free, no key, User-Agent header required. Two unknowns to test first: browsers cannot set a User-Agent header, and CORS from a static page is unverified. `aviationweather.gov` is the documented fallback.
+**Phase two, not built.** METAR ceiling from KSFO, KOAK, KHAF. Free, no key, User-Agent header required. Two unknowns were to be tested first. **Resolved 2026-10-15 against the API's own page:** `aviationweather.gov/api/data/metar` states that cross-origin requests are not permitted, so the static page cannot call it directly, and it asks for a custom User-Agent, which a browser cannot set. Limits are 100 requests a minute and 1 a minute per thread, history is 15 days, and a cache file of every current METAR is refreshed each minute. Any live use needs a small server-side relay. Back-testing does not need one.
 
 What METAR uniquely buys is *observation* rather than model. Open-Meteo is model output only — no station observations, no validated actuals. Phase one fixed the variable mismatch; it did not fix the 3 km resolution mismatch.
 
@@ -411,6 +411,7 @@ Raised and deliberately left open.
 8. **Google Fonts round trip.** Bricolage is a network dependency on cellular. Self-hosting untested.
 9. **Wrong-once risk.** Nothing hedges a marginal call. The quiet rule could widen to cover model disagreement or a ceiling within a few hundred feet of a hilltop.
 10. **Scrubber fill stays amber** in the quiet state, the only accent left on a page that says there is no sun. Decided: leave it.
+11. **Post-MVP, pinned 2026-10-15: native app and widgets.** A native build, and a home screen widget in particular, are deferred until after the MVP. They are the only route to real haptics on the scrubber: Safari plays its tick only for a finger press on a real `<input type=\"checkbox\" switch>`, and a click from script does nothing (tested on Anto's iPhone with seven trials; only the real switch ticked). The web build keeps its Android buzzes. A native wrapper would end the single-file, no-build rule, so it is a separate decision.
 
 ---
 
