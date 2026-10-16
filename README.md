@@ -20,7 +20,7 @@ No build step. No dependencies. One code file plus the wordmark.
 
 ## Data
 
-One batched [Open-Meteo](https://open-meteo.com/) request covers all eleven coordinates and nine hourly variables for the next twenty-four hours. If it fails the page falls back to a simulator built on the same physics, so the interface still behaves correctly offline.
+One batched [Open-Meteo](https://open-meteo.com/) request covers all eleven coordinates and nine hourly variables for the next twenty-four hours. If it fails, the page shows the last good forecast from this device when it is under six hours old. Otherwise it says Karl is in the way, shows why, draws no ranking and no fog, and offers a Try again button where the scrubber sits. Nothing is invented to fill the gap.
 
 Two constraints:
 
@@ -54,7 +54,7 @@ The forecast is hourly and the scrubber moves in quarter hours, reading between 
 ## What is and isn't measured
 
 - **Model output:** cloud, visibility, wind, temperature. Forecast data, not station observations.
-- **Estimated:** each place's `rel` shelter figure is hardcoded and unverified. It only sets wind in the offline simulator and has no part in live ordering.
+- **Estimated:** each place's `rel` shelter figure is hardcoded and unverified. It only sets wind in the simulator that `test.js` uses for fixtures, and has no part in what the page shows.
 - **Read from the API:** each spot's elevation, from Open-Meteo's own 90 m digital elevation model.
 
 ## Units

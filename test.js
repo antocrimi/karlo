@@ -260,6 +260,7 @@ ok('quiet rule reachable in the simulator', quiet > 0, quiet + ' quiet hours');
   ok('the quiet state still reports the city', /class="v-cond"/.test(html) &&
      /\d+% cloud citywide/.test(clean(html)) && /\d+ (mph|km\/h) wind/.test(clean(html)),
      clean(html).slice(0, 90));
+  ok('the quiet state says Karl is upon us, at any hour', /Karl is upon us\./.test(html) && !/winning/.test(html), clean(html).slice(0, 60));
 }
 
 head('THE FIELD  — the properties the drawing rests on');
@@ -396,7 +397,7 @@ head('ONE BODY  — cohesive, and anchored where the meaning is');
      in the list and the height of the body come from the same numbers */
   const src4 = fs.readFileSync(FILE, 'utf8');
   ok('the field is smoothed before anything is decided',
-     /smoothAcross\(await fetchLive\(\)\)/.test(src4) && /smoothAcross\(saved\?saved\.frames:simulate\(\)\)/.test(src4));
+     /smoothAcross\(await fetchLive\(\)\)/.test(src4) && /smoothAcross\(saved\.frames\)/.test(src4));
   /* The blend was removed on 1 Sept. A single clear cell inside a covered city
      used to be hidden as grid noise; it is now shown, because it is what the
      model said about that place and ?debug can prove it either way. */
@@ -846,7 +847,7 @@ head('resume and pull to refresh');
     const h2 = harness();
     await tick(); await tick();
     const t0 = Date.parse('2026-10-08T14:00:00Z') / 1000;    /* 7:00 am PDT */
-    h2.api.S.frames = h2.api.S.frames.map((f, k) => ({ ...f, t: t0 + k * 3600 }));
+    h2.api.S.frames = h2.api.smoothAcross(h2.api.simulate()).map((f, k) => ({ ...f, t: t0 + k * 3600 }));
     clock = Date.parse('2026-10-08T14:46:00Z');
     h2.api.S.h = 0; h2.api.paint();
     ok('frames span one hour past the scrubber', h2.api.S.frames.length === h2.api.HOURS + 1, h2.api.S.frames.length);
@@ -887,7 +888,7 @@ head('resume and pull to refresh');
 
 /* ── when the forecast fails ─────────────────────────────────────────── */
 async function failureTests() {
-head('failure is explained, and a saved forecast comes before the simulator');
+head('failure is explained, a saved forecast comes first, and nothing is invented');
 {
   const tick = () => new Promise(r => setImmediate(r));
   const good = () => {                      /* a real-shaped Open-Meteo answer for all eleven spots */
@@ -911,14 +912,23 @@ head('failure is explained, and a saved forecast comes before the simulator');
 
   for (const k of Object.keys(ls)) delete ls[k];
   let h = await run(() => Promise.reject(new TypeError('Failed to fetch')));
-  ok('unreachable host says so, and is labeled simulated',
-     text(h, 'liveLabel') === 'Simulated' && text(h, 'updated') === 'Could not reach Open-Meteo', text(h, 'updated'));
-  ok('the scrubber does not claim live while simulated', text(h, 'tbRel') === 'Simulated', text(h, 'tbRel'));
+  ok('unreachable host says so, and says there is no forecast',
+     text(h, 'liveLabel') === 'No forecast' && text(h, 'updated') === 'Could not reach Open-Meteo', text(h, 'liveLabel') + ' / ' + text(h, 'updated'));
+  ok('Karl owns the headline and the line under it says what happened',
+     /Karl cut the signal\./.test(h.store.verdict._html) && /Could not reach Open-Meteo/.test(h.store.verdict._html), clean(h.store.verdict._html));
+  ok('with no forecast nothing is ranked and no number is invented',
+     h.store.board._html === '' && !/°/.test(h.store.verdict._html), h.store.board._html.slice(0, 40));
+  ok('the retry button takes the scrubber\'s place', h.store.retry.hidden === false && h.store.timebar._cls.has('err'));
 
   h = await run(reply(429, {}));
   ok('a busy service reads as busy', text(h, 'updated') === 'Open-Meteo is busy (429)', text(h, 'updated'));
+  ok('and Karl needs a minute', /Karl needs a minute\./.test(h.store.verdict._html));
+  h = await run(() => Promise.reject(Object.assign(new Error('t'), { name: 'AbortError' })));
+  ok('a timeout reads as a timeout', text(h, 'updated') === 'Open-Meteo timed out', text(h, 'updated'));
+  ok('and Karl took too long', /Karl took too long\./.test(h.store.verdict._html));
   h = await run(reply(500, {}));
   ok('a server error shows its status', text(h, 'updated') === 'Open-Meteo error (500)', text(h, 'updated'));
+  ok('and Karl blocked the road', /Karl blocked the road\./.test(h.store.verdict._html));
   h = await run(reply(200, { nonsense: true }));
   ok('an unreadable answer says so', text(h, 'updated') === 'Forecast unreadable', text(h, 'updated'));
 
@@ -926,17 +936,32 @@ head('failure is explained, and a saved forecast comes before the simulator');
   h = await run(() => (++calls === 1 ? Promise.reject(new TypeError('x')) : reply(200, good())()));
   ok('one failed attempt is retried and the page ends up live',
      calls === 2 && text(h, 'liveLabel') === 'Live forecast', calls + ' calls, ' + text(h, 'liveLabel'));
+  ok('a live page keeps the scrubber and hides the retry', h.store.retry.hidden === true && !h.store.timebar._cls.has('err'));
   ok('a good answer is kept for later', !!ls['karl.raw']);
 
+  /* a failure after a good load keeps what the visit already shows, even with nothing saved */
+  delete ls['karl.raw']; let up = false;
+  h = await run(() => (up ? reply(200, good())() : Promise.reject(new TypeError('x'))));
+  ok('start without a forecast', h.store.retry.hidden === false);
+  up = true; h.handlers.retry.click(); await tick(); await tick(); await tick(); await tick();
+  ok('pressing Try again loads it and gives the scrubber back',
+     text(h, 'liveLabel') === 'Live forecast' && h.store.retry.hidden === true && !h.store.timebar._cls.has('err') && h.store.board._html.includes('class="tr'),
+     text(h, 'liveLabel'));
+  delete ls['karl.raw']; up = false; h.handlers.refresh.click(); await tick(); await tick(); await tick(); await tick();
+  ok('a failed refresh keeps the forecast already on the page',
+     text(h, 'liveLabel') === 'Saved forecast' && h.store.board._html.includes('class="tr') && h.store.retry.hidden === true, text(h, 'liveLabel'));
+
+  for (const k of Object.keys(ls)) delete ls[k];
+  ls['karl.raw'] = JSON.stringify({ at: Date.now(), j: good() });
   h = await run(() => Promise.reject(new TypeError('x')));
-  ok('with a saved forecast, a failure shows it instead of the simulator',
+  ok('with a saved forecast, a failure shows it instead of an empty page',
      text(h, 'liveLabel') === 'Saved forecast' && /^From .* · Could not reach Open-Meteo$/.test(text(h, 'updated')),
      text(h, 'liveLabel') + ' / ' + text(h, 'updated'));
   ok('and the scrubber says saved', text(h, 'tbRel') === 'Saved', text(h, 'tbRel'));
 
   const o = JSON.parse(ls['karl.raw']); o.at -= 7 * 3600e3; ls['karl.raw'] = JSON.stringify(o);
   h = await run(() => Promise.reject(new TypeError('x')));
-  ok('a forecast older than six hours is not trusted', text(h, 'liveLabel') === 'Simulated', text(h, 'liveLabel'));
+  ok('a forecast older than six hours is not trusted', text(h, 'liveLabel') === 'No forecast', text(h, 'liveLabel'));
 
   global.fetch = realFetch; delete global.localStorage;
 }
@@ -970,6 +995,7 @@ head('a tick when the best spot changes and when a refresh lands, and nowhere el
        exist in the next: seed it the same way every time */
     let seed = 12345; Math.random = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
     const hh = harness(); await tick(); await tick(); await tick();
+    hh.api.S.frames = hh.api.smoothAcross(hh.api.simulate());   /* a failed boot paints nothing, so give it a day to scrub */
     global.matchMedia = q => ({ matches: reduced && /reduced-motion/.test(q) });
     if (vibrate) global.navigator.vibrate = p => { buzz.push(p); return true };
     else delete global.navigator.vibrate;
@@ -1109,7 +1135,7 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
   clear(); events.length = 0;
   h = await withCounter('byekarl.com', '');
   ok('the forecast state is reported once the page has loaded',
-     events.some(e => e[0] === 'forecast' && e[1].src === 'sim' && typeof e[1].why === 'string'), JSON.stringify(events));
+     events.some(e => e[0] === 'forecast' && e[1].src === 'none' && typeof e[1].why === 'string'), JSON.stringify(events));
 
   events.length = 0;
   for (let i = 0; i < 15; i++) h.handlers.time.change({ target: { value: String(i * 0.25 + 5) } });
