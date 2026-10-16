@@ -31,6 +31,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, 
         if (c._parent) c._parent.children = c._parent.children.filter(x => x !== c);
         c._parent = this; this.children.push(c);
       },
+      click() { this._clicks = (this._clicks || 0) + 1 },
       querySelector: () => null,
       querySelectorAll(sel) { return this.children.filter(c => c.tagName === sel.toUpperCase()) },
       classList: {
@@ -959,6 +960,85 @@ head('leaders are one flat light grey');
   ok('no state recolors a leader', !/\.pk\.(on|pick)::after|\.rail i\.(on|pick)/.test(src));
 }
 
+/* ── haptics ─────────────────────────────────────────────────────────── */
+async function hapticTests() {
+head('a tick when the best spot changes and when a refresh lands, and nowhere else');
+{
+  const tick = () => new Promise(r => setImmediate(r));
+  const buzz = [];
+  const mkH = async (vibrate = true, reduced = false) => {
+    const hh = harness(); await tick(); await tick(); await tick();
+    global.matchMedia = q => ({ matches: reduced && /reduced-motion/.test(q) });
+    if (vibrate) global.navigator.vibrate = p => { buzz.push(p); return true };
+    else delete global.navigator.vibrate;
+    buzz.length = 0;
+    return hh;
+  };
+  const setH = (hh, v) => hh.handlers.time.input({ target: { value: String(v) } });
+  /* find two hours with different picks in the simulated forecast */
+  let h = await mkH();
+  const picks = []; for (let q = 0; q <= 23; q += 1) { h.api.S.h = q; h.api.paint(); picks.push(h.api.S.pick); }
+  const i0 = 0, i1 = picks.findIndex(p => p !== picks[0]);
+  ok('the simulated day has a pick that changes', i1 > 0, JSON.stringify(picks));
+
+  h = await mkH(); h.api.S.h = 0; h.api.paint();
+  setH(h, 0);
+  ok('scrubbing without a new pick is silent', buzz.length === 0, JSON.stringify(buzz));
+  h.api.S.h = 0; h.api.paint();
+  setH(h, i1);
+  ok('scrubbing to a new pick gives a double buzz', buzz.length === 1 && Array.isArray(buzz[0]) && buzz[0].length === 3, JSON.stringify(buzz));
+  setH(h, i1 + 0.0);
+  ok('staying on the same pick is silent', buzz.length === 1, JSON.stringify(buzz));
+
+  const realNow = Date.now; let t = 1e12; Date.now = () => t;
+  h = await mkH(); h.api.S.h = 0; h.api.paint(); buzz.length = 0;
+  setH(h, i1); t += 50; setH(h, 0); t += 50; setH(h, i1);
+  ok('a pick that flickers is held to one buzz in 150 ms', buzz.length === 1, JSON.stringify(buzz));
+  t += 400; setH(h, 0);
+  ok('and buzzes again once it has settled', buzz.length === 2, JSON.stringify(buzz));
+  Date.now = realNow;
+
+  /* refresh */
+  global.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  const n = 72, t0 = Math.floor(Date.now() / 3600e3) * 3600 - 7200;
+  const hourly = { time: Array.from({ length: n }, (_, i) => t0 + i * 3600), temperature_2m: Array(n).fill(64),
+    cloud_cover_low: Array(n).fill(10), visibility: Array(n).fill(24000), wind_speed_10m: Array(n).fill(9), cloud_cover_mid: Array(n).fill(0) };
+  const api0 = harness().api; for (const L of api0.LEVELS) hourly[L.k] = Array(n).fill(0);
+  const goodJson = Array.from({ length: api0.SPOTS.length }, () => ({ elevation: 50, hourly }));
+  const goodFetch = () => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(goodJson) });
+  const realFetch = global.fetch;
+  global.fetch = goodFetch;
+  h = await mkH(); global.fetch = goodFetch;
+  h.handlers.refresh.click(); await tick(); await tick(); await tick();
+  ok('a refresh the person asked for gives one tick when it lands live', buzz.length === 1 && buzz[0] === 16, JSON.stringify(buzz));
+
+  buzz.length = 0; global.fetch = () => Promise.reject(new TypeError('x'));
+  h.handlers.refresh.click(); await tick(); await tick(); await tick();
+  ok('a failed refresh is silent', buzz.length === 0, JSON.stringify(buzz));
+
+  buzz.length = 0; global.fetch = goodFetch;
+  let clk = Date.now(); const rn = Date.now; Date.now = () => clk;
+  h.handlers.document.visibilitychange(); clk += 10 * 60e3; h.handlers.document.visibilitychange(); await tick(); await tick(); await tick();
+  Date.now = rn;
+  ok('an automatic refresh on return is silent', buzz.length === 0, JSON.stringify(buzz));
+
+  /* reduced motion and iOS */
+  buzz.length = 0; global.fetch = goodFetch;
+  h = await mkH(true, true); global.fetch = goodFetch;
+  h.api.S.h = 0; h.api.paint(); setH(h, i1); h.handlers.refresh.click(); await tick(); await tick(); await tick();
+  ok('nothing fires under reduced motion', buzz.length === 0, JSON.stringify(buzz));
+
+  h = await mkH(false); global.fetch = goodFetch;
+  h.handlers.refresh.click(); await tick(); await tick(); await tick();
+  const lab = (global.document.body.children || []).find(c => c.tagName === 'LABEL');
+  ok('without a vibration API a hidden switch is clicked instead', !!lab && lab._clicks === 1 && lab.children[0]._a.switch === '', lab && lab._clicks);
+  ok('and it is hidden from view and from assistive tech', !!lab && lab._a['aria-hidden'] === 'true' && /opacity:0/.test(lab.style.cssText), lab && lab.style.cssText);
+
+  global.fetch = realFetch; delete global.localStorage; delete global.navigator.vibrate;
+  global.matchMedia = () => ({ matches: false });
+}
+}
+
 /* ── counting visits ─────────────────────────────────────────────────── */
 async function analyticsTests() {
 head('visits are counted on byekarl.com only, never on a flagged device, and without cookies');
@@ -1084,7 +1164,7 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
 }
 }
 
-resumeTests().then(failureTests).then(analyticsTests).catch(e => { fail++; console.log('  FAIL  async tests threw   → ' + e.stack); }).then(() => {
+resumeTests().then(failureTests).then(hapticTests).then(analyticsTests).catch(e => { fail++; console.log('  FAIL  async tests threw   → ' + e.stack); }).then(() => {
   console.log(`\n${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 });
