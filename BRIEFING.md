@@ -114,7 +114,7 @@ Build `2026.10.15.1`, pending approval. Visits are counted with Umami Cloud on i
 
 The loader is injected from the page script after a check of `localStorage` key `karl.me`, so a device flagged with `?me` never loads it and shows "not counted" beside the build tag. `?me=off` clears the flag. On iOS a home screen app keeps its own storage, so it needs its own flag: open `byekarl.com/?me` in Safari and add that address to the home screen. The Privacy line in the Data panel now says what is counted, and no longer claims there is no tracking.
 
-Read duration with care. The page refreshes itself on return, so tabs left open run long and the median is the honest figure. Whether custom events are included on the Hobby plan was not readable on Umami's pricing page, so confirm it in the dashboard after the first scrub.
+Read duration with care. The page refreshes itself on return, so tabs left open run long and the median is the honest figure. Custom events are included on the Hobby plan: confirmed 2026-10-15, when two `scrub` events and one `forecast` event from a real visit appeared under Events. Visit duration reads 0s for a visit that sends no event after the page view, because Umami measures first event to last event, so quiet visits understate it.
 
 Rejected: Cloudflare Web Analytics (no custom events, so no scrubber), Google Analytics (cookies and consent), and a collector of our own on a Cloudflare Worker (a backend and a dashboard to build for one page).
 
