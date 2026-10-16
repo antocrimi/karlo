@@ -942,13 +942,16 @@ head('failure is explained, and a saved forecast comes before the simulator');
 }
 }
 
-head('leaders are the divider grey');
+head('leaders are the divider grey, and a clear place\'s matches its dot');
 {
   const src = fs.readFileSync(FILE, 'utf8');
   const pk = (src.match(/\.pk::after\{[^}]*\}/) || [''])[0], rail = (src.match(/\.rail i\{[^}]*\}/) || [''])[0];
   ok('hilltop leaders use --line', /background:var\(--line\)/.test(pk), pk);
   ok('rail ticks use --line', /background:var\(--line\)/.test(rail), rail);
-  ok('a clear place does not recolor its leader', !/\.pk\.on::after|\.rail i\.on/.test(src));
+  const dot = (src.match(/\.dot\.on\{[^}]*background:(var\(--[a-z-]+\))/) || [])[1];
+  ok('a clear place\'s hilltop leader is the colour of its dot', !!dot && new RegExp('\\.pk\\.on::after\\{background:' + dot.replace(/[()]/g, '\\$&') + '\\}').test(src), dot);
+  ok('and so is its rail tick', !!dot && new RegExp('\\.rail i\\.on\\{background:' + dot.replace(/[()]/g, '\\$&') + '\\}').test(src), dot);
+  ok('no leader uses the dim accent', !/\.(pk\.on::after|rail i\.on)\{[^}]*clear-dim/.test(src));
 }
 
 /* ── counting visits ─────────────────────────────────────────────────── */
