@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.15.6 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.15.7 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -341,13 +341,11 @@ svg.g{fill:currentColor}
 .f-place{display:flex; align-items:center; gap:8px; min-width:0}
 .f-place svg{width:15px; height:15px; fill:currentColor; color:var(--fog-faint); flex:0 0 auto}
 /* build tag — dimmest thing on the page, so a deploy can be verified at a
-   glance without competing with anything */
-.f-ver{color:var(--fog-faint); font-weight:400}
-.f-ver::before{content:"·"; margin:0 7px; color:var(--fog-faint)}
-/* shown only on a device flagged with ?me: its own line under the place, so the row never squeezes */
-.f-place.me{flex-wrap:wrap; row-gap:2px}
-.f-place.me .f-ver.off{flex:0 0 100%; padding-left:23px}
-.f-place.me .f-ver.off::before{content:none}
+   glance without competing with anything. Shown only on a device flagged
+   with ?me, on its own line under the colophon row. */
+.f-me{margin-top:10px; font-family:var(--mono); font-size:12px; color:var(--fog-faint)}
+.f-me .f-ver{font-weight:400}
+.f-me .f-ver + .f-ver::before{content:"·"; margin:0 7px}
 .f-made{display:flex; align-items:center; gap:7px; flex:0 0 auto}
 .f-heart svg{width:14px; height:14px; fill:currentColor; color:var(--clear); display:block}
 @media(max-width:359px){ .f-end{font-size:11px; gap:8px 12px} }
@@ -606,6 +604,7 @@ svg.g{fill:currentColor}
       <span class="f-place" id="fPlace"></span>
       <span class="f-made">Built with <i class="f-heart" id="fHeart"></i> by Anto</span>
     </div>
+    <div class="f-me" id="fMe" hidden></div>
   </footer>
 </div>
 
@@ -674,7 +673,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.15.6";
+const BUILD="2026.10.15.7";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1486,8 +1485,8 @@ function buildFooter(){
   $("refresh").innerHTML=ico("arrow_clockwise");
   $("ptr").innerHTML=ico("arrow_clockwise");
   $("fPlace").innerHTML=ico("map_pin")
-    +`<span>San Francisco, CA</span>`+(ME?`<b class="f-ver">v${BUILD}</b><b class="f-ver off">not counted</b>`:"");
-  if(ME) $("fPlace").classList.add("me");
+    +`<span>San Francisco, CA</span>`;
+  if(ME){ $("fMe").innerHTML=`<b class="f-ver">v${BUILD}</b><b class="f-ver">not counted</b>`; $("fMe").hidden=false; }
   $("fHeart").innerHTML=ico("heart");
 
   /* one panel open at a time; all closed to begin with */
