@@ -3,7 +3,7 @@
 **Purpose:** hand the whole project to a fresh session, with any model, without losing state or relitigating settled ground. Read top to bottom before touching anything.
 
 **Status:** shipped prototype, live at `byekarl.com`. GitHub Pages serves the old `antocrimi.github.io/karlo/` address as a redirect to it. The custom domain sits at the root, so absolute URLs in the head carry no sub-path. One HTML file, no build step, no dependencies, plus two image assets.
-**Last worked:** 1 September 2026 — the fog redrawn as one body on a part-compressed axis, after seeing live data on a phone. Before that, 30 August 2026 — the marine layer redrawn as a contoured surface with a leading edge, per-spot sunlight lines, continuous time, then the roster constrained to the transect and the ridge given a hairline.
+**Last worked:** 16 October 2026 — visit counting with Umami, a private build tag, METAR research, two back-tests against airport observations, and a calibration table. Before that, 1 September 2026 — the fog redrawn as one body on a part-compressed axis, after seeing live data on a phone.
 
 **Companion file:** `CLAUDE.md` carries Anto's voice rules, attribution tiers and working preferences. It governs every word written for or as him. This file governs the product.
 
@@ -294,7 +294,7 @@ Map labels are measured and packed on load, on font swap and on resize, driven b
 | | Limit | Cost |
 |---|---|---|
 | Open-Meteo free | 600/min, 5,000/hr, 10,000/day, 300,000/mo | $0 |
-| Open-Meteo Standard | 1M calls/mo | $29/mo |
+| Open-Meteo Standard | 1M calls/mo | $29/mo (price not confirmed on Open-Meteo's own page, 2026-10-15) |
 | Open-Meteo Professional | 5M calls/mo | $99/mo |
 | NWS / api.weather.gov | undocumented | $0 |
 

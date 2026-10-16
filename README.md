@@ -8,7 +8,7 @@ The eleven are chosen for somewhere worth sitting outside, and then constrained 
 
 Live at [byekarl.com](https://byekarl.com/).
 
-It is a project site, not a user site, so it is served from the `/karlo/` sub-path. The `canonical`, `og:url` and `og:image` tags in `index.html` are absolute and have to carry that sub-path: `og-image.png` at the bare domain is a 404, which is a link preview with no image and nothing on the page to show it. `test.js` checks them against this README so the two cannot drift.
+It is served from the root of `byekarl.com` through a `CNAME` file and GitHub Pages. The `canonical`, `og:url` and `og:image` tags in `index.html` are absolute and have to name that address, or a link preview loses its image. `test.js` checks them against the live URL above so the two cannot drift.
 
 ## Deploy
 
@@ -54,7 +54,7 @@ The forecast is hourly and the scrubber moves in quarter hours, reading between 
 ## What is and isn't measured
 
 - **Model output:** cloud, visibility, wind, temperature. Forecast data, not station observations.
-- **Estimated:** the year-round clear-sky figure used as a tiebreak is a local estimate. Replace it before anyone relies on it.
+- **Estimated:** each place's `rel` shelter figure is hardcoded and unverified. It only sets wind in the offline simulator and has no part in live ordering.
 - **Read from the API:** each spot's elevation, from Open-Meteo's own 90 m digital elevation model.
 
 ## Units
@@ -65,4 +65,4 @@ Inferred from the browser's locale, with a manual override in the footer. Scorin
 
 It's a 3 km model resolving a fog edge sharper than 3 km. It can be wrong, and it's verifiable by looking out of a window — twice now that's exactly how a bug was found. See `BRIEFING.md` §9 for the accuracy work and what's planned next.
 
-The build tag (`v2026.08.31`) shows in the footer only on a device flagged with `?me`, so visitors see the place alone. It tells you which version is actually being served, which is useful when a deploy looks like it hasn't landed.
+The build tag (for example `v2026.10.16.4`) shows in the footer only on a device flagged with `?me`, so visitors see the place alone. It tells you which version is actually being served, which is useful when a deploy looks like it hasn't landed.
