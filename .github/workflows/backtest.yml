@@ -7,7 +7,7 @@ on:
       start: { description: "First day, YYYY-MM-DD", default: "2026-06-01" }
       end:   { description: "Last day, YYYY-MM-DD",  default: "2026-10-10" }
   push:
-    branches: [backtest]
+    branches: [backtest, lead-time]
 permissions:
   contents: write
 jobs:
@@ -19,11 +19,13 @@ jobs:
         with: { node-version: 22 }
       - run: node tools/backtest.test.js
       - run: node tools/backtest.js "${{ inputs.start || '2026-06-01' }}" "${{ inputs.end || '2026-10-10' }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - run: node tools/backtest-lead.js "${{ inputs.start || '2026-06-01' }}" "${{ inputs.end || '2026-10-10' }}" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: backtest
           path: |
             report.md
+            report-lead.md
             metar.csv
       - name: Save the report to the backtest-results branch
         run: |
@@ -31,7 +33,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git checkout --orphan backtest-results
           git rm -rf -q --cached . 
-          mkdir -p out && cp report.md out/report.md && gzip -c metar.csv > out/metar.csv.gz
+          mkdir -p out && cp report.md report-lead.md out/ && gzip -c metar.csv > out/metar.csv.gz
           git add -f out
           git commit -q -m "Back-test report"
           git push -f origin backtest-results
