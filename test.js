@@ -967,6 +967,9 @@ head('a tick when the best spot changes and when a refresh lands, and nowhere el
   const tick = () => new Promise(r => setImmediate(r));
   const buzz = [];
   const mkH = async (vibrate = true, reduced = false) => {
+    /* the simulator uses Math.random, so a pick found in one harness must
+       exist in the next: seed it the same way every time */
+    let seed = 12345; Math.random = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
     const hh = harness(); await tick(); await tick(); await tick();
     global.matchMedia = q => ({ matches: reduced && /reduced-motion/.test(q) });
     if (vibrate) global.navigator.vibrate = p => { buzz.push(p); return true };
