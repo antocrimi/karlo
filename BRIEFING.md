@@ -386,7 +386,16 @@ What METAR uniquely buys is *observation* rather than model. Open-Meteo is model
 
 What it says. At the two Bay airports the model finds a low layer 81 to 87 per cent of the time. The weak hours are the night, 03:00 to 05:00 at KSFO (57 to 77 per cent caught), and not the 7 to 10 am window the earlier note expected, where it catches 88 to 94 per cent. Afternoon false alarms run 40 to 55 per cent at KSFO, on only 3 to 10 observed layer hours each, so that figure is noisy. The coast station sits in a layer 66 per cent of the hours and the model misses a third of them, which is the 3 km grid not resolving the coastal edge. `cloud_cover_low` catches 98 to 100 per cent but alarms 23 to 44 per cent of the time, which supports the 22 August decision to read pressure levels. Raising the line from 45 to 60 trades a catch rate of 81 to 67 per cent at KSFO for fewer false alarms, so the current line sits in a sensible place.
 
-What it does not say. These are the shortest-lead forecasts stitched together, so a person reading the 48 hour scrubber sees something worse. It tests the model's low layer, not Karl's verdict, which also depends on the sun line and on each place's elevation. The airports are not among the eleven places. Visibility cannot be judged at KSFO (no hour under 5 km in the sample) and KOAK (three). Open question: whether to repeat this with lead time as a variable, using the previous-runs API.
+What it does not say. These are the shortest-lead forecasts stitched together, so a person reading the 48 hour scrubber sees something worse. It tests the model's low layer, not Karl's verdict, which also depends on the sun line and on each place's elevation. The airports are not among the eleven places. Visibility cannot be judged at KSFO (no hour under 5 km in the sample) and KOAK (three). **Lead time, 2026-10-16.** `tools/backtest-lead.js` repeats the test with the forecast issued 0, 1, 2 and 3 days ahead, from the Previous Runs API (`previous-runs-api.open-meteo.com`). That API carries total cloud cover at lead but not pressure-level cloud cover, `cloud_cover_low`, or visibility (probed on 2026-10-16: pressure levels return a 400, the others return nulls), so Karl's own variables cannot be tested by lead time. Total cover at 45 per cent against "any broken or overcast layer" is the proxy, and it shows how fast skill decays, not Karl's absolute accuracy.
+
+| Lead | Right | Layer caught | False alarm |
+|---|---|---|---|
+| Latest run (day 0) | 80% | 92% | 25% |
+| 1 day | 77% | 81% | 23% |
+| 2 days | 68% | 54% | 23% |
+| 3 days | 66% | 52% | 25% |
+
+All three stations pooled, 9,450 hours. The loss comes between one and two days ahead: the share of layers caught falls from 81 to 54 per cent, then stays flat. False alarms barely move. At KSFO the same step goes from 69 to 50 per cent, and at KHAF from 91 to 57. So the forecast is dependable for about a day and misses roughly half the layers beyond that, which matters because the scrubber runs to 72 hours. Open decision: say so on the page (a dimmer or labeled second and third day, or a line in the Data panel), or leave it. Nothing changed on the site.
 
 ---
 
