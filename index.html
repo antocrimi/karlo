@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.16.2 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.16.3 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -582,7 +582,7 @@ svg.g{fill:currentColor}
             station observations. The year-round clear-sky figure used to break ties is a
             local estimate rather than a measurement.</p></div>
           <div><h3>Privacy</h3><p>No accounts and no cookies. Visits are counted anonymously
-            with Umami, including a few taps such as moving the time slider. Nothing identifies
+            with Umami, including a few taps such as moving the time slider and how long the page stays open. Nothing identifies
             you and Do Not Track is respected. The last forecast stays on your device for six
             hours in case the connection drops.</p></div>
           <div><h3>Resolution</h3><p id="dResolve">The model runs on a 3 km grid and the city is
@@ -675,7 +675,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.16.2";
+const BUILD="2026.10.16.3";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1594,6 +1594,21 @@ function nowOff(){
   return cl(m,0,59)/60;
 }
 
+/* ── time on the page ───────────────────────────────────────────
+   Umami measures a visit from its first event to its last, so a visit that is
+   only looked at reads 0 s. When the page is hidden this sends the seconds it
+   has been visible so far (a running total, so the largest value in a visit is
+   the time on the page). At most three a visit, nothing under a second. */
+let visSince=(typeof document!=="undefined" && document.visibilityState==="hidden") ? 0 : Date.now(), visMs=0, leaves=0;
+function dwell(){
+  const now=Date.now();
+  if(document.visibilityState==="hidden"){
+    if(!visSince) return;
+    visMs+=now-visSince; visSince=0;
+    if(leaves<3 && visMs>=1000){ leaves++; track("leave",{seconds:Math.round(visMs/1000)}); }
+  }else if(!visSince) visSince=now;
+}
+
 /* ── coming back to the app ──────────────────────────────────────
    Saved to the home screen, iOS keeps the page alive in the background and
    hands it back as it was, so "Now" can be hours old. Coming back after more
@@ -1623,7 +1638,7 @@ async function checkBuild(){
     if(m && m[1]!==BUILD) location.reload();
   }catch(e){}
 }
-if(document.addEventListener) document.addEventListener("visibilitychange",resume);
+if(document.addEventListener) document.addEventListener("visibilitychange",()=>{ dwell(); resume(); });
 addEventListener("pageshow",e=>{ if(e&&e.persisted) resume(); });
 addEventListener("focus",resume);
 /* iOS does not always tell a home screen app it is back. Timers are frozen

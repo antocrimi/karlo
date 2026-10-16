@@ -1133,6 +1133,21 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
   h.handlers.refresh.click(); await tick();
   ok('the refresh button is reported', events.some(e => e[0] === 'refresh' && e[1].how === 'button'), JSON.stringify(events));
 
+  /* time on the page */
+  events.length = 0;
+  const rn = Date.now; let clk = rn(); Date.now = () => clk;
+  global.document.visibilityState = 'visible'; clk += 7400;
+  global.document.visibilityState = 'hidden'; h.handlers.document.visibilitychange();
+  let lv = events.filter(e => e[0] === 'leave');
+  ok('hiding the page reports the seconds it was visible', lv.length === 1 && typeof lv[0][1].seconds === 'number' && Object.keys(lv[0][1]).join() === 'seconds', JSON.stringify(events));
+  global.document.visibilityState = 'visible'; h.handlers.document.visibilitychange(); clk += 20000;
+  global.document.visibilityState = 'hidden'; h.handlers.document.visibilitychange();
+  lv = events.filter(e => e[0] === 'leave');
+  ok('a second stretch reports the running total', lv.length === 2 && lv[1][1].seconds > lv[0][1].seconds, JSON.stringify(lv));
+  for (let i = 0; i < 4; i++) { global.document.visibilityState = 'visible'; h.handlers.document.visibilitychange(); clk += 3000; global.document.visibilityState = 'hidden'; h.handlers.document.visibilitychange(); }
+  ok('and no more than three a visit', events.filter(e => e[0] === 'leave').length === 3, events.filter(e => e[0] === 'leave').length);
+  Date.now = rn; global.document.visibilityState = 'visible';
+
   /* a flagged device sends nothing */
   clear(); events.length = 0; ls['karl.me'] = '1';
   h = await withCounter('byekarl.com', '');
