@@ -1,0 +1,25 @@
+name: backtest
+# Compares archived Open-Meteo forecasts with airport METARs and prints a report.
+# Not part of the site. Run by hand from the Actions tab, or on a push to the backtest branch.
+on:
+  workflow_dispatch:
+    inputs:
+      start: { description: "First day, YYYY-MM-DD", default: "2026-06-01" }
+      end:   { description: "Last day, YYYY-MM-DD",  default: "2026-10-10" }
+  push:
+    branches: [backtest]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node tools/backtest.test.js
+      - run: node tools/backtest.js "${{ inputs.start || '2026-06-01' }}" "${{ inputs.end || '2026-10-10' }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backtest
+          path: |
+            report.md
+            metar.csv
