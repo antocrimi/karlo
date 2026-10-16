@@ -1165,6 +1165,20 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
 }
 }
 
+/* ── borderline ──────────────────────────────────────────────────────── */
+{
+  const { api } = harness();
+  const n = (lowCloud, extra) => api.note(Object.assign({ vis: 20000, aboveFog: false, lowCloud }, extra));
+  head('a close call is called one');
+  ok('cover just under the line reads borderline', n(42) === ' · borderline', n(42));
+  ok('and so does cover just over it', n(52) === ' · borderline', n(52));
+  ok('the band starts at 30 and ends before 60 on the displayed number', n(29.4) === '' && n(29.6) === ' · borderline' && n(59.4) === ' · borderline' && n(59.5) === '', [n(29.4), n(29.6), n(59.4), n(59.5)].join('|'));
+  ok('a clear sky and a solid deck say nothing extra', n(5) === '' && n(90) === '', [n(5), n(90)].join('|'));
+  ok('a visibility or elevation word wins over borderline', n(42, { vis: 800 }) === ' · fogged in' && n(42, { aboveFog: true }) === ' · above the fog' && n(42, { vis: 7000 }) === ' · hazy', [n(42, { vis: 800 }), n(42, { aboveFog: true }), n(42, { vis: 7000 })].join('|'));
+  ok('it is at most one word', !/·.*·/.test(n(42)), n(42));
+  ok('a record with no cover says nothing', api.note({ vis: 20000, aboveFog: false }) === '');
+}
+
 /* ── forecast window ─────────────────────────────────────────────────── */
 async function windowTests() {
 head('the request asks for two days, and two days still cover the scrubber at 11:30 pm');

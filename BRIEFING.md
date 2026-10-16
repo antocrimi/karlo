@@ -246,7 +246,9 @@ score = clarity×.42 + visibility×.13 + wind comfort×.22 + temperature fit×.2
 Score no longer drives ordering. It only breaks ties on equal wind and is not displayed.
 
 ### One conditional word
-`note()` adds at most one word, and only when visibility or elevation contradicts the cloud reading: **fogged in** (<1 km), **above the fog**, **misty** (<5 km), **hazy** (<10 km). A plain sunny day reads exactly as before.
+`note()` adds at most one word, and only when visibility or elevation contradicts the cloud reading: **fogged in** (<1 km), **above the fog**, **misty** (<5 km), **hazy** (<10 km). A fifth, **borderline**, follows these when cover is 30 to 59 per cent. A plain sunny day reads exactly as before.
+
+**`borderline`, build `2026.10.16.3`, pending approval.** A fifth word, lowest priority: it appears only when none of the other four applies and the displayed cloud cover is 30 to 59 per cent (`MARGINAL_LO`, `MARGINAL_HI`). Chosen on 2026-10-16 as option B of four for hedging marginal calls (A leave it, C dim the verdict near the line, D widen the quiet rule). The band comes from the back-test calibration: an airport layer was present in 36 per cent of hours at 20 to 29, 48 per cent at 30 to 39, 66 per cent at 40 to 49, 73 per cent at 50 to 59 and 86 per cent at 60 to 69, so 30 to 59 is where the model is least decisive. It applies on both sides of the 45 per cent line and changes no verdict, order or colour. About one daytime hour in six has at least one place in the band. The wind phrase is kept together (`.nw`) so a wrapped line reads "9 mph wind" and not a lone "wind".
 
 ---
 
