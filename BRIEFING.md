@@ -120,7 +120,7 @@ Build `2026.10.15.9`, pending a test on Anto's phone. Two moments carry a tick: 
 ### Counting visits
 Build `2026.10.15.1`, pending approval. Visits are counted with Umami Cloud on its free Hobby plan (100,000 events a month, one site, six months of data). It is the one outside script on the page and the single exception to "no dependencies". It sets no cookies, loads only on byekarl.com, honors Do Not Track and records nothing that identifies a person. Besides page views it records five events: `scrub` (the hour at release, at most twelve a visit), `panel` (which footer panel opened), `units`, `refresh` (button or pull) and `forecast` (live, saved or simulated, with the reason when it is not live). The `forecast` event is how often the "Simulated" state really happens and why.
 
-**Time on the page, build `2026.10.16.3`, pending approval of one Privacy sentence.** When the page is hidden it sends a `leave` event with the seconds it has been visible so far, a running total across stretches, at most three a visit and nothing under a second. The largest value in a visit is the time on the page. This fixes the 0 s duration on quiet visits (option B from 2026-10-15). It adds up to three events a visit against the 100,000 a month plan. The Privacy line now says "including a few taps such as moving the time slider and how long the page stays open."
+**Time on the page, shipped in build `2026.10.16.3`, 2026-10-16.** When the page is hidden it sends a `leave` event with the seconds it has been visible so far, a running total across stretches, at most three a visit and nothing under a second. The largest value in a visit is the time on the page. This fixes the 0 s duration on quiet visits (option B from 2026-10-15). It adds up to three events a visit against the 100,000 a month plan. The Privacy line says "including a few taps such as moving the time slider and how long the page stays open."
 
 The loader is injected from the page script after a check of `localStorage` key `karl.me`, so a device flagged with `?me` never loads it and shows "not counted" beside the build tag. `?me=off` clears the flag. On iOS a home screen app keeps its own storage, so it needs its own flag: open `byekarl.com/?me` in Safari and add that address to the home screen. The Privacy line in the Data panel now says what is counted, and no longer claims there is no tracking.
 
@@ -249,6 +249,8 @@ Score no longer drives ordering. It only breaks ties on equal wind and is not di
 
 ### One conditional word
 `note()` adds at most one word, and only when visibility or elevation contradicts the cloud reading: **fogged in** (<1 km), **above the fog**, **misty** (<5 km), **hazy** (<10 km). A plain sunny day reads exactly as before.
+
+**`borderline` is built and held, 2026-10-16.** A fifth word for displayed cover of 30 to 59 per cent was built on the `borderline` branch (tests passing, screenshots shown) and Anto chose to hold it and watch the alpha first. It is not on `main`. The case for it is the calibration table in §9: an airport layer was present in 48 to 73 per cent of hours in that band. The costs seen in screenshots: the stat line wraps at 390px, and the verdict block grows one line when the best spot is borderline.
 
 ---
 
