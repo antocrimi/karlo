@@ -103,6 +103,15 @@ Build `2026.10.13.7`. Hilltop labels are placed in pixels from the stage's width
 ### When the forecast fails
 Build `2026.10.13.4`, pending approval. The footer used to say "Simulated, No connection" for every failure, which hid real causes. It now says what happened: could not reach Open-Meteo (blocked or offline), timed out, busy (429), a server error with its status, or an unreadable answer. One retry after 1.5s for the brief ones. The last good response is kept in `localStorage` (`karl.raw`) and used for up to six hours with the label "Saved forecast" and its time, so a failed refresh shows real data before it ever shows the simulator. The scrubber's "Live" label reads "Simulated" or "Saved" when it is not live. The simulator itself is unchanged.
 
+### Counting visits
+Build `2026.10.15.1`, pending approval. Visits are counted with Umami Cloud on its free Hobby plan (100,000 events a month, one site, six months of data). It is the one outside script on the page and the single exception to "no dependencies". It sets no cookies, loads only on byekarl.com, honors Do Not Track and records nothing that identifies a person. Besides page views it records five events: `scrub` (the hour at release, at most twelve a visit), `panel` (which footer panel opened), `units`, `refresh` (button or pull) and `forecast` (live, saved or simulated, with the reason when it is not live). The `forecast` event is how often the "Simulated" state really happens and why.
+
+The loader is injected from the page script after a check of `localStorage` key `karl.me`, so a device flagged with `?me` never loads it and shows "not counted" beside the build tag. `?me=off` clears the flag. On iOS a home screen app keeps its own storage, so it needs its own flag: open `byekarl.com/?me` in Safari and add that address to the home screen. The Privacy line in the Data panel now says what is counted, and no longer claims there is no tracking.
+
+Read duration with care. The page refreshes itself on return, so tabs left open run long and the median is the honest figure. Whether custom events are included on the Hobby plan was not readable on Umami's pricing page, so confirm it in the dashboard after the first scrub.
+
+Rejected: Cloudflare Web Analytics (no custom events, so no scrubber), Google Analytics (cookies and consent), and a collector of our own on a Cloudflare Worker (a backend and a dashboard to build for one page).
+
 ### Fresh on every return
 Added 2026-10-07 (build `2026.10.07.1`). Saved to the iPhone home screen, iOS resumes the page as it was, so "Now" went stale. Two fixes. Coming back after more than five minutes (`STALE`) refetches and returns the scrubber to now; a quicker look away keeps the scrub. In the home screen app only (`navigator.standalone` or `display-mode: standalone`), pulling down from the top past 72 px refreshes, with the footer's `arrow_clockwise` glyph turning with the pull in the gap above the header and spinning for at least 600 ms while it loads. Safari in a tab keeps its own pull to refresh, so ours stays off there. A pull that starts on the scrubber or a button never counts.
 

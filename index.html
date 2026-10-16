@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.13.8 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.15.1 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -346,6 +346,10 @@ svg.g{fill:currentColor}
    glance without competing with anything */
 .f-ver{color:var(--fog-faint); font-weight:400}
 .f-ver::before{content:"·"; margin:0 7px; color:var(--fog-faint)}
+/* shown only on a device flagged with ?me: its own line under the place, so the row never squeezes */
+.f-place.me{flex-wrap:wrap; row-gap:2px}
+.f-place.me .f-ver.off{flex:0 0 100%; padding-left:23px}
+.f-place.me .f-ver.off::before{content:none}
 .f-made{display:flex; align-items:center; gap:7px; flex:0 0 auto}
 .f-heart svg{width:14px; height:14px; fill:currentColor; color:var(--clear); display:block}
 @media(max-width:359px){ .f-end{font-size:11px; gap:8px 12px} }
@@ -579,8 +583,10 @@ svg.g{fill:currentColor}
           <div><h3>Measured, and not</h3><p>Cloud, visibility, wind and temperature are forecast model output, not
             station observations. The year-round clear-sky figure used to break ties is a
             local estimate rather than a measurement.</p></div>
-          <div><h3>Privacy</h3><p>No accounts, no tracking, nothing stored. The page talks
-            to one weather API and to nobody else.</p></div>
+          <div><h3>Privacy</h3><p>No accounts and no cookies. Visits are counted anonymously
+            with Umami, including a few taps such as moving the time slider. Nothing identifies
+            you and Do Not Track is respected. The last forecast stays on your device for six
+            hours in case the connection drops.</p></div>
           <div><h3>Resolution</h3><p id="dResolve">The model runs on a 3 km grid and the city is
             about 11 km across, so several places share a grid square and read the same air.
             That number is what the cross section actually has to draw with.</p></div>
@@ -670,7 +676,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.13.8";
+const BUILD="2026.10.15.1";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1396,6 +1402,54 @@ function drawFog(){
   $("terrain").setAttribute("d",d); $("terrainMask").setAttribute("d",d);
   $("terrainMask2").setAttribute("d",d); })();
 
+/* ── counting visits ─────────────────────────────────────────────
+   The one outside script on the page. Umami Cloud counts visits and a few
+   taps, sets no cookies and records nothing that identifies a person. It
+   loads on byekarl.com only, so previews and tests are never counted, and
+   not at all on a device flagged with ?me (?me=off clears the flag). It is
+   injected here rather than written into the markup so the flag is checked
+   first and the rest of the page never waits on it. */
+const UMAMI_SRC="https://cloud.umami.is/script.js";
+const UMAMI_ID="d59c07a5-fe76-4f55-be9d-cde3f01de557";
+const ME_KEY="karl.me";
+function readMe(){
+  try{
+    if(typeof location!=="undefined" && typeof URLSearchParams!=="undefined"){
+      const p=new URLSearchParams(location.search||"");
+      if(p.has("me")){
+        if(p.get("me")==="off") localStorage.removeItem(ME_KEY); else localStorage.setItem(ME_KEY,"1");
+        p.delete("me"); const rest=p.toString();
+        if(typeof history!=="undefined" && history.replaceState)
+          history.replaceState(null,"",location.pathname+(rest?"?"+rest:"")+(location.hash||""));
+      }
+    }
+    return localStorage.getItem(ME_KEY)==="1";
+  }catch(e){ return false; }
+}
+const ME=readMe();
+const COUNTED=!ME && typeof location!=="undefined" && location.hostname==="byekarl.com";
+const queued=[];
+/* events wait for the script, which arrives after first paint, and are
+   dropped rather than allowed to pile up if it never does */
+function track(name,data){
+  if(!COUNTED) return;
+  try{
+    if(window.umami && window.umami.track) window.umami.track(name,data);
+    else if(queued.length<20) queued.push([name,data]);
+  }catch(e){}
+}
+if(COUNTED){
+  try{
+    const s=document.createElement("script");
+    s.async=true; s.src=UMAMI_SRC;
+    s.setAttribute("data-website-id",UMAMI_ID);
+    s.setAttribute("data-domains","byekarl.com");
+    s.setAttribute("data-do-not-track","true");
+    s.onload=()=>{ while(queued.length){ const [n,d]=queued.shift(); track(n,d); } };
+    (document.head||document.documentElement).appendChild(s);
+  }catch(e){}
+}
+
 /* ── controls ──────────────────────────────────────────────────── */
 /* coalesce to one repaint per frame — a drag fires input far faster than
    the browser paints, and each paint rebuilds the list, dots and rail */
@@ -1408,9 +1462,17 @@ $("time").addEventListener("input",e=>{
   if(raf) return;
   raf=requestAnimationFrame(()=>{ raf=null; paint(); });
 },{passive:true});
+/* one event per release, not per input: a drag fires hundreds. Twelve a visit
+   is plenty to tell a glance from a session, and keeps inside the free
+   plan's 100,000 events a month. */
+let scrubs=0;
+$("time").addEventListener("change",e=>{
+  if(scrubs>=12) return; scrubs++;
+  track("scrub",{hour:Math.round(+e.target.value)});
+});
 $("units").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
-  S.unit=b.dataset.u;
+  S.unit=b.dataset.u; track("units",{unit:S.unit});
   [...$("units").querySelectorAll("button")].forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
   paint();
 });
@@ -1426,7 +1488,8 @@ function buildFooter(){
   $("refresh").innerHTML=ico("arrow_clockwise");
   $("ptr").innerHTML=ico("arrow_clockwise");
   $("fPlace").innerHTML=ico("map_pin")
-    +`<span>San Francisco, CA</span><b class="f-ver">v${BUILD}</b>`;
+    +`<span>San Francisco, CA</span><b class="f-ver">v${BUILD}</b>`+(ME?`<b class="f-ver off">not counted</b>`:"");
+  if(ME) $("fPlace").classList.add("me");
   $("fHeart").innerHTML=ico("heart");
 
   /* one panel open at a time; all closed to begin with */
@@ -1435,13 +1498,14 @@ function buildFooter(){
     const t=e.target.closest(".acc-t"); if(!t) return;
     const key=t.id.slice(2);              /* t-met → met, so ids cannot desync */
     const next = key===openKey ? null : key;
+    if(next) track("panel",{name:next});
     F.forEach(([k])=>{
       $("t-"+k).setAttribute("aria-expanded",String(k===next));
       $("p-"+k).hidden = k!==next;
     });
     openKey=next;
   });
-  $("refresh").addEventListener("click",()=>load(true));
+  $("refresh").addEventListener("click",()=>{ track("refresh",{how:"button"}); load(true); });
 }
 
 function stampNow(live,why,saved){
@@ -1469,7 +1533,9 @@ async function load(user){
     S.frames=smoothAcross(saved?saved.frames:simulate());
   }
   S.src = live ? "live" : saved ? "saved" : "sim";
-  if(user) S.h=0;                       /* a manual refresh returns you to now */
+  /* how often the page is live, saved or simulated, and why when it is not */
+  track("forecast",live ? {src:S.src} : {src:S.src,why});
+  if(user) S.h=0;                      /* a manual refresh returns you to now */
   $("time").value=S.h;
   paint(); safeLayout(); stampNow(live,why,saved);
   loadedAt=Date.now();
@@ -1575,7 +1641,7 @@ if(STANDALONE){
     p.classList.toggle("armed",pulled>=PULL);
   },{passive:true});
   addEventListener("touchend",()=>{
-    if(y0!=null && pulled>=PULL) load(true); else if(!loading) ptrReset();
+    if(y0!=null && pulled>=PULL){ track("refresh",{how:"pull"}); load(true); } else if(!loading) ptrReset();
     y0=null; pulled=0;
   },{passive:true});
 }

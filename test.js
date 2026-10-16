@@ -942,7 +942,130 @@ head('failure is explained, and a saved forecast comes before the simulator');
 }
 }
 
-resumeTests().then(failureTests).catch(e => { fail++; console.log('  FAIL  async tests threw   → ' + e.stack); }).then(() => {
+/* ── counting visits ─────────────────────────────────────────────────── */
+async function analyticsTests() {
+head('visits are counted on byekarl.com only, never on a flagged device, and without cookies');
+{
+  const tick = () => new Promise(r => setImmediate(r));
+  const SRC = 'https://cloud.umami.is/script.js';
+  const ls = {};
+  const replaced = [];
+  const setup = (host, search) => {
+    global.localStorage = { getItem: k => (k in ls ? ls[k] : null), setItem: (k, v) => { ls[k] = String(v) }, removeItem: k => { delete ls[k] } };
+    global.location = { hostname: host, search, pathname: '/', hash: '', protocol: 'https:' };
+    global.history = { replaceState: (a, b, u) => replaced.push(u) };
+  };
+  const scripts = () => global.document.documentElement.children.filter(c => c.src);
+  const clear = () => { for (const k of Object.keys(ls)) delete ls[k]; replaced.length = 0; };
+  const text = (h, id) => (h.store[id] ? h.store[id].textContent : '');
+
+  /* where it loads */
+  clear(); setup('byekarl.com', '');
+  let h = harness(); await tick();
+  ok('on byekarl.com one outside script is added', scripts().length === 1 && scripts()[0].src === SRC, scripts().length);
+  const s = scripts()[0];
+  ok('it carries the site id, the domain lock and Do Not Track',
+     s._a['data-website-id'] === 'd59c07a5-fe76-4f55-be9d-cde3f01de557' &&
+     s._a['data-domains'] === 'byekarl.com' && s._a['data-do-not-track'] === 'true', JSON.stringify(s._a));
+  ok('the footer does not say the device is excluded', !/not counted/.test(h.store.fPlace.innerHTML));
+
+  for (const host of ['localhost', 'antocrimi.github.io', '']) {
+    clear(); setup(host, ''); harness(); await tick();
+    ok(`on "${host || 'no host'}" nothing is added`, scripts().length === 0, scripts().length);
+  }
+  delete global.location; delete global.history; delete global.localStorage;
+  harness(); await tick();
+  ok('with no location at all the page still starts and adds nothing', scripts().length === 0);
+
+  /* ?me */
+  clear(); setup('byekarl.com', '?me');
+  h = harness(); await tick();
+  ok('?me sets the flag', ls['karl.me'] === '1', JSON.stringify(ls));
+  ok('?me adds no script', scripts().length === 0, scripts().length);
+  ok('?me is removed from the address', replaced.length === 1 && replaced[0] === '/', JSON.stringify(replaced));
+  ok('the footer says this device is not counted', /not counted/.test(h.store.fPlace.innerHTML), h.store.fPlace.innerHTML);
+
+  clear(); setup('byekarl.com', '?debug&me');
+  harness(); await tick();
+  ok('?me leaves other parameters in the address', replaced[0] === '/?debug=', JSON.stringify(replaced));
+
+  ls['karl.me'] = '1'; replaced.length = 0; setup('byekarl.com', '');
+  h = harness(); await tick();
+  ok('the flag holds on later visits without ?me', scripts().length === 0 && replaced.length === 0);
+
+  setup('byekarl.com', '?me=off');
+  h = harness(); await tick();
+  ok('?me=off clears the flag', !('karl.me' in ls), JSON.stringify(ls));
+  ok('and the visit is counted again', scripts().length === 1, scripts().length);
+
+  /* events */
+  const events = [];
+  const withCounter = async (host, search) => {
+    setup(host, search);
+    const hh = harness();
+    global.window.umami = { track: (n, d) => events.push([n, d]) };
+    await tick(); await tick(); await tick();
+    return hh;
+  };
+  clear(); events.length = 0;
+  h = await withCounter('byekarl.com', '');
+  ok('the forecast state is reported once the page has loaded',
+     events.some(e => e[0] === 'forecast' && e[1].src === 'sim' && typeof e[1].why === 'string'), JSON.stringify(events));
+
+  events.length = 0;
+  for (let i = 0; i < 15; i++) h.handlers.time.change({ target: { value: String(i * 0.25 + 5) } });
+  const sc = events.filter(e => e[0] === 'scrub');
+  ok('a scrub is one event per release, capped at twelve a visit', sc.length === 12, sc.length);
+  ok('and it names the hour only', sc[0][1].hour === 5 && Object.keys(sc[0][1]).join() === 'hour', JSON.stringify(sc[0]));
+
+  events.length = 0;
+  h.handlers.acc.click({ target: { closest: () => ({ id: 't-met' }) } });
+  h.handlers.acc.click({ target: { closest: () => ({ id: 't-met' }) } });
+  h.handlers.acc.click({ target: { closest: () => ({ id: 't-dat' }) } });
+  ok('opening a panel is reported and closing it is not',
+     JSON.stringify(events) === JSON.stringify([['panel', { name: 'met' }], ['panel', { name: 'dat' }]]), JSON.stringify(events));
+
+  events.length = 0;
+  h.handlers.units.click({ target: { closest: () => ({ dataset: { u: 'c' }, setAttribute() {} }) } });
+  ok('a unit change is reported', JSON.stringify(events) === JSON.stringify([['units', { unit: 'c' }]]), JSON.stringify(events));
+
+  events.length = 0;
+  h.handlers.refresh.click(); await tick();
+  ok('the refresh button is reported', events.some(e => e[0] === 'refresh' && e[1].how === 'button'), JSON.stringify(events));
+
+  /* a flagged device sends nothing */
+  clear(); events.length = 0; ls['karl.me'] = '1';
+  h = await withCounter('byekarl.com', '');
+  h.handlers.time.change({ target: { value: '3' } });
+  h.handlers.acc.click({ target: { closest: () => ({ id: 't-how' }) } });
+  ok('a flagged device sends no events', events.length === 0, JSON.stringify(events));
+
+  /* before the script arrives, events wait for it */
+  clear(); setup('byekarl.com', '');
+  h = harness(); await tick(); await tick();
+  const sn = scripts()[0];
+  h.handlers.units.click({ target: { closest: () => ({ dataset: { u: 'f' }, setAttribute() {} }) } });
+  events.length = 0;
+  global.window.umami = { track: (n, d) => events.push([n, d]) };
+  sn.onload();
+  ok('events raised before the script loads are sent when it does',
+     events.some(e => e[0] === 'units') && events.some(e => e[0] === 'forecast'), JSON.stringify(events));
+
+  /* what the page says about it */
+  const src = fs.readFileSync(FILE, 'utf8');
+  const outside = [...src.matchAll(/(?:src|href)="(https?:\/\/[^"]+)"/g)].map(m => m[1])
+    .concat([...src.matchAll(/\.src\s*=\s*"(https?:\/\/[^"]+)"|UMAMI_SRC\s*=\s*"([^"]+)"/g)].map(m => m[1] || m[2]));
+  ok('the only outside script is Umami', outside.filter(u => /\.js(\?|$)/.test(u)).every(u => u === SRC), outside.join(' '));
+  ok('the privacy line no longer claims there is no tracking', !/no tracking/i.test(src) && /counted anonymously\s+with Umami/.test(src));
+  ok('no cookie is set', !/document\.cookie/.test(src));
+  const brief = fs.readFileSync(path.join(__dirname, 'BRIEFING.md'), 'utf8');
+  ok('the decision is recorded in BRIEFING.md', /### Counting visits/.test(brief) && /Umami/.test(brief));
+
+  delete global.location; delete global.history; delete global.localStorage; delete global.window;
+}
+}
+
+resumeTests().then(failureTests).then(analyticsTests).catch(e => { fail++; console.log('  FAIL  async tests threw   → ' + e.stack); }).then(() => {
   console.log(`\n${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 });
