@@ -110,7 +110,7 @@ function harness({ width = 361, stageH = 152, locale = 'en-US', online = false, 
   js += '\nmodule.exports={S,paint,simulate,split,profile,coverCurve,note,frameAt,' +
         'SPOTS,LEVELS,CLEAR,VIS_CLEAR,yM,yFog,GROUND,VBW,VBH,HOURS,BUILD,smooth,RIDGE,' +
         'overheadCurve,overheadAt,sunLine,T_EDGE,H_TRUE,yFog,OFF_AXIS_KM,columns,smoothAcross,' +
-        'kmBetween,CELL_KM,sunAlt,isNight,sideProgress};';
+        'sunAlt,isNight,sideProgress};';
   const mod = { exports: {} };
   new Function('module', js)(mod);
   return { api: mod.exports, store, handlers, html };
@@ -128,8 +128,7 @@ const head = t => console.log(`\n${t}`);
 const { api, store } = harness();
 const { S, paint, simulate, split, profile, note, frameAt,
         SPOTS, LEVELS, CLEAR, VIS_CLEAR, yM, yFog, GROUND, VBW, HOURS, BUILD,
-        overheadCurve, overheadAt, sunLine, T_EDGE, H_TRUE, OFF_AXIS_KM, columns, smoothAcross,
-        kmBetween, CELL_KM } = api;
+        overheadCurve, overheadAt, sunLine, T_EDGE, H_TRUE, OFF_AXIS_KM, columns, smoothAcross } = api;
 /* load() smooths the field before anything is drawn or decided, so a harness
    that skips it is testing a different app from the one that ships */
 S.frames = smoothAcross(simulate());
@@ -1193,6 +1192,19 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
   const src = fs.readFileSync(FILE, 'utf8');
   head('copy that must stay true');
   ok('the page does not claim a clear-sky tiebreak, which no longer exists', !/clear-sky figure|break ties/i.test(src.replace(/\/\*[\s\S]*?\*\//g, '')));
+}
+
+/* ── nothing left behind ─────────────────────────────────────────────── */
+{
+  head('nothing left behind');
+  const src = fs.readFileSync(FILE, 'utf8');
+  const code = src.slice(src.lastIndexOf('<script>') + 8, src.lastIndexOf('</script>'))
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1');
+  const names = [...code.matchAll(/(?:^|\n)\s*(?:async\s+)?(?:function\s+([A-Za-z_$][\w$]*)|(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=)/g)].map(m => m[1] || m[2]);
+  const harnessSrc = fs.readFileSync(__filename, 'utf8');
+  const count = n => (code.match(new RegExp('(?<![\\w$.])' + n.replace(/\$/g, '\\$') + '(?![\\w$])', 'g')) || []).length;
+  const dead = names.filter(n => count(n) < 2 && !new RegExp('\\b' + n.replace(/\$/g, '\\$') + '\\b').test(harnessSrc.split('nothing left behind')[0]));
+  ok('every function and constant in the page script is used somewhere', dead.length === 0, dead.join());
 }
 
 /* ── forecast window ─────────────────────────────────────────────────── */

@@ -22,7 +22,7 @@ Karl shows where the fog (local name: Karl) isn't across eleven San Francisco pl
 - **Fixes with no visual change** can go straight to `main` once tests pass. Say so when reporting.
 - **Accent colour** lives only in `--clear` and `--clear-dim` (and `--night`, `--night-dim` after sunset). Never hard-code it; a test enforces this.
 - **Data.** One batched Open-Meteo request for all eleven places with nine hourly variables; ten or more bills as two calls. Free tier is non-commercial and needs the CC BY 4.0 credit in the footer. Each place is judged on its own grid cell; do not blend readings across places (see the rejected directions in `BRIEFING.md`).
-- **Elevation axis.** Anything drawn vertically on the cross section goes through `yM()` in metres.
+- **Elevation axis.** Anything drawn vertically on the cross section is placed in metres. The fog goes through `yFog()`, which follows `yM()` apart from a shoreline correction and the compression above `H_TRUE`. The tests check the two against each other.
 - Record each decision in `BRIEFING.md` in the same commit that makes it.
 
 ## Voice for any copy

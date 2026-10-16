@@ -25,7 +25,7 @@ One batched [Open-Meteo](https://open-meteo.com/) request covers all eleven coor
 Two constraints:
 
 - **Attribution is required.** Open-Meteo data is CC BY 4.0. The credit line in the footer stays.
-- **The free tier is non-commercial only.** 10,000 calls per day, rate-limited by IP. An ad or a subscription moves this to a paid plan at $29/month.
+- **The free tier is non-commercial only.** 10,000 calls per day, rate-limited by IP. An ad or a subscription moves this to a paid plan. `BRIEFING.md` records it at $29/month and marks that unconfirmed.
 
 Nine variables is deliberate: requests covering more than ten variables bill as multiple calls.
 
