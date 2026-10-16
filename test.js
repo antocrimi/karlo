@@ -1180,6 +1180,14 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
 }
 }
 
+/* ── method list ─────────────────────────────────────────────────────── */
+{
+  const src = fs.readFileSync(FILE, 'utf8');
+  const dts = [...src.matchAll(/<dt>([^<]+)<\/dt>/g)].map(m => m[1]);
+  head('the Method list');
+  ok('no term appears twice', new Set(dts).size === dts.length, dts.filter((d, i) => dts.indexOf(d) !== i).join());
+}
+
 /* ── forecast window ─────────────────────────────────────────────────── */
 async function windowTests() {
 head('the request asks for two days, and two days still cover the scrubber at 11:30 pm');
