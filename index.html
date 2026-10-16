@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Karl build 2026.10.16.8 — keep in step with BUILD in the script -->
+<!-- Karl build 2026.10.16.9 — keep in step with BUILD in the script -->
 <title>Karl: where the fog isn't, in San Francisco</title>
 <meta name="description" content="Where is it sunny in San Francisco right now? Karl reads low cloud, wind and temperature across eleven SF spots, from Ocean Beach to Dogpatch, and shows which side of the fog line each one is on for the next 24 hours.">
 <link rel="canonical" href="https://byekarl.com/">
@@ -123,17 +123,20 @@ svg.g{fill:currentColor}
 
 /* ══ time scrubber ═════════════════════════════════════════════ */
 .timebar{position:relative; margin-top:12px; padding-top:12px; border-top:1px solid var(--line)}
-/* With no forecast at all the scrubber has nothing to scrub, so the button takes
-   its whole place. The scrubber stays in the layout, hidden, so the page does
-   not change height when it comes back. */
-.timebar.err>*:not(.retry){visibility:hidden}
-.retry{position:absolute; left:0; right:0; top:12px; bottom:0; width:100%;
-  font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.02em;
-  color:var(--paper); background:transparent; border:1px solid var(--line-hi);
-  border-radius:14px; cursor:pointer; -webkit-tap-highlight-color:transparent}
-.retry:hover{background:var(--line)}
-.retry:focus-visible{outline:2px solid var(--clear); outline-offset:2px}
-.retry:disabled{cursor:default; color:var(--fog); background:transparent}
+/* With no forecast at all the scrubber has nothing to scrub, so a single
+   button stands where it was. */
+.timebar.err>*:not(.retry){display:none !important}
+.retry{display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; max-width:420px; height:52px; padding:0 20px;
+  font-family:var(--disp); font-weight:700; font-size:17px; letter-spacing:-.01em;
+  color:var(--ink); background:var(--paper); border:0; border-radius:14px; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; transition:filter .15s, transform .1s}
+.retry svg{width:19px; height:19px; display:block; fill:currentColor}
+.retry:hover{filter:brightness(1.07)}
+.retry:active{transform:scale(.985)}
+.retry:focus-visible{outline:2px solid var(--clear); outline-offset:3px}
+.retry:disabled{cursor:default; filter:none; transform:none; opacity:.72}
+.retry:disabled svg{animation:spin .9s linear infinite}
 .retry[hidden]{display:none}
 .tb-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:4px}
 .tb-at{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.022em; color:var(--paper)}
@@ -459,7 +462,7 @@ svg.g{fill:currentColor}
 .sk-tp{width:42px; height:21px}
 
 @media(prefers-reduced-motion:reduce){
-  .sk{animation:none}
+  .sk,.retry:disabled svg{animation:none}
   .dot,.dot .rays,.v-ico,#time::-webkit-slider-thumb,#time::-moz-range-thumb{transition:none}
 }
 </style>
@@ -548,7 +551,7 @@ svg.g{fill:currentColor}
       <input type="range" id="time" min="0" max="23" step="0.25" value="0"
              aria-label="Time, hours from now" aria-valuetext="Now">
       <div class="tb-scale"><span>Now</span><span>+12h</span><span>+24h</span></div>
-      <button class="retry" id="retry" type="button" hidden>Try again</button>
+      <button class="retry" id="retry" type="button" hidden><i id="retryIco" aria-hidden="true"></i><span id="retryText">Try again</span></button>
     </div>
   </div>
   </div>
@@ -709,7 +712,7 @@ const LEVELS=[{k:"cloud_cover_1000hPa",h:110},{k:"cloud_cover_975hPa",h:320},
 const CLEAR=45,        /* cloud overhead, per cent */
       VIS_CLEAR=5000,  /* metres — below this it is not a clear sky */
       VIS_FOG=1000, VIS_MIST=5000, VIS_HAZE=10000;
-const BUILD="2026.10.16.8";
+const BUILD="2026.10.16.9";
 const HOURS=24, VBW=900, VBH=250, GROUND=246;
 
 /* The terrain's y coordinates are an elevation axis: fitting all eleven
@@ -1539,6 +1542,7 @@ function buildFooter(){
       +`<span class="lb">${label}</span><span class="cv">${ico("caret_down")}</span>`;
   });
   $("refresh").innerHTML=ico("arrow_clockwise");
+  $("retryIco").innerHTML=ico("arrow_clockwise");
   $("ptr").innerHTML=ico("arrow_clockwise");
   $("fPlace").innerHTML=ico("map_pin")
     +`<span>San Francisco, CA</span>`;
@@ -1603,7 +1607,7 @@ async function load(user,felt){
   $("refresh").classList.add("spin");
   if(user) $("ptr").classList.add("spin");
   if(user) $("updated").textContent="Updating…";
-  const rb=$("retry"); if(!rb.hidden){ rb.disabled=true; rb.textContent="Trying…"; }
+  const rb=$("retry"); if(!rb.hidden){ rb.disabled=true; $("retryText").textContent="Trying…"; }
   let live=true, why="", saved=null, bad=null;
   try{ S.frames=smoothAcross(await fetchLive()); }
   catch(err){
@@ -1622,7 +1626,7 @@ async function load(user,felt){
   }else paintFailure(bad,why);
   safeLayout(); stampNow(live,why,saved);
   loadedAt=Date.now();
-  const done=()=>{ rb.disabled=false; rb.textContent="Try again"; $("refresh").classList.remove("spin"); ptrReset(); loading=false; if(felt && live) haptic("land"); };
+  const done=()=>{ rb.disabled=false; $("retryText").textContent="Try again"; $("refresh").classList.remove("spin"); ptrReset(); loading=false; if(felt && live) haptic("land"); };
   const wait=user ? MIN_SPIN-(Date.now()-t0) : 0;
   wait>0 ? setTimeout(done,wait) : done();
 }

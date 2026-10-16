@@ -919,6 +919,7 @@ head('failure is explained, a saved forecast comes first, and nothing is invente
   ok('with no forecast nothing is ranked and no number is invented',
      h.store.board._html === '' && !/°/.test(h.store.verdict._html), h.store.board._html.slice(0, 40));
   ok('the retry button takes the scrubber\'s place', h.store.retry.hidden === false && h.store.timebar._cls.has('err'));
+  ok('and the rule that hides the scrubber cannot be outvoted by an id selector', /\.timebar\.err>\*:not\(\.retry\)\{display:none !important\}/.test(fs.readFileSync(FILE, 'utf8')));
 
   h = await run(reply(429, {}));
   ok('a busy service reads as busy', text(h, 'updated') === 'Open-Meteo is busy (429)', text(h, 'updated'));
@@ -1252,7 +1253,7 @@ head('visits are counted on byekarl.com only, never on a flagged device, and wit
   ok('the first labels say Loading, not Live', /id="tbRel">Loading</.test(markup) && /id="liveLabel">Loading</.test(markup));
   const css = src.slice(src.indexOf('/* ══ loading'), src.indexOf('@media(prefers-reduced-motion:reduce)'));
   ok('the sheen uses the line tokens and no colour of its own', css.includes('var(--line-hi)') && !/#[0-9a-f]{3,6}\b|rgba?\(/i.test(css.replace(/\/\*[\s\S]*?\*\//g, '')));
-  ok('reduced motion holds the sheen still', /prefers-reduced-motion:reduce\)\{\s*\.sk\{animation:none\}/.test(src));
+  ok('reduced motion holds the sheen still', /prefers-reduced-motion:reduce\)\{\s*\.sk,\.retry:disabled svg\{animation:none\}/.test(src));
   ok('paint replaces the placeholders', !/class="sk/.test(store.board._html || '') && !/class="sk/.test(store.verdict._html || ''));
 }
 
